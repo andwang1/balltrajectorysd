@@ -1,0 +1,113 @@
+Bootstrap: library
+From: airl_lab/default/airl_env:pytorch_ci
+
+%labels Author eivinas.butkus18@imperial.ac.uk
+	# adapted from Antoine Cully
+    Version v0.0.1
+
+%files
+    ./resources/setup.sh /git/sferes2
+    ./resources/fix_build.py /git/sferes2
+
+%post
+    export LD_LIBRARY_PATH="/workspace/lib:$LD_LIBRARY_PATH"
+    cd /git/sferes2
+    mkdir example-pytorch-sferes/
+
+    # Install Useful libraries
+    apt-get update
+    apt-get upgrade -y
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get install -y  python3-matplotlib python3-numpy python3.6-dev python3-opencv python3-pip python3.6-tk graphviz xdg-utils
+
+    # Install nn2 from Szymon Repository, and libfastsim forked from JBM's repo
+    apt-get install -y libsdl1.2-dev # First install SDL1.2 for libfastsim
+
+    cd /git/sferes2/modules/
+
+    if [ ! -z "${CI_JOB_TOKEN}" ] # this enables the automated build in the CI environment
+     then
+          git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.doc.ic.ac.uk/AIRL/research_projects/luca_grillotti/libfastsim.git
+          git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.doc.ic.ac.uk/AIRL/students_projects/2018-2019/szymon_brych/nn2.git
+     elif [ ! -z "${PERSONAL_TOKEN}" ]
+     then
+          git clone https://oauth:${PERSONAL_TOKEN}@gitlab.doc.ic.ac.uk/AIRL/research_projects/luca_grillotti/libfastsim.git
+          git clone https://oauth:${PERSONAL_TOKEN}@gitlab.doc.ic.ac.uk/AIRL/students_projects/2018-2019/szymon_brych/nn2.git
+     else
+          git clone https://gitlab.doc.ic.ac.uk/AIRL/research_projects/luca_grillotti/libfastsim.git
+          git clone https://gitlab.doc.ic.ac.uk/AIRL/students_projects/2018-2019/szymon_brych/nn2.git
+     fi
+
+     # Install FastSim Library in /workspace/ directory
+     cd /git/sferes2/modules/libfastsim
+     ./waf configure --prefix=/workspace
+     ./waf build
+     ./waf install
+
+    # Add library names to configuration file of spheres
+    cd /git/sferes2/
+    echo 'libfastsim' >> modules.conf
+    echo 'nn2' >> modules.conf
+
+    apt-get install -y  gdb
+    alias pip="/usr/local/anaconda/bin/pip"
+
+   cd /git/sferes2/exp/
+   mkdir example-pytorch-sferes/
+   #====================================================================================================
+   exit 0 #NOTFORFINAL - the lines below this "exit" will be executed only when building the final image
+   #====================================================================================================
+   if [ ! -z "${CI_JOB_TOKEN}" ] # this enables the automated build in the CI environment
+   then
+        git clone --recurse-submodules https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.doc.ic.ac.uk/AIRL/examples/example-pytorch-sferes.git example-pytorch-sferes/
+   elif [ ! -z "${PERSONAL_TOKEN}" ]
+   then
+        git clone --recurse-submodules https://oauth:${PERSONAL_TOKEN}@gitlab.doc.ic.ac.uk/AIRL/examples/example-pytorch-sferes.git example-pytorch-sferes/
+   else
+        git clone --recurse-submodules https://gitlab.doc.ic.ac.uk/AIRL/examples/example-pytorch-sferes.git example-pytorch-sferes/
+   fi
+
+   if [ ! -z "${CI_COMMIT_SHA}" ]
+   then
+     echo 'Launching the experiment at commit: '${CI_COMMIT_SHA}
+     cd example-pytorch-sferes/
+     git checkout ${CI_COMMIT_SHA}
+     git submodule update
+   else
+     echo 'Launching the experiment from branch Master'
+   fi
+
+   cd /git/sferes2/
+   ./setup.sh $SETUP_ARGS
+
+    alias pip="/usr/local/anaconda/bin/pip"
+    cd /git/sferes2/exp/example-pytorch-sferes/submodules/figure_generator
+    pip3 install -r requirements.txt
+    pip3 install opencv-python==4.1.2.30
+    pip3 install seaborn pandas python-gitlab graphviz imageio natsort tabulate
+
+    pip3 install Jinja2
+
+
+%runscript
+    bash -c 'sleep $[ ( $RANDOM % 90 )  + 1 ]s'
+
+    export HOME=/tmp/home
+    mkdir $HOME
+    D=$(/opt/TurboVNC/bin/vncserver 2>&1 | grep "Desktop" | awk '{print $3}' | sed 's/.*://g')
+    export DISPLAY=':'$D
+
+    CURPATH=$(pwd)
+    cd /git/sferes2/
+    DIRNAME=results_$1
+    PATHNAME=$(date +%Y-%m-%d_%H_%M_%S)_$$
+
+    mkdir -p $CURPATH/$DIRNAME/
+    tmp_dir=$(mktemp -d -p $CURPATH/$DIRNAME/ ${PATHNAME}_XXX)
+    mkdir -p $tmp_dir
+
+    echo Launching command \'build/exp/example-pytorch-sferes/$1 -d $tmp_dir $2 $3\'
+    build/exp/example-pytorch-sferes/$1 -d $tmp_dir $2 $3
+
+%help
+    To Complete
