@@ -147,20 +147,17 @@ namespace sferes {
                     filtered_pop[i]->fit().entropy() = (float) res(i, Params::qd::behav_dim);
                 }
 
-                if (!Params::nov::use_fixed_l) {
                     // Updating value for l
 
-                    pop_t tmp_pop;
-                    ea.container().get_full_content(tmp_pop);
+                pop_t tmp_pop;
+                ea.container().get_full_content(tmp_pop);
 
-                    if ((ea.gen() > 1) && (!tmp_pop.empty())) {
-                        this->update_l(tmp_pop);
-                    } else if (!tmp_pop.empty()){
-                        this->initialise_l(tmp_pop);
-                    }
-                    std::cout << "l = " << Params::nov::l << "; size_pop = " << tmp_pop.size() << std::endl;
-
+                if ((ea.gen() > 1) && (!tmp_pop.empty())) {
+                    this->update_l(tmp_pop);
+                } else if (!tmp_pop.empty()){
+                    this->initialise_l(tmp_pop);
                 }
+                std::cout << "l = " << Params::nov::l << "; size_pop = " << tmp_pop.size() << std::endl;
 
             }
 
@@ -214,21 +211,19 @@ namespace sferes {
 
                 this->assign_descriptor_to_population(ea, tmp_pop);
 
-                //Update the population if the value of l has changed:F
-                if (!Params::nov::use_fixed_l) {
-                    // update l to maintain a number of indiv lower than 10k
-                    std::cout << "NEW L= " << Params::nov::l << std::endl;
 
-                    // Addition of the offspring to the container
-                    std::vector<bool> added;
-                    ea.add(tmp_pop, added);
-                    ea.pop().clear();
-                    // Copy of the content of the container into the _pop object.
-                    ea.container().get_full_content(ea.pop());
-                    // dump_data(ea,stat1,stat2,added);
+                // update l to maintain a number of indiv lower than Params::resolution
+                std::cout << "NEW L= " << Params::nov::l << std::endl;
 
-                    std::cout << "Gen " << ea.gen() << " - size population with l updated : " << ea.pop().size() << std::endl;
-                }
+                // Addition of the offspring to the container
+                std::vector<bool> added;
+                ea.add(tmp_pop, added);
+                ea.pop().clear();
+                // Copy of the content of the container into the _pop object.
+                ea.container().get_full_content(ea.pop());
+                // dump_data(ea,stat1,stat2,added);
+
+                std::cout << "Gen " << ea.gen() << " - size population with l updated : " << ea.pop().size() << std::endl;
             }
 
             void update_l(const pop_t &pop) const {
