@@ -143,7 +143,6 @@ int main(int argc, char **argv) {
     typedef ParamsMaze params_t;
     ParamsMaze::nov::l = 0;
 
-    typedef taxons::ParamsFactory<environment, algorithm, specific_params_t>::params_t params_t;
     typedef sferes::phen::Parameters<sferes::gen::EvoFloat<1, param_t>, sferes::fit::FitDummy<>, param_t> weight_t;
     typedef sferes::phen::Parameters<sferes::gen::EvoFloat<1, param_t>, sferes::fit::FitDummy<>, param_t> bias_t;
     typedef nn::PfWSum<weight_t> pf_t;
