@@ -42,8 +42,9 @@ def build(bld):
     bld.env.LIB_LIBFASTSIM = ['fastsim']
     bld.env.INCLUDES_LIBFASTSIM = ['/workspace/include']
 
-    bld.program(source='cpp/example_pytorch_libfastsim.cpp',
-                includes='./cpp . ../../',
+    bld.program(features='cxx',
+            source='src/example_pytorch_libfastsim.cpp',
+                includes='./src . ../../',
                 uselib='TBB BOOST EIGEN PTHREAD MPI'
                        + ' PYTHON PYTORCH LIBFASTSIM SDL',
                 use='sferes2',
