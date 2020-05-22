@@ -42,6 +42,10 @@
 
 #include <boost/program_options.hpp>
 
+
+#include <Eigen/Core>
+#include <Eigen/Eigenvalues>
+
 #include <torch/torch.h>
 #include <torch/script.h> // One-stop header.
 
