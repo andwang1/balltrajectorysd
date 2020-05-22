@@ -20,6 +20,8 @@ struct ParamsMaze {
     SFERES_CONST size_t update_frequency = 10; // -1 means exponentially decaying update frequency
     SFERES_CONST size_t times_downsample = 4; // for taking the image
 
+    SFERES_CONST bool use_colors = true;
+
     struct nov {
         static double l;
         SFERES_CONST double k = 15;
