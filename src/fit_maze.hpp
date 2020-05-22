@@ -41,7 +41,7 @@ FIT_QD(HardMaze)
 public:
     HardMaze() {}
 
-    typedef std::vector<std::vector<std::vector<uint8_t>>> image_t
+    typedef std::vector<std::vector<std::vector<uint8_t>>> image_t;
 
     template<typename Indiv>
     void eval(Indiv &ind) {
