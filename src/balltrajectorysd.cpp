@@ -52,6 +52,7 @@
 #include <sferes/eval/parallel.hpp>
 #include <sferes/gen/evo_float.hpp>
 #include <sferes/modif/dummy.hpp>
+// this needs to go
 #include <sferes/phen/parameters.hpp>
 #include <sferes/run.hpp>
 
@@ -80,7 +81,9 @@
 
 #include "fastsim_display.hpp"
 #include "fit_maze.hpp"
-#include "params_maze.hpp"
+#include "params.hpp"
+#include "trajectory.hpp"
+#include "phen.hpp"
 
 // quick hack to have "write" access to the container, this need to be added to the main API later.
 template<typename Phen, typename Eval, typename Stat, typename FitModifier, typename Select, typename Container, typename Params, typename Exact = stc::Itself>
@@ -128,6 +131,7 @@ void get_arguments(const boost::program_options::options_description &desc, Argu
 }
 
 int main(int argc, char **argv) {
+    // threading options
     boost::program_options::options_description desc;
     Arguments arg{};
 
@@ -138,26 +142,51 @@ int main(int argc, char **argv) {
 
     srand(time(0));
 
+    // threading tool
     tbb::task_scheduler_init init(arg.number_threads);
 
-    init_fastsim_settings();
+    typedef Params params_t;
+    // why have 0?
+    Params::nov::l = 0;
+    typedef Trajectory<params_t> fit_t;
+    typedef sferes::gen::EvoFloat<2, params_t> gen_t;
+    typedef sferes::phen::Custom_Phen<gen_t, fit_t, params_t> phen_t;
 
-    typedef ParamsMaze params_t;
-    ParamsMaze::nov::l = 0;
+    // change below here
 
-    typedef sferes::phen::Parameters<sferes::gen::EvoFloat<1, params_t>, sferes::fit::FitDummy<>, params_t> weight_t;
-    typedef sferes::phen::Parameters<sferes::gen::EvoFloat<1, params_t>, sferes::fit::FitDummy<>, params_t> bias_t;
-    typedef nn::PfWSum<weight_t> pf_t;
-    typedef nn::AfTanh<bias_t> af_t;
-    typedef nn::Neuron<pf_t, af_t> neuron_t;
-    typedef nn::Connection<weight_t> connection_t;
 
-    typedef sferes::gen::GenMlp<neuron_t, connection_t, params_t> gen_t;
-    typedef HardMaze<params_t> fit_t;
-    typedef sferes::phen::Dnn<gen_t, fit_t, params_t> phen_t;
 
-    typedef NetworkLoaderAutoEncoder<params_t> network_loader_t;
-    typedef sferes::modif::DimensionalityReduction<phen_t, params_t, network_loader_t> modifier_t;
+    // can be removed after removing fastsim simulation?
+    // init_fastsim_settings();
+
+    
+
+    // need to add in gen_t, phen_t and fitness based on that
+
+    // typedef sferes::phen::Parameters<sferes::gen::EvoFloat<1, params_t>, sferes::fit::FitDummy<>, params_t> weight_t;
+    // typedef sferes::phen::Parameters<sferes::gen::EvoFloat<1, params_t>, sferes::fit::FitDummy<>, params_t> bias_t;
+    
+    // // can this be cut out? change phenotype to default phenotype, and then have the modif call the AE
+    // // i think the nn stuff is to evolve the network itself, not required here
+    // typedef nn::PfWSum<weight_t> pf_t;
+    // typedef nn::AfTanh<bias_t> af_t;
+    // typedef nn::Neuron<pf_t, af_t> neuron_t;
+    // typedef nn::Connection<weight_t> connection_t;
+
+    // typedef sferes::gen::GenMlp<neuron_t, connection_t, params_t> gen_t;
+    // typedef HardMaze<params_t> fit_t;
+    // typedef sferes::phen::Dnn<gen_t, fit_t, params_t> phen_t;
+
+    // typedef NetworkLoaderAutoEncoder<params_t> network_loader_t;
+    // typedef sferes::modif::DimensionalityReduction<phen_t, params_t, network_loader_t> modifier_t;
+
+    // ambitious
+    typedef sferes::modif::Dummy<> modifier_t;
+
+
+    // everything below here should be ok to keep
+
+
 
     // For the Archive, you can chose one of the following storage:
     // kD_tree storage, recommended for small behavioral descriptors (behav_dim<10)
@@ -170,18 +199,23 @@ int main(int argc, char **argv) {
     typedef sferes::qd::container::Archive<phen_t, storage_t, params_t> container_t;
 
     typedef sferes::eval::Parallel<params_t> eval_t;
+    // luca commented this line below out
     // typedef eval::Eval<Params> eval_t;
 
-    typedef boost::fusion::vector<
-                    sferes::stat::CurrentGen<phen_t, params_t>,
-                    sferes::stat::QdContainer<phen_t, params_t>,
-                    sferes::stat::QdProgress<phen_t, params_t>,
-                    sferes::stat::Projection<phen_t, params_t>,
-                    sferes::stat::ImagesObservations<phen_t, params_t>,
-                    sferes::stat::ImagesReconstructionObs<phen_t, params_t>,
-                    sferes::stat::ModelAutoencoder<phen_t, params_t>,
-                    sferes::stat::Modifier<phen_t, params_t>
-                > stat_t;
+    // typedef boost::fusion::vector<
+    //                 sferes::stat::CurrentGen<phen_t, params_t>,
+    //                 sferes::stat::QdContainer<phen_t, params_t>,
+    //                 sferes::stat::QdProgress<phen_t, params_t>,
+    //                 sferes::stat::Projection<phen_t, params_t>,
+    //                 sferes::stat::ImagesObservations<phen_t, params_t>,
+    //                 sferes::stat::ImagesReconstructionObs<phen_t, params_t>,
+    //                 sferes::stat::ModelAutoencoder<phen_t, params_t>,
+    //                 sferes::stat::Modifier<phen_t, params_t>
+    //             > stat_t;
+
+    // ambitious
+    typedef boost::fusion::vector<sferes::stat::QdContainer<phen_t, params_t>,
+      sferes::stat::QdProgress<phen_t, params_t>> stat_t;
 
     typedef sferes::qd::selector::Uniform<phen_t, params_t> selector_t;
 
