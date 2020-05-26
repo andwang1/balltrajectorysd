@@ -42,7 +42,6 @@
 
 #include <boost/program_options.hpp>
 
-
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 
@@ -51,9 +50,6 @@
 
 #include <sferes/eval/parallel.hpp>
 #include <sferes/gen/evo_float.hpp>
-#include <sferes/modif/dummy.hpp>
-// this needs to go
-#include <sferes/phen/parameters.hpp>
 #include <sferes/run.hpp>
 
 #include <sferes/stat/best_fit.hpp>
@@ -79,8 +75,6 @@
 #include "stat/stat_model_autoencoder.hpp"
 #include "stat/stat_modifier.hpp"
 
-#include "fastsim_display.hpp"
-#include "fit_maze.hpp"
 #include "params.hpp"
 #include "trajectory.hpp"
 #include "phen.hpp"
@@ -155,7 +149,6 @@ int main(int argc, char **argv) {
     typedef NetworkLoaderAutoEncoder<params_t> network_loader_t;
     typedef sferes::modif::DimensionalityReduction<phen_t, params_t, network_loader_t> modifier_t;
 
-
     // For the Archive, you can chose one of the following storage:
     // kD_tree storage, recommended for small behavioral descriptors (behav_dim<10)
     typedef  std::conditional<
@@ -167,23 +160,18 @@ int main(int argc, char **argv) {
     typedef sferes::qd::container::Archive<phen_t, storage_t, params_t> container_t;
 
     typedef sferes::eval::Parallel<params_t> eval_t;
-    // luca commented this line below out
-    // typedef eval::Eval<Params> eval_t;
 
-    // typedef boost::fusion::vector<
-    //                 sferes::stat::CurrentGen<phen_t, params_t>,
-    //                 sferes::stat::QdContainer<phen_t, params_t>,
-    //                 sferes::stat::QdProgress<phen_t, params_t>,
-    //                 sferes::stat::Projection<phen_t, params_t>,
-    //                 sferes::stat::ImagesObservations<phen_t, params_t>,
-    //                 sferes::stat::ImagesReconstructionObs<phen_t, params_t>,
-    //                 sferes::stat::ModelAutoencoder<phen_t, params_t>,
-    //                 sferes::stat::Modifier<phen_t, params_t>
-    //             > stat_t;
+    typedef boost::fusion::vector<
+                    sferes::stat::CurrentGen<phen_t, params_t>,
+                    sferes::stat::QdContainer<phen_t, params_t>,
+                    sferes::stat::QdProgress<phen_t, params_t>,
+                    // sferes::stat::Projection<phen_t, params_t>,
+                    // sferes::stat::ImagesObservations<phen_t, params_t>,
+                    // sferes::stat::ImagesReconstructionObs<phen_t, params_t>,
+                    sferes::stat::ModelAutoencoder<phen_t, params_t>,
+                    sferes::stat::Modifier<phen_t, params_t>
+                > stat_t;
 
-    // ambitious
-    typedef boost::fusion::vector<sferes::stat::QdContainer<phen_t, params_t>,
-      sferes::stat::QdProgress<phen_t, params_t>> stat_t;
 
     typedef sferes::qd::selector::Uniform<phen_t, params_t> selector_t;
 

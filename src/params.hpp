@@ -31,26 +31,23 @@ struct Params {
     SFERES_CONST bool is_random_dpf = false;
     };
 
-    struct ae 
-    {
-        SFERES_CONST size_t batch_size = 256;
-        SFERES_CONST size_t nb_epochs = 10000;
-        SFERES_CONST float convergence_epsilon = 0.0000001;
-        SFERES_CONST float CV_fraction = 0.75;
-        SFERES_CONST float learning_rate = 1e-4;
+    struct ae {
+    SFERES_CONST size_t batch_size = 256;
+    SFERES_CONST size_t nb_epochs = 10000;
+    SFERES_CONST float convergence_epsilon = 0.0000001;
+    SFERES_CONST float CV_fraction = 0.75;
+    SFERES_CONST float learning_rate = 1e-4;
 
-        // network neurons        
-        // input = qd::gen_dim
-        SFERES_CONST size_t en_hid_dim1 = 10;
-        // latent_dim = qd::behav_dim
-        SFERES_CONST size_t de_hid_dim1 = 10;
-        SFERES_CONST size_t de_hid_dim2 = 30;
-        // output_dim = sim::trajectory_length
+    // network neurons        
+    // input = qd::gen_dim
+    SFERES_CONST size_t en_hid_dim1 = 10;
+    // latent_dim = qd::behav_dim
+    SFERES_CONST size_t de_hid_dim1 = 10;
+    SFERES_CONST size_t de_hid_dim2 = 30;
+    // output_dim = sim::trajectory_length
     };
     
     SFERES_CONST size_t discretisation = 20;
-    
-
     
     SFERES_CONST size_t update_period = 10;
     SFERES_CONST size_t image_width = 50;
@@ -92,27 +89,6 @@ struct Params {
         // remove these 2 once phen is fully setup
         SFERES_CONST double min = 0.5f;
         SFERES_CONST double max = 0.5f;
-    };
-    struct dnn {
-        SFERES_CONST size_t nb_inputs = 5;
-        SFERES_CONST size_t nb_outputs = 2;
-//                SFERES_CONST size_t min_nb_neurons	= 4;
-//                SFERES_CONST size_t max_nb_neurons	= 5;
-//                SFERES_CONST size_t min_nb_conns	= 50;
-//                SFERES_CONST size_t max_nb_conns	= 101;
-
-        SFERES_CONST float m_rate_add_conn = 1.f;
-        SFERES_CONST float m_rate_del_conn = 0.05f;
-        SFERES_CONST float m_rate_change_conn = 0.1f;
-        SFERES_CONST float m_rate_add_neuron = 0.2f;
-        SFERES_CONST float m_rate_del_neuron = 0.05f;
-
-        SFERES_CONST int io_param_evolving = true;
-        SFERES_CONST sferes::gen::dnn::init_t init = sferes::gen::dnn::init_t::ff;
-    };
-    struct mlp {
-        SFERES_CONST size_t layer_0_size = 4;
-        SFERES_CONST size_t layer_1_size = 4;
     };
 
     struct qd {
