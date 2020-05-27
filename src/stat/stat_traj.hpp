@@ -101,10 +101,10 @@ namespace sferes {
                 // print a second line with only losses after training
 
                 // training frequency
-                if (Params::update_frequency == -1) 
+                if (Params::update::update_frequency == -1) 
                 {
-                    if (Params::update_period > 0 && 
-                       (ea.gen() == 1 || ea.gen() == last_update + Params::update_period * std::pow(2, update_id - 1))) 
+                    if (Params::update::update_period > 0 && 
+                       (ea.gen() == 1 || ea.gen() == last_update + Params::update::update_period * std::pow(2, update_id - 1))) 
                     {
                         std::string train_fname = ea.res_dir() + "/" + prefix + "_train" + std::string(".dat");
                         std::ofstream ofs_train(train_fname.c_str(), std::ofstream::app);
@@ -115,7 +115,7 @@ namespace sferes {
                 } 
                 else if (ea.gen() > 0) 
                 {
-                    if ((ea.gen() % Params::update_frequency == 0) || ea.gen() == 1) 
+                    if ((ea.gen() % Params::update::update_frequency == 0) || ea.gen() == 1) 
                     {
                         std::string train_fname = ea.res_dir() + "/" + prefix + "_train" + std::string(".dat");
                         std::ofstream ofs_train(train_fname.c_str(), std::ofstream::app);

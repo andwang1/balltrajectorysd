@@ -38,10 +38,10 @@ namespace sferes {
                  * assign those values to the population (every step)
                  * */
 
-                if (Params::update_frequency == -1) 
+                if (Params::update::update_frequency == -1) 
                 {// NOTE: THERE's BEEN A CHANGE to update_period
-                    if (Params::update_period > 0 && 
-                       (ea.gen() == 1 || ea.gen() == last_update + Params::update_period * std::pow(2, update_id - 1))) 
+                    if (Params::update::update_period > 0 && 
+                       (ea.gen() == 1 || ea.gen() == last_update + Params::update::update_period * std::pow(2, update_id - 1))) 
                     {
                         update_id++;
                         last_update = ea.gen();
@@ -50,7 +50,7 @@ namespace sferes {
                 } 
                 else if (ea.gen() > 0) 
                 {
-                    if ((ea.gen() % Params::update_frequency == 0) || ea.gen() == 1) 
+                    if ((ea.gen() % Params::update::update_frequency == 0) || ea.gen() == 1) 
                     {
                         update_descriptors(ea);
                     }
@@ -100,8 +100,7 @@ namespace sferes {
                 get_trajectories(content, traj_d, is_random_d);
                 
                 if (training) {
-                    std::cout << "training set is composed of " << phen_d.rows() << " samples of Phenotypes ("
-                              << ea.gen() << " archive size : " << pop_size << ")" << std::endl;
+                    std::cout << "Gen " << ea.gen() << " train set composed of " << phen_d.rows() << " phenotypes - Archive size : " << pop_size << std::endl;
                 }
             }
 

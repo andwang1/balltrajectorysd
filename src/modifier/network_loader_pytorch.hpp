@@ -145,7 +145,7 @@ public:
         std::cout << "INIT recon train loss: " << init_tr_recon_loss << "   valid recon loss: " << init_vl_recon_loss << std::endl;
         std::cout << "Training: Total num of trajectories " << is_traj.sum() << ", Num random trajectories " << is_traj.sum() - phen_d.rows() << ", (random ratio: " << 1 - float(phen_d.rows())/is_traj.sum() <<")" << std::endl;
         bool _continue = true;
-        Eigen::VectorXd previous_avg = Eigen::VectorXd::Ones(5) * 100;
+        Eigen::VectorXd previous_avg = Eigen::VectorXd::Ones(TParams::ae::running_mean_num_epochs) * 100;
 
         int nb_epochs = Options::nb_epochs;
 
@@ -195,7 +195,8 @@ public:
 
                 previous_avg[previous_avg.size() - 1] = current_avg;
 
-                if ((previous_avg.array() - previous_avg[0]).mean() > 0 &&
+                // if the running average on the val set is increasing and train loss is higher than at the beginning
+                if ((previous_avg.array() - previous_avg[0]).mean() > 0 && epoch > TParams::ae::min_num_epochs &&
                     this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj) < init_tr_recon_loss)
                     _continue = false;
             }
