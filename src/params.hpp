@@ -42,7 +42,7 @@ struct Params {
     // output_dim = sim::trajectory_length
     };
     
-    SFERES_CONST size_t discretisation = 20;
+    
     
     SFERES_CONST size_t update_period = 10;
     SFERES_CONST size_t image_width = 50;
@@ -57,6 +57,8 @@ struct Params {
         static double l;
         SFERES_CONST double k = 15;
         SFERES_CONST double eps = 0.1;
+        // the discretisation used to create the diversity bin data
+        SFERES_CONST size_t discretisation = 20;
     };
 
     struct pop {
@@ -94,6 +96,7 @@ struct Params {
     struct stat {
         SFERES_CONST size_t save_trajectories = 500;
         SFERES_CONST size_t save_model = 2000;
+        SFERES_CONST size_t save_diversity = 2000;
         SFERES_CONST size_t period_saving_individual_in_population = 5;
     };
 };

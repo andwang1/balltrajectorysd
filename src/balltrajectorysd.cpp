@@ -72,6 +72,7 @@
 #include "stat/stat_model_autoencoder.hpp"
 #include "stat/stat_modifier.hpp"
 #include "stat/stat_traj.hpp"
+#include "stat/stat_diversity.hpp"
 
 #include "params.hpp"
 #include "trajectory.hpp"
@@ -93,7 +94,6 @@ public:
     // pop_t& get_pop_advers() { return this->pop_advers; }
 
     Container &container() { return this->_container; }
-
 
     void add(pop_t &pop_off, std::vector<bool> &added, pop_t &pop_parents) {
         this->_add(pop_off, added, pop_parents);
@@ -165,6 +165,7 @@ int main(int argc, char **argv) {
                     sferes::stat::QdProgress<phen_t, params_t>,
                     // writes the trajectories and the AE loss
                     sferes::stat::Trajectories<phen_t, params_t>,
+                    sferes::stat::Diversity<phen_t, params_t>,
                     sferes::stat::ModelAutoencoder<phen_t, params_t>,
                     sferes::stat::Modifier<phen_t, params_t>
                 > stat_t;
