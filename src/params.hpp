@@ -28,7 +28,7 @@ struct Params {
 
     struct ae {
     SFERES_CONST size_t batch_size = 64;
-    SFERES_CONST size_t nb_epochs = 10000;
+    SFERES_CONST size_t nb_epochs = 5000;
     SFERES_CONST float convergence_epsilon = 0.000001;
     SFERES_CONST float CV_fraction = 0.75;
     SFERES_CONST float learning_rate = 1e-3;
@@ -37,17 +37,17 @@ struct Params {
     // input = qd::gen_dim
     SFERES_CONST size_t en_hid_dim1 = 10;
     // latent_dim = qd::behav_dim
-    SFERES_CONST size_t de_hid_dim1 = 10;
-    SFERES_CONST size_t de_hid_dim2 = 30;
+    SFERES_CONST size_t de_hid_dim1 = 20;
+    SFERES_CONST size_t de_hid_dim2 = 40;
     // output_dim = sim::trajectory_length
     };
 
     // used in deciding how often to apply dim reduction (and training)
-    SFERES_CONST size_t update_frequency = 10; // -1 means exponentially decaying update frequency, how often update BD etc
-    SFERES_CONST size_t update_period = 10;
+    SFERES_CONST size_t update_frequency = 20; // -1 means exponentially decaying update frequency, how often update BD etc
+    SFERES_CONST size_t update_period = 20;
 
-    // influences l; targetted size of pop -> 5000
-    SFERES_CONST int resolution = 5000; 
+    // influences l; targetted size of pop
+    SFERES_CONST int resolution = 2000; 
     
     struct nov {
         static double l;
@@ -60,7 +60,7 @@ struct Params {
     struct pop {
         SFERES_CONST size_t size = 256;
         SFERES_CONST size_t nb_gen = 15001;
-        SFERES_CONST size_t dump_period = 500;
+        SFERES_CONST size_t dump_period = 1000;
     };
 
     struct evo_float {
@@ -86,10 +86,9 @@ struct Params {
     };
 
     struct stat {
-        SFERES_CONST size_t save_trajectories = 500;
-        SFERES_CONST size_t save_model = 2000;
-        SFERES_CONST size_t save_diversity = 2000;
-        SFERES_CONST size_t period_saving_individual_in_population = 5;
+        SFERES_CONST size_t save_trajectories = 1000;
+        SFERES_CONST size_t save_model = 5000;
+        SFERES_CONST size_t save_diversity = 500;
     };
 };
 

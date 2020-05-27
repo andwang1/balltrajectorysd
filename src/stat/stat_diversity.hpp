@@ -67,7 +67,7 @@ namespace sferes {
                 std::ofstream ofs(fname.c_str());
                 ofs.precision(17);
                 Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "");
-                ofs << "First Line is the overall diversity map, Second Line is the total diversity score\n";
+                ofs << "First Line is the overall diversity map, Second Line is the total diversity score, Max diversity: "<< Params::nov::discretisation * Params::nov::discretisation <<"\n";
                 ofs << total_diversity << "\n";
                 ofs << nums_covered_buckets.format(CommaInitFmt) << std::endl;
             }
