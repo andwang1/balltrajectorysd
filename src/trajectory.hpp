@@ -21,9 +21,7 @@ namespace rng {
         //     // Will be used to obtain a seed for the random number engine
     std::random_device rd;  
     std::mt19937 gen(rd()); 
-    std::uniform_real_distribution<> rng_prob(0, 1);
-    std::uniform_real_distribution<> rng_angle(0, Params::parameters::max_angle);
-    std::uniform_real_distribution<> rng_dpf(0, Params::parameters::max_dpf);
+    std::uniform_real_distribution<> rng(0, 1);
 }
 
 FIT_QD(Trajectory)
@@ -53,12 +51,12 @@ FIT_QD(Trajectory)
         for (int i{1}; i < Params::random::max_num_random + 1; ++i)
         {
             // std::uniform_real_distribution<> rng_prob(0, 1);
-            float prob = rng::rng_prob(rng::gen);
+            float prob = rng::rng(rng::gen);
             if (prob <= Params::random::pct_random)
             {
-                angle = rng::rng_angle(rng::gen);
+                angle = rng::rng(rng::gen) * Params::parameters::max_angle;
                 if (Params::random::is_random_dpf)
-                {dpf = rng::rng_dpf(rng::gen);}
+                {dpf = rng::rng(rng::gen) * Params::parameters::max_dpf;}
                 // generate a random trajectory
                 generate_traj(single_traj, angle, dpf);
                 // 1 means it is a trajectory
@@ -252,15 +250,13 @@ FIT_QD(Trajectory)
         }
     }
 
-       // assuming at most 2 impacts per frame, can add to assert in terms of dist per frame
-    // generates impact points and makes sure the order is correct
     void generate_impact_points(std::vector<float> &wall_impacts, float previous_x, float previous_y, float previous_angle, 
-                                float x_delta, float y_delta, float dist_per_frame)
+                            float x_delta, float y_delta, float dist_per_frame)
     {
+        float epsilon = 1e-4;
+
         float ROOM_H = Params::sim::ROOM_H;
         float ROOM_W = Params::sim::ROOM_W;
-
-        float epsilon = 1e-8;
 
         float projected_x = previous_x + x_delta;
         float projected_y = previous_y + y_delta;
@@ -282,7 +278,7 @@ FIT_QD(Trajectory)
             impact_1_x = ROOM_W;
             impact_1_y = previous_y + tan(previous_angle) * (ROOM_W - previous_x);
             if (double_impact)
-            // one of the two conditions below must hold if there is a double impact
+            // one of the two conditions below must hold if there is a float impact
             {
                 bool reorder{false};
                 if (impact_1_y > ROOM_H + epsilon)
@@ -353,7 +349,7 @@ FIT_QD(Trajectory)
                     else 
                     {
                         new_angle = (3 * M_PI - previous_angle);
-                        impact_2_x = impact_1_y / tan(new_angle);
+                        impact_2_x = impact_1_y / -tan(new_angle);
                     }
                 }
                 if (reorder)
@@ -364,7 +360,7 @@ FIT_QD(Trajectory)
                 }
             }
         }
-        // if there is no double impact and the x limits are not exceeded, then the impact is on y    
+        // if there is no float impact and the x limits are not exceeded, then the impact is on y    
         if ((previous_y + y_delta > ROOM_H + epsilon) && !double_impact)
         {
             impact_1_x = previous_x + (ROOM_H - previous_y) / tan(previous_angle);
@@ -395,6 +391,150 @@ FIT_QD(Trajectory)
             }
         }
     }
+
+    //    // assuming at most 2 impacts per frame, can add to assert in terms of dist per frame
+    // // generates impact points and makes sure the order is correct
+    // void generate_impact_points(std::vector<float> &wall_impacts, float previous_x, float previous_y, float previous_angle, 
+    //                             float x_delta, float y_delta, float dist_per_frame)
+    // {
+    //     float ROOM_H = Params::sim::ROOM_H;
+    //     float ROOM_W = Params::sim::ROOM_W;
+
+    //     float epsilon = 1e-8;
+
+    //     float projected_x = previous_x + x_delta;
+    //     float projected_y = previous_y + y_delta;
+
+    //     bool double_impact{false};
+    //     // check if there will be two impacts
+    //     if (((projected_x > ROOM_W + epsilon) && (projected_y > ROOM_H + epsilon)) || ((projected_x < 0 - epsilon) && (projected_y < 0 - epsilon)) ||
+    //         ((projected_x > ROOM_W + epsilon) && (projected_y < 0 - epsilon)) || ((projected_x < 0 - epsilon) && (projected_y > ROOM_H + epsilon)))
+    //     {double_impact = true;}
+
+    //     float impact_1_x;
+    //     float impact_1_y;
+    //     float impact_2_x;
+    //     float impact_2_y;
+    //     float new_angle;
+
+    //     if (previous_x + x_delta > ROOM_W + epsilon)
+    //     {
+    //         impact_1_x = ROOM_W;
+    //         impact_1_y = previous_y + tan(previous_angle) * (ROOM_W - previous_x);
+    //         if (double_impact)
+    //         // one of the two conditions below must hold if there is a double impact
+    //         {
+    //             bool reorder{false};
+    //             if (impact_1_y > ROOM_H + epsilon)
+    //             // ball hits the upper y axis limit first, so recalculate
+    //             {
+    //                 reorder = true;
+    //                 impact_1_x = previous_x + (ROOM_H - previous_y) / tan(previous_angle);
+    //                 impact_1_y = ROOM_H;
+    //             }
+    //             else if (impact_1_y < 0 - epsilon)
+    //             // ball hits the lower y axis limit first
+    //             {
+    //                 reorder = true;
+    //                 impact_1_x = previous_x - previous_y / tan(previous_angle);
+    //                 impact_1_y = 0;
+    //             }
+    //             else
+    //             // no reordering required
+    //             {
+    //                 impact_2_y = ROOM_H;
+    //                 if (previous_angle < M_PI)
+    //                 {
+    //                     new_angle = (M_PI - previous_angle);
+    //                     impact_2_x = ROOM_W + (ROOM_H - impact_1_y) / tan(new_angle);
+    //                 }
+    //                 else 
+    //                 {
+    //                     new_angle = (3 * M_PI - previous_angle);
+    //                     impact_2_x = ROOM_W - impact_1_y / tan(new_angle);
+    //                 }
+    //             }
+    //             if (reorder)
+    //             // calculate second impact point after reordering
+    //             {
+    //                 new_angle = (2 * M_PI - previous_angle);
+    //                 impact_2_x = ROOM_W;
+    //                 impact_2_y = impact_1_y + tan(new_angle) * (ROOM_W - impact_1_x);
+    //             }
+    //         }
+    //     }
+    //     else if (previous_x + x_delta < 0 + epsilon)
+    //     {
+    //         impact_1_x = 0;
+    //         impact_1_y = previous_y - tan(previous_angle) * previous_x;
+    //         if (double_impact)
+    //         {
+    //             bool reorder{false};
+    //             if (impact_1_y > ROOM_H + epsilon)
+    //             {
+    //                 reorder = true;
+    //                 impact_1_x = previous_x + (ROOM_H - previous_y) / tan(previous_angle);
+    //                 impact_1_y = ROOM_H;
+    //             }
+    //             else if (impact_1_y < 0 - epsilon)
+    //             {
+    //                 reorder = true;
+    //                 impact_1_x = previous_x - previous_y / tan(previous_angle);
+    //                 impact_1_y = 0;
+    //             }
+    //             else
+    //             {
+    //                 impact_2_y = 0;
+    //                 if (previous_angle < M_PI) 
+    //                 {
+    //                     new_angle = (M_PI - previous_angle);
+    //                     impact_2_x = (ROOM_H - impact_1_y) / tan(new_angle);
+    //                 }
+    //                 else 
+    //                 {
+    //                     new_angle = (3 * M_PI - previous_angle);
+    //                     impact_2_x = impact_1_y / tan(new_angle);
+    //                 }
+    //             }
+    //             if (reorder)
+    //             {
+    //                 new_angle = (2 * M_PI - previous_angle);
+    //                 impact_2_x = 0;
+    //                 impact_2_y = impact_1_y + tan(new_angle) * -impact_1_x;
+    //             }
+    //         }
+    //     }
+    //     // if there is no double impact and the x limits are not exceeded, then the impact is on y    
+    //     if ((previous_y + y_delta > ROOM_H + epsilon) && !double_impact)
+    //     {
+    //         impact_1_x = previous_x + (ROOM_H - previous_y) / tan(previous_angle);
+    //         impact_1_y = ROOM_H;
+    //     }
+    //     if ((previous_y + y_delta < 0 - epsilon) && !double_impact)
+    //     {
+    //         impact_1_x = previous_x - previous_y / tan(previous_angle);
+    //         impact_1_y = 0;
+    //     }
+
+    //     wall_impacts.push_back(impact_1_x);
+    //     wall_impacts.push_back(impact_1_y);
+    //     if (VERBOSE)
+    //     {
+    //         std::cout << "IMPACT1 X " << impact_1_x << std::endl;
+    //         std::cout << "IMPACT1 Y " << impact_1_y << std::endl;
+    //     }
+    //     // this will give two impact if the points are the same, e.g. 10,10 can add a norm comparison to make it only be one
+    //     if (double_impact)
+    //     {
+    //         wall_impacts.push_back(impact_2_x);
+    //         wall_impacts.push_back(impact_2_y);
+    //         if (VERBOSE)
+    //         {
+    //             std::cout << "IMPACT2 X " << impact_2_x << std::endl;
+    //             std::cout << "IMPACT2 Y " << impact_2_y << std::endl;
+    //         }
+    //     }
+    // }
 
 
     template<typename block_t>
@@ -484,14 +624,12 @@ FIT_QD(Trajectory)
                 
                 if (VERBOSE)
                 {
-                    std::cout << "IMAPCT" << impact_pt << std::endl;
                     std::cout << "START" << start << std::endl;
+                    std::cout << "IMAPCT" << impact_pt << std::endl;
                     std::cout << j * factor << "MAX: " << max_factor << std::endl;
                     std::cout << "\nCURRENT POS\n" << current << std::endl;
                     std::cout << "Bx " << bucket_x << "By " << bucket_y << "Bnum " << bucket_number << std::endl;
                     std::cout << "WALL" << wall_impacts << std::endl;
-                    std::cout << "WALLSIZE" << wall_impacts.size()<< std::endl;
-                    std::cout << "EIGENWALL" << impact_pts<< std::endl;
                 }
                 crossed_buckets.set(bucket_number);
             }
@@ -518,7 +656,6 @@ FIT_QD(Trajectory)
 
     protected:
     float m_entropy;
-    
 
     // // generates images from the trajectories fed into the function
     // void generate_image(std::array<Eigen::Matrix<double, discretisation, discretisation>, trajectory_length> &image_frames,

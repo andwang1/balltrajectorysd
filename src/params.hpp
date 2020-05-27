@@ -31,7 +31,7 @@ struct Params {
     SFERES_CONST size_t nb_epochs = 10000;
     SFERES_CONST float convergence_epsilon = 0.000001;
     SFERES_CONST float CV_fraction = 0.75;
-    SFERES_CONST float learning_rate = 1e-4;
+    SFERES_CONST float learning_rate = 1e-3;
 
     // network neurons        
     // input = qd::gen_dim
@@ -41,18 +41,14 @@ struct Params {
     SFERES_CONST size_t de_hid_dim2 = 30;
     // output_dim = sim::trajectory_length
     };
-    
-    
-    
-    SFERES_CONST size_t update_period = 10;
-    SFERES_CONST size_t image_width = 50;
-    SFERES_CONST size_t image_height = 50;
-    SFERES_CONST int resolution = 5000; // influences l; targetted size of pop -> 5000
+
+    // used in deciding how often to apply dim reduction (and training)
     SFERES_CONST size_t update_frequency = 10; // -1 means exponentially decaying update frequency, how often update BD etc
-    SFERES_CONST size_t times_downsample = 4; // for taking the image
+    SFERES_CONST size_t update_period = 10;
 
-    SFERES_CONST bool use_colors = true;
-
+    // influences l; targetted size of pop -> 5000
+    SFERES_CONST int resolution = 5000; 
+    
     struct nov {
         static double l;
         SFERES_CONST double k = 15;
@@ -62,7 +58,7 @@ struct Params {
     };
 
     struct pop {
-        SFERES_CONST size_t size = 128;
+        SFERES_CONST size_t size = 256;
         SFERES_CONST size_t nb_gen = 15001;
         SFERES_CONST size_t dump_period = 500;
     };
@@ -82,10 +78,6 @@ struct Params {
         SFERES_CONST double max_dpf = 0.5f;
         // minimum value
         SFERES_CONST double max_angle = 2 * M_PI;
-
-        // remove these 2 once phen is fully setup
-        SFERES_CONST double min = 0.5f;
-        SFERES_CONST double max = 0.5f;
     };
 
     struct qd {

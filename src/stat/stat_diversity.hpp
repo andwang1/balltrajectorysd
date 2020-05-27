@@ -29,7 +29,7 @@ namespace sferes {
             {
                 if ((ea.gen() % Params::stat::save_diversity == 0) || (ea.gen() == 1) ) 
                 {
-                   std::string prefix = "diversity" + add_leading_zeros(ea.gen());
+                   std::string prefix = "diversity" + boost::lexical_cast<std::string>(ea.gen());
                     _write_diversity(prefix, ea);
                 }
             }

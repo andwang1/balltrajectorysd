@@ -59,7 +59,6 @@ namespace sferes {
 #endif
       Custom_Phen() : _params((*this)._gen.size()) { }
       typedef float type_t;
-      SFERES_CONST float max_ = Params::parameters::min;
       void develop() {
         // angle first
         _params[0] = this->_gen.data(0) * Params::parameters::max_angle;
