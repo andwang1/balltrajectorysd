@@ -50,22 +50,11 @@ From: airl_lab/default/airl_env:pytorch_ci
    cd /git/sferes2/
    ./setup.sh $SETUP_ARGS
 
-    alias pip="/usr/local/anaconda/bin/pip"
-    cd /git/sferes2/exp/balltrajectorysd/submodules/figure_generator
-    pip3 install -r requirements.txt
-    pip3 install opencv-python==4.1.2.30
-    pip3 install seaborn pandas python-gitlab graphviz imageio natsort tabulate
-
-    pip3 install Jinja2
-
-
 %runscript
     bash -c 'sleep $[ ( $RANDOM % 90 )  + 1 ]s'
 
     export HOME=/tmp/home
     mkdir $HOME
-    D=$(/opt/TurboVNC/bin/vncserver 2>&1 | grep "Desktop" | awk '{print $3}' | sed 's/.*://g')
-    export DISPLAY=':'$D
 
     CURPATH=$(pwd)
     cd /git/sferes2/

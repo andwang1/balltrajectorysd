@@ -11,6 +11,7 @@ resuls/
 .wscript*
 workspace/
 singularity/tmp.def
+singularity/results*
 analysis/report.md
 
 compile_commands*.json
