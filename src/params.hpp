@@ -28,7 +28,7 @@ struct Params {
 
     struct ae {
     SFERES_CONST size_t batch_size = 64;
-    SFERES_CONST size_t nb_epochs = 10000;
+    SFERES_CONST size_t nb_epochs = 40000;
     SFERES_CONST size_t min_num_epochs = 500;
     SFERES_CONST size_t running_mean_num_epochs = 10;
     SFERES_CONST float convergence_epsilon = 0.000001;
@@ -42,6 +42,9 @@ struct Params {
     SFERES_CONST size_t de_hid_dim1 = 10;
     SFERES_CONST size_t de_hid_dim2 = 30;
     // output_dim = sim::trajectory_length
+
+    // KL weight
+    SFERES_CONST size_t beta = 0;
     };
 
     struct update {

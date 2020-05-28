@@ -19,12 +19,19 @@ struct AutoEncoderImpl : torch::nn::Module {
     }
 
     torch::Tensor forward(const torch::Tensor &x) {
+        torch::Tensor encoder_mu, encoder_logvar;
         // std::cout << x << "AE" << std::endl;
-        return m_decoder(m_encoder(x));
+        return m_decoder(m_encoder(x, encoder_mu, encoder_logvar));
     }
 
     torch::Tensor forward_get_latent(const torch::Tensor &input, torch::Tensor &corresponding_latent) {
-        corresponding_latent = m_encoder(input);
+        torch::Tensor encoder_mu, encoder_logvar;
+        corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar);
+        return m_decoder(corresponding_latent);
+    }
+
+    torch::Tensor forward_get_encoder_stats(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar) {
+        torch::Tensor corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar);
         return m_decoder(corresponding_latent);
     }
 

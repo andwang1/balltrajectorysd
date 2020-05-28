@@ -32,13 +32,15 @@ struct EncoderImpl : torch::nn::Module {
                 z = torch::randn_like(logvar, torch::device(m_device).requires_grad(true)) * torch::exp(0.5 * logvar) + mu;
         }
 
-        torch::Tensor forward(const torch::Tensor &x) 
+
+        torch::Tensor forward(const torch::Tensor &x, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar)
         {
-                torch::Tensor mu, logvar, z;
-                encode(x, mu, logvar);
-                reparametrize(mu, logvar, z);
+                torch::Tensor z;
+                encode(x, encoder_mu, encoder_logvar);
+                reparametrize(encoder_mu, encoder_logvar, z);
                 return z;
         }
+
 
         torch::nn::Linear m_linear_1, m_linear_m, m_linear_v;
         torch::Device m_device;
