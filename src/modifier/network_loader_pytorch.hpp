@@ -311,9 +311,10 @@ public:
                 // std::get<0>(tup).set_requires_grad(true);
 
                 // tup[0] is the phenotype
-                torch::Tensor reconstruction_tensor = auto_encoder->forward_get_encoder_stats(std::get<0>(tup), encoder_mu, encoder_logvar);
+                torch::Tensor reconstruction_tensor = auto_encoder->forward_get_encoder_stats(std::get<0>(tup).to(this->m_device), encoder_mu, encoder_logvar);
                 
                 torch::Tensor loss_tensor = torch::zeros(1);
+                loss_tensor.to(this->m_device);
                 // KL loss
                 loss_tensor += -0.5 * TParams::ae::beta * torch::sum(1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar));
                 // start at -1 because first loop will take it to 0
@@ -402,7 +403,7 @@ public:
 
         
         torch::Tensor descriptors_tensor;
-        torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent(phen_tensor, descriptors_tensor);
+        torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent(phen_tensor.to(this->m_device), descriptors_tensor);
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows());
 
         // start at -1 because first loop will take it to 0
