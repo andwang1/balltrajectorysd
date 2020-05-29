@@ -402,9 +402,6 @@ public:
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows());
         torch::Tensor recon_loss_unreduced = torch::pow(traj_tensor - reconstruction_tensor, 2);
 
-        // averaged_descriptors_tensor[0] += descriptors_tensor[0];
-        // reconstruction_loss[0] += torch::sqrt(torch::sum(recon_loss_unreduced[0]));
-
         // std::cout << "INPUT" << traj_tensor.sizes() << std::endl;
         // std::cout << "OUTPUT" << reconstruction_tensor.sizes() << std::endl;
         // std::cout << "DESC" << descriptors_tensor.sizes() << std::endl;
@@ -412,7 +409,6 @@ public:
         // std::cout << "PHENROWS" << phen.rows() << std::endl;
 
 
-        // start at -1 because first loop will take it to 0
         int index{0};
         int internal_avg_counter{0};
         for (int i{0}; i < boundaries.size(); ++i)
@@ -427,6 +423,12 @@ public:
             averaged_descriptors_tensor[index] += descriptors_tensor[i];
             reconstruction_loss[index] += torch::sqrt(torch::sum(recon_loss_unreduced[i]));
             ++internal_avg_counter;
+        }
+        // outside loop, if last one is a random trajectory, then the last element in boundaries is false, and thus need to divide
+        if (!boundaries[boundaries.size() - 1])
+        {
+            reconstruction_loss[index] /= internal_avg_counter;
+            averaged_descriptors_tensor[index] /= internal_avg_counter;
         }
         assert(index == phen.rows() - 1);
 

@@ -328,7 +328,6 @@ public:
                 torch::Tensor reconstruction_tensor = auto_encoder->forward_(std::get<0>(tup).to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar);
                 
                 torch::Tensor loss_tensor = torch::zeros(1);
-                
                 loss_tensor.to(this->m_device);
 
                 #ifdef VAE
@@ -446,7 +445,7 @@ public:
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
                 
         torch::Tensor descriptors_tensor;
-        torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent_VAE(phen_tensor.to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar, descriptors_tensor);
+        torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent(phen_tensor.to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar, descriptors_tensor);
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows());
 
         // stats
@@ -456,12 +455,16 @@ public:
         torch::Tensor L2 = torch::empty({traj.rows(), TParams::sim::num_trajectory_elements});
         torch::Tensor recon_loss_unreduced = torch::empty_like(L2);
 
-        // start at -1 because first loop will take it to 0
-        int index{-1};
+        int index{0};
+        int internal_avg_counter{0};
         for (int i{0}; i < boundaries.size(); ++i)
         {
-            if (boundaries[i])
-            {++index;}
+            if (boundaries[i] && i > 0)
+            {
+                reconstruction_loss[index] /= internal_avg_counter;
+                ++index;
+                internal_avg_counter = 0;
+            }
 
             #ifdef VAE
             if (TParams::ae::full_loss)
@@ -479,13 +482,17 @@ public:
             }
             L2[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2);
 
-            #else
+            #else //AE
             recon_loss_unreduced[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2);
             reconstruction_loss[index] += torch::sqrt(torch::sum(recon_loss_unreduced[i]));
             #endif
 
-
+            ++internal_avg_counter;
         }
+        // outside loop, if last one is a random trajectory, then the last element in boundaries is false, and thus need to divide
+        if (!boundaries[boundaries.size() - 1])
+        {reconstruction_loss[index] /= internal_avg_counter;}
+
         this->get_eigen_matrix_from_torch_tensor(descriptors_tensor.cpu(), descriptors);
         this->get_eigen_matrix_from_torch_tensor(reconstruction_tensor.cpu(), reconstructed_data);
         this->get_eigen_matrix_from_torch_tensor(reconstruction_loss.cpu(), recon_loss);
