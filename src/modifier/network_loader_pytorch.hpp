@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <tuple>
 
+#include "preprocessor.hpp"
 
 #ifdef VAE
 #include "autoencoder/autoencoder_VAE.hpp"
@@ -30,13 +31,10 @@ public:
                                                 torch::optim::AdamOptions(TParams::ae::learning_rate)
                                                         .beta1(0.5))),
             m_device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
-        {
-
-        if (torch::cuda::is_available()) {
-            std::cout << "Torch -> Using CUDA" << std::endl;
-        } else {
-            std::cout << "Torch -> Using CPU" << std::endl;
-        }
+    {
+        if (torch::cuda::is_available()) 
+        {std::cout << "Torch -> Using CUDA" << std::endl;} 
+        else {std::cout << "Torch -> Using CPU" << std::endl;}
 
         this->m_auto_encoder_module.ptr()->to(this->m_device);
     }
@@ -50,8 +48,9 @@ public:
               MatrixXf_rm &recon_loss_unred,
               MatrixXf_rm &L2_loss,
               MatrixXf_rm &KL_loss,
-              MatrixXf_rm &decoder_var) {
-        stc::exact(this)->eval(phen, traj, is_traj, descriptors, reconstructed_data, recon_loss, recon_loss_unred, L2_loss, KL_loss, decoder_var);
+              MatrixXf_rm &decoder_var,
+              bool is_train_set = false) {
+        stc::exact(this)->eval(phen, traj, is_traj, descriptors, reconstructed_data, recon_loss, recon_loss_unred, L2_loss, KL_loss, decoder_var, is_train_set);
     }
     
     void prepare_batches(std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>> &batches, 
@@ -131,9 +130,9 @@ public:
         eval(phen, traj, is_traj, descriptors, reconstruction, recon_loss, L2_loss, KL_loss, decoder_var);
     }
 
-    float get_avg_recon_loss(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj) {
+    float get_avg_recon_loss(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, bool is_train_set = false) {
         MatrixXf_rm descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, KL_loss, decoder_var;
-        eval(phen, traj, is_traj, descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, KL_loss, decoder_var);
+        eval(phen, traj, is_traj, descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, KL_loss, decoder_var, is_train_set);
         return recon_loss.mean();
     }
 
@@ -209,7 +208,9 @@ public:
                                                            TParams::ae::de_hid_dim1, TParams::ae::de_hid_dim2, TParams::sim::num_trajectory_elements))),
             log_2_pi(log(2 * M_PI)),
             _epochs_trained(0)
-             {}
+             {
+                _prep_traj.init();
+             }
 
     typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXf_rm;
 
@@ -226,9 +227,12 @@ public:
         if (batches.size() == 1) 
         {
                 // filtering
-                MatrixXf_rm filtered_traj;
+                MatrixXf_rm filtered_traj, scaled_filtered_traj;
                 std::vector<bool> boundaries;
                 this->filter_trajectories(traj, is_trajectory,filtered_traj, boundaries);
+
+                // scaling initialised in eval run before training
+                _prep_traj.apply(filtered_traj, scaled_filtered_traj);
 
                 torch::Tensor T1, T2;
                 this->get_tuple_from_eigen_matrices(phen, filtered_traj, boundaries, T1, T2, batches[0]);
@@ -238,7 +242,7 @@ public:
             for (size_t ind = 0; ind < batches.size(); ind++) 
             {
                 // filtering
-                MatrixXf_rm filtered_traj;
+                MatrixXf_rm filtered_traj, scaled_filtered_traj;
                 std::vector<bool> boundaries;
                 this->filter_trajectories(traj.middleRows(ind * TParams::ae::batch_size * (TParams::random::max_num_random + 1),
                                                     TParams::ae::batch_size * (TParams::random::max_num_random + 1)),
@@ -246,9 +250,11 @@ public:
                                                     filtered_traj,
                                                     boundaries);
 
+                _prep_traj.apply(filtered_traj, scaled_filtered_traj);
+
                 torch::Tensor T1, T2;
                 this->get_tuple_from_eigen_matrices(phen.middleRows(ind * TParams::ae::batch_size, TParams::ae::batch_size),
-                                                    filtered_traj,
+                                                    scaled_filtered_traj,
                                                     boundaries,
                                                     T1,
                                                     T2,
@@ -258,12 +264,12 @@ public:
 
     }
 
-    void vector_to_eigen(std::vector<int> &is_trajectories, Eigen::VectorXi &is_traj)
+    void vector_to_eigen(std::vector<int> &is_trajectories, Eigen::VectorXi &is_traj) const
     {
         is_traj = Eigen::Map<Eigen::VectorXi> (is_trajectories.data(), is_trajectories.size());
     }
 
-    int get_epochs_trained()
+    int get_epochs_trained() const
     {return _epochs_trained;}
 
     float training(const MatrixXf_rm &phen_d, const MatrixXf_rm &traj_d, std::vector<int> &is_trajectories, bool full_train = false, int generation = 1000) 
@@ -300,7 +306,7 @@ public:
         // std::cout << val_is_traj.size() << std::endl;
 
 
-        float init_tr_recon_loss = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj);
+        float init_tr_recon_loss = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj, true);
         float init_vl_recon_loss = this->get_avg_recon_loss(valid_phen, valid_traj, val_is_traj);
 
         std::cout << "INIT recon train loss: " << init_tr_recon_loss << "   valid recon loss: " << init_vl_recon_loss << std::endl;
@@ -426,7 +432,8 @@ public:
               MatrixXf_rm &recon_loss_unred,
               MatrixXf_rm &L2_loss,
               MatrixXf_rm &KL_loss,
-              MatrixXf_rm &decoder_var) 
+              MatrixXf_rm &decoder_var,
+              bool is_train_set = false) 
     {
         torch::NoGradGuard no_grad;
         AutoEncoder auto_encoder = std::static_pointer_cast<AutoEncoderImpl>(this->m_auto_encoder_module.ptr());
@@ -434,14 +441,20 @@ public:
         torch::Tensor phen_tensor, traj_tensor;
         this->get_torch_tensor_from_eigen_matrix(phen, phen_tensor);
         
-        MatrixXf_rm filtered_traj;
+        MatrixXf_rm filtered_traj, scaled_filtered_traj;
         std::vector<bool> boundaries;
         this->filter_trajectories(traj,
                         is_trajectory,
                         filtered_traj,
                         boundaries);
 
-        this->get_torch_tensor_from_eigen_matrix(filtered_traj, traj_tensor);
+        // initialise with the whole filtered training dataset, the mean and var will be reused by the training (eval runs before training)
+        if (is_train_set)
+        {_prep_traj.init(filtered_traj);}
+
+        _prep_traj.apply(filtered_traj, scaled_filtered_traj);
+
+        this->get_torch_tensor_from_eigen_matrix(scaled_filtered_traj, traj_tensor);
 
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
                 
@@ -494,10 +507,14 @@ public:
         if (!boundaries[boundaries.size() - 1])
         {reconstruction_loss[index] /= internal_avg_counter;}
 
+        MatrixXf_rm scaled_reconstructed_data;
+
         this->get_eigen_matrix_from_torch_tensor(descriptors_tensor.cpu(), descriptors);
-        this->get_eigen_matrix_from_torch_tensor(reconstruction_tensor.cpu(), reconstructed_data);
+        this->get_eigen_matrix_from_torch_tensor(reconstruction_tensor.cpu(), scaled_reconstructed_data);
         this->get_eigen_matrix_from_torch_tensor(reconstruction_loss.cpu(), recon_loss);
         this->get_eigen_matrix_from_torch_tensor(recon_loss_unreduced.cpu(), recon_loss_unred);
+
+        _prep_traj.deapply(scaled_reconstructed_data, reconstructed_data);
 
         #ifdef VAE
         this->get_eigen_matrix_from_torch_tensor(torch::exp(decoder_logvar).cpu(), decoder_var);
@@ -509,6 +526,7 @@ public:
 
     float log_2_pi;
     int _epochs_trained;
+    RescaleFeature _prep_traj;
 };
 
 #endif

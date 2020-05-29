@@ -136,8 +136,6 @@ namespace sferes {
 
             void train_network(const Mat &phen_d, const Mat &traj_d, std::vector<int> &is_random_d) {
                 // we change the data normalisation each time we train/refine network, could cause small changes in loss between two trainings.
-                // std::cout << "TRAINING" << std::endl;
-                // std::cout << "ROWS" << phen_d.rows() << std::endl;
                 _prep.init(phen_d);
                 Mat scaled_data;
                 _prep.apply(phen_d, scaled_data);
@@ -212,7 +210,6 @@ namespace sferes {
                 latent_and_entropy = Mat(descriptors.rows(), descriptors.cols() + recon_loss.cols());
                 latent_and_entropy << descriptors, recon_loss;
             }
-
 
             stat_t get_stat(const pop_t &pop) {
                 stat_t result;
@@ -295,13 +292,13 @@ namespace sferes {
             }
 
             void get_reconstruction(const Mat &phen, const Mat &traj, std::vector<int> &is_traj, Mat &reconstruction) const {
-                Mat scaled_data;
-                _prep.apply(phen, scaled_data);
+                Mat scaled_phen;
+                _prep.apply(phen, scaled_phen);
 
                 Eigen::VectorXi is_trajectories;
                 get_network_loader()->vector_to_eigen(is_traj, is_trajectories);
                 
-                network->get_reconstruction(scaled_data, traj, is_trajectories, reconstruction);
+                network->get_reconstruction(scaled_phen, traj, is_trajectories, reconstruction);
 
                 // do not need to apply scaling to reconstruction
                 // _prep.deapply(scaled_reconstruction, reconstruction);
