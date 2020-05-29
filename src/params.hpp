@@ -14,7 +14,8 @@ struct Params {
 
     // fixed at first or random initialised from main?
     SFERES_CONST double start_x = 3.13;
-    SFERES_CONST double start_y = 3.13;
+    SFERES_CONST double start_y = 1.17;
+    SFERES_CONST double dpf = 0.21;
     SFERES_CONST size_t trajectory_length = 50;
     // 2D
     SFERES_CONST int num_trajectory_elements = 2 * trajectory_length;
@@ -28,12 +29,12 @@ struct Params {
 
     struct ae {
     SFERES_CONST size_t batch_size = 64;
-    SFERES_CONST size_t nb_epochs = 5000;
+    SFERES_CONST size_t nb_epochs = 10000;
     SFERES_CONST size_t min_num_epochs = 0;
     SFERES_CONST size_t running_mean_num_epochs = 5;
     SFERES_CONST float CV_fraction = 0.80;
     SFERES_CONST float learning_rate = 1e-3;
-    SFERES_CONST bool full_loss = false;
+    static bool full_loss;
 
     // network neurons        
     // input = qd::gen_dim
@@ -44,7 +45,7 @@ struct Params {
     // output_dim = sim::trajectory_length
 
     // KL weight
-    SFERES_CONST size_t beta = 0;
+    SFERES_CONST size_t beta = 1;
 
     // 
     };
@@ -103,6 +104,7 @@ struct Params {
 
 double Params::nov::l;
 double Params::random::pct_random;
+bool Params::ae::full_loss;
 
 
 #endif //PARAMS_HPP

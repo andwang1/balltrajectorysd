@@ -110,6 +110,7 @@ public:
 struct Arguments {
     size_t number_threads;
     double pct_random;
+    bool full_loss;
 };
 
 void get_arguments(const boost::program_options::options_description &desc, Arguments &arg, int argc, char **argv) {
@@ -122,6 +123,7 @@ void get_arguments(const boost::program_options::options_description &desc, Argu
     boost::program_options::notify(vm);
     arg.number_threads = vm["number-threads"].as<size_t>();
     arg.pct_random = vm["pct-random"].as<double>();
+    arg.full_loss = vm["full-loss"].as<bool>();
 }
 
 int main(int argc, char **argv) {
@@ -133,6 +135,8 @@ int main(int argc, char **argv) {
                 ("number-threads", boost::program_options::value<size_t>(), "Set Number of Threads");
     desc.add_options()
                 ("pct-random", boost::program_options::value<double>(), "Set Pct of random trajectories");
+    desc.add_options()
+                ("full-loss", boost::program_options::value<bool>(), "Full VAE loss or just L2");
 
     get_arguments(desc, arg, argc, argv);
 
@@ -145,6 +149,8 @@ int main(int argc, char **argv) {
     // why have 0?
     Params::nov::l = 0;
     Params::random::pct_random = arg.pct_random;
+    Params::ae::full_loss = arg.full_loss;
+
     typedef Trajectory<params_t> fit_t;
     typedef sferes::gen::EvoFloat<Params::qd::gen_dim, params_t> gen_t;
     typedef sferes::phen::Custom_Phen<gen_t, fit_t, params_t> phen_t;
