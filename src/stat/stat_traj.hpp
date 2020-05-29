@@ -74,12 +74,16 @@ namespace sferes {
                 {
                     ofs << i << ", RECON," <<  reconstruction.row(i).format(CommaInitFmt) << "\n";
                     ofs << i << ", RECON_LOSS," <<  recon_loss_unred.row(i).format(CommaInitFmt) << "\n";
+                    #ifdef VAE
                     ofs << i << ", KL_LOSS," <<  KL_loss.row(i).format(CommaInitFmt) << "\n";
                     ofs << i << ", DECODER_VAR," <<  decoder_var.row(i).format(CommaInitFmt) << "\n";
+                    #endif
                     do
                     {
                         ofs << i << ", ACTUAL," <<  filtered_traj.row(traj_index).format(CommaInitFmt) << "\n";
+                        #ifdef VAE
                         ofs << i << ", L2_loss," <<  L2_loss.row(traj_index).format(CommaInitFmt) << "\n";
+                        #endif
                         ++traj_index;
                     }
                     while (!boundaries[traj_index]);

@@ -41,15 +41,20 @@ namespace sferes {
                 matrix_t descriptors, recon_loss, recon_loss_unred, reconstruction, L2_loss, KL_loss, decoder_var;
                 boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_stats(phen, traj, is_trajectory, descriptors, recon_loss, recon_loss_unred, reconstruction, L2_loss, KL_loss, decoder_var);
 
-                double recon = recon_loss.rowwise().sum().mean();
-                double L2 = L2_loss.mean();
-                double KL = KL_loss.mean();
-                double var = decoder_var.mean();
-
+                
 
                 std::ofstream ofs(fname.c_str(), std::ofstream::app);
                 ofs.precision(17);
+                double recon = recon_loss.mean();
+
+                #ifdef VAE
+                double L2 = L2_loss.mean();
+                double KL = KL_loss.mean();
+                double var = decoder_var.mean();
                 ofs << ea.gen() << ", " << recon << ", " << L2 << ", " << KL << ", " << var;
+                #else
+                ofs << ea.gen() << ", " << recon;
+                #endif
 
                 // training frequency
                 if (Params::update::update_frequency == -1) 

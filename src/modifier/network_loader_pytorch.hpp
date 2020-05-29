@@ -7,13 +7,16 @@
 #include <iomanip>
 #include <tuple>
 
+
+#ifdef VAE
+#include "autoencoder/autoencoder_VAE.hpp"
 #include "autoencoder/encoder_VAE.hpp"
 #include "autoencoder/decoder_VAE.hpp"
-// #ifdef AE
-// #include "autoencoder/autoencoder_AE.hpp"
-// #else
-#include "autoencoder/autoencoder_VAE.hpp"
-// #endif
+#else
+#include "autoencoder/autoencoder_AE.hpp"
+#include "autoencoder/encoder_AE.hpp"
+#include "autoencoder/decoder_AE.hpp"
+#endif
 
 template <typename TParams, typename Exact = stc::Itself>
 class AbstractLoader : public stc::Any<Exact> {
@@ -322,13 +325,15 @@ public:
                 // std::get<0>(tup).set_requires_grad(true);
 
                 // tup[0] is the phenotype
-                torch::Tensor reconstruction_tensor = auto_encoder->forward_VAE(std::get<0>(tup).to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar);
+                torch::Tensor reconstruction_tensor = auto_encoder->forward_(std::get<0>(tup).to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar);
                 
                 torch::Tensor loss_tensor = torch::zeros(1);
                 
                 loss_tensor.to(this->m_device);
 
+                #ifdef VAE
                 loss_tensor += -0.5 * TParams::ae::beta * torch::sum(1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar));
+                #endif
                 // start at -1 because first loop will take it to 0
                 int index{-1};
 
@@ -445,7 +450,9 @@ public:
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows());
 
         // stats
+        #ifdef VAE
         torch::Tensor KL = -0.5 * TParams::ae::beta * (1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar));
+        #endif
         torch::Tensor L2 = torch::empty({traj.rows(), TParams::sim::num_trajectory_elements});
         torch::Tensor recon_loss_unreduced = torch::empty_like(L2);
 
@@ -456,6 +463,7 @@ public:
             if (boundaries[i])
             {++index;}
 
+            #ifdef VAE
             if (TParams::ae::full_loss)
             {
                 recon_loss_unreduced[i] = torch::pow(
@@ -468,18 +476,26 @@ public:
             {
                 recon_loss_unreduced[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2);
                 reconstruction_loss[index] += torch::sqrt(torch::sum(recon_loss_unreduced[i]));
-                
             }
-
             L2[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2);
+
+            #else
+            recon_loss_unreduced[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2);
+            reconstruction_loss[index] += torch::sqrt(torch::sum(recon_loss_unreduced[i]));
+            #endif
+
+
         }
         this->get_eigen_matrix_from_torch_tensor(descriptors_tensor.cpu(), descriptors);
         this->get_eigen_matrix_from_torch_tensor(reconstruction_tensor.cpu(), reconstructed_data);
         this->get_eigen_matrix_from_torch_tensor(reconstruction_loss.cpu(), recon_loss);
         this->get_eigen_matrix_from_torch_tensor(recon_loss_unreduced.cpu(), recon_loss_unred);
+
+        #ifdef VAE
         this->get_eigen_matrix_from_torch_tensor(torch::exp(decoder_logvar).cpu(), decoder_var);
-        this->get_eigen_matrix_from_torch_tensor(KL.cpu(), KL_loss);
         this->get_eigen_matrix_from_torch_tensor(L2.cpu(), L2_loss);
+        this->get_eigen_matrix_from_torch_tensor(KL.cpu(), KL_loss);
+        #endif
         // std::cout << "Eval: Total num of trajectories " << boundaries.size() << ", Num random trajectories " << boundaries.size() - phen.rows() << ", (random ratio: " << 1 - float(phen.rows())/boundaries.size() <<")" << std::endl;
     }
 

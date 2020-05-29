@@ -1,14 +1,14 @@
 //
-// Created by Luca Grillotti
+// Created by Andy Wang
 //
 
-#ifndef EXAMPLE_PYTORCH_AUTOENCODER_HPP
-#define EXAMPLE_PYTORCH_AUTOENCODER_HPP
+#ifndef VAE_HPP
+#define VAE_HPP
 
 #include <torch/torch.h>
 
-#include "encoder.hpp"
-#include "decoder.hpp"
+#include "encoder_VAE.hpp"
+#include "decoder_VAE.hpp"
 
 struct AutoEncoderImpl : torch::nn::Module {
     AutoEncoderImpl(int input_dim, int en_hid_dim1, int latent_dim, int de_hid_dim1, int de_hid_dim2, int output_dim) :
@@ -29,7 +29,7 @@ struct AutoEncoderImpl : torch::nn::Module {
         return m_decoder(corresponding_latent, decoder_logvar);
     }
 
-    torch::Tensor forward_VAE(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar) {
+    torch::Tensor forward_(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar) {
         torch::Tensor corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar);
         return m_decoder(corresponding_latent, decoder_logvar);
     }

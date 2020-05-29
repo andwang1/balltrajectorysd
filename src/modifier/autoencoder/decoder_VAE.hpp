@@ -2,8 +2,8 @@
 // Created by Luca Grillotti
 //
 
-#ifndef EXAMPLE_PYTORCH_DECODER_HPP
-#define EXAMPLE_PYTORCH_DECODER_HPP
+#ifndef VAE_DECODER_HPP
+#define VAE_DECODER_HPP
 
 #include <torch/torch.h>
 

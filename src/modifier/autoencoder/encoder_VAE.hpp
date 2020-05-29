@@ -2,8 +2,8 @@
 // Created by Luca Grillotti
 //
 
-#ifndef EXAMPLE_PYTORCH_ENCODER_HPP
-#define EXAMPLE_PYTORCH_ENCODER_HPP
+#ifndef VAE_ENCODER_HPP
+#define VAE_ENCODER_HPP
 
 struct EncoderImpl : torch::nn::Module {
     EncoderImpl(int input_dim, int en_hid_dim1, int latent_dim) :
