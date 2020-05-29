@@ -15,7 +15,7 @@
 
 
 // remove this
-bool VERBOSE = true;
+bool VERBOSE = false;
 
 namespace rng {
         //     // Will be used to obtain a seed for the random number engine
