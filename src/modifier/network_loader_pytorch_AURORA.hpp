@@ -379,6 +379,7 @@ public:
               MatrixXf_rm &KL_loss,
               MatrixXf_rm &decoder_var) 
     {
+        torch::NoGradGuard no_grad;
         AutoEncoder auto_encoder = std::static_pointer_cast<AutoEncoderImpl>(this->m_auto_encoder_module.ptr());
 
         torch::Tensor phen_tensor, traj_tensor;
