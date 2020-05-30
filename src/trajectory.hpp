@@ -279,7 +279,10 @@ FIT_QD(Trajectory)
         // check if there will be two impacts
         if (((projected_x > ROOM_W + epsilon) && (projected_y > ROOM_H + epsilon)) || ((projected_x < 0 - epsilon) && (projected_y < 0 - epsilon)) ||
             ((projected_x > ROOM_W + epsilon) && (projected_y < 0 - epsilon)) || ((projected_x < 0 - epsilon) && (projected_y > ROOM_H + epsilon)))
-        {double_impact = true;}
+        {
+            double_impact = true;
+            std::cout << "DOUBLE IPMACT"<< std::endl;
+        }
 
         float impact_1_x;
         float impact_1_y;
