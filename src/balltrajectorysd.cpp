@@ -119,7 +119,7 @@ public:
 };
 
 struct Arguments {
-    size_t number_threads;
+    size_t number_cpus;
     double pct_random;
     bool full_loss;
 };
@@ -132,7 +132,7 @@ void get_arguments(const boost::program_options::options_description &desc, Argu
 
     boost::program_options::store(parsed, vm);
     boost::program_options::notify(vm);
-    arg.number_threads = vm["number-threads"].as<size_t>();
+    arg.number_cpus = vm["number-cpus"].as<size_t>();
     arg.pct_random = vm["pct-random"].as<double>();
     arg.full_loss = vm["full-loss"].as<bool>();
 }
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     Arguments arg{};
 
     desc.add_options()
-                ("number-threads", boost::program_options::value<size_t>(), "Set Number of Threads");
+                ("number-cpus", boost::program_options::value<size_t>(), "Set Number of CPUs");
     desc.add_options()
                 ("pct-random", boost::program_options::value<double>(), "Set Pct of random trajectories");
     desc.add_options()
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     srand(time(0));
 
     // threading tool
-    tbb::task_scheduler_init init(arg.number_threads);
+    tbb::task_scheduler_init init(arg.number_cpus);
 
     typedef Params params_t;
     // why have 0?
