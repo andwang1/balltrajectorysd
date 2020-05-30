@@ -54,6 +54,7 @@ FIT_QD(Trajectory)
         for (int i{1}; i < Params::random::max_num_random + 1; ++i)
         {
             Eigen::VectorXf new_traj;
+            new_traj.resize(Params::sim::num_trajectory_elements);
             // std::uniform_real_distribution<> rng_prob(0, 1);
             float prob = rng::rng(rng::gen);
             if (prob <= Params::random::pct_random)
