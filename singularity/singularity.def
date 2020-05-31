@@ -54,15 +54,15 @@ From: airl_lab/default/airl_env:pytorch_ci
     bash -c 'sleep $[ ( $RANDOM % 90 )  + 1 ]s'
 
     CURPATH=$(pwd)
-    DIRNAME=results_$1
+    DIRNAME=results_$1/%2_$3_$4_$5
     PATHNAME=$(date +%Y-%m-%d_%H_%M_%S)_$$
 
     mkdir -p $CURPATH/$DIRNAME/$PATHNAME
 
     cd /git/sferes2/
 
-    echo Launching command \'build/exp/balltrajectorysd/$1 -d $CURPATH/$DIRNAME/$PATHNAME $2 $3 $4\'
-    build/exp/balltrajectorysd/$1 -d $CURPATH/$DIRNAME/$PATHNAME $2 $3 $4
+    echo Launching command \'build/exp/balltrajectorysd/$1 -d $CURPATH/$DIRNAME/$PATHNAME $2 $3 $4 $5\'
+    build/exp/balltrajectorysd/$1 -d $CURPATH/$DIRNAME/$PATHNAME $2 $3 $4 $5
 
 
 %apprun vae
