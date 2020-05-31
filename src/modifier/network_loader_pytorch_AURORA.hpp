@@ -327,7 +327,7 @@ public:
                 torch::Tensor reconstruction_tensor = auto_encoder->forward_(std::get<1>(tup).to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar);
 
                 // for training can just take the sum as usual, for eval need to do some averaging as there are fewer phenotypes than trajectories
-                torch::Tensor loss_tensor = torch::sum(torch::pow(std::get<1>(tup) - reconstruction_tensor, 2), {0}).mean();
+                torch::Tensor loss_tensor = torch::sum(torch::pow(std::get<1>(tup) - reconstruction_tensor, 2), {1}).mean();
                 loss_tensor.backward();
 
                 
