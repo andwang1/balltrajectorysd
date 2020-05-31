@@ -232,10 +232,10 @@ public:
                 this->filter_trajectories(traj, is_trajectory,filtered_traj, boundaries);
 
                 // scaling initialised in eval run before training
-                _prep_traj.apply(filtered_traj, scaled_filtered_traj);
+                // _prep_traj.apply(filtered_traj, scaled_filtered_traj);
 
                 torch::Tensor T1, T2;
-                this->get_tuple_from_eigen_matrices(phen, scaled_filtered_traj, boundaries, T1, T2, batches[0]);
+                this->get_tuple_from_eigen_matrices(phen, filtered_traj, boundaries, T1, T2, batches[0]);
         } 
         else 
         {
@@ -250,11 +250,11 @@ public:
                                                     filtered_traj,
                                                     boundaries);
 
-                _prep_traj.apply(filtered_traj, scaled_filtered_traj);
+                // _prep_traj.apply(filtered_traj, scaled_filtered_traj);
 
                 torch::Tensor T1, T2;
                 this->get_tuple_from_eigen_matrices(phen.middleRows(ind * TParams::ae::batch_size, TParams::ae::batch_size),
-                                                    scaled_filtered_traj,
+                                                    filtered_traj,
                                                     boundaries,
                                                     T1,
                                                     T2,
@@ -446,12 +446,12 @@ public:
                         boundaries);
 
         // initialise with the whole filtered training dataset, the mean and var will be reused by the training (eval runs before training)
-        if (is_train_set)
-        {_prep_traj.init(filtered_traj);}
+        // if (is_train_set)
+        // {_prep_traj.init(filtered_traj);}
 
-        _prep_traj.apply(filtered_traj, scaled_filtered_traj);
+        // _prep_traj.apply(filtered_traj, scaled_filtered_traj);
 
-        this->get_torch_tensor_from_eigen_matrix(scaled_filtered_traj, traj_tensor);
+        this->get_torch_tensor_from_eigen_matrix(filtered_traj, traj_tensor);
 
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
                 
@@ -459,8 +459,8 @@ public:
         torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent(phen_tensor.to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar, descriptors_tensor);
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows());
 
-        std::cout << traj_tensor << "SCALEDTRAJ" << std::endl;
-        std::cout << reconstruction_tensor << "SCALEDRECON" << std::endl;
+        // std::cout << traj_tensor << "SCALEDTRAJ" << std::endl;
+        // std::cout << reconstruction_tensor << "SCALEDRECON" << std::endl;
 
         // stats
         #ifdef VAE
@@ -507,12 +507,12 @@ public:
         MatrixXf_rm scaled_reconstructed_data;
 
         this->get_eigen_matrix_from_torch_tensor(descriptors_tensor.cpu(), descriptors);
-        this->get_eigen_matrix_from_torch_tensor(reconstruction_tensor.cpu(), scaled_reconstructed_data);
+        this->get_eigen_matrix_from_torch_tensor(reconstruction_tensor.cpu(), reconstructed_data);
         this->get_eigen_matrix_from_torch_tensor(reconstruction_loss.cpu(), recon_loss);
         this->get_eigen_matrix_from_torch_tensor(recon_loss_unreduced.cpu(), recon_loss_unred);
 
-        _prep_traj.deapply(scaled_reconstructed_data, reconstructed_data);
-        std::cout << "UNSCALED RECON" << reconstructed_data << std::endl;
+        // _prep_traj.deapply(scaled_reconstructed_data, reconstructed_data);
+        // std::cout << "UNSCALED RECON" << reconstructed_data << std::endl;
 
         #ifdef VAE
         this->get_eigen_matrix_from_torch_tensor(torch::exp(decoder_logvar).cpu(), decoder_var);
