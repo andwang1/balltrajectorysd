@@ -453,7 +453,7 @@ public:
         // _prep_traj.apply(filtered_traj, scaled_filtered_traj);
 
         this->get_torch_tensor_from_eigen_matrix(filtered_traj, traj_tensor);
-	traj_tensor = traj_tensor.to(this->m_device);
+	    traj_tensor = traj_tensor.to(this->m_device);
 
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
                 

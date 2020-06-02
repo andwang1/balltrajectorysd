@@ -131,7 +131,7 @@ public:
 
 
     void get_stats(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, 
-                   MatrixXf_rm &descriptors, MatrixXf_rm &recon_loss, MatrixXf_rm &recon_loss_unred, MatrixXf_rm &reconstruction, 
+                   MatrixXf_rm &descriptors, MatrixXf_rm &reconstruction, MatrixXf_rm &recon_loss, MatrixXf_rm &recon_loss_unred,  
                    MatrixXf_rm &L2_loss, MatrixXf_rm &KL_loss, MatrixXf_rm &decoder_var) {
         eval(phen, traj, is_traj, descriptors, reconstruction, recon_loss, recon_loss_unred, L2_loss, KL_loss, decoder_var);
     }
