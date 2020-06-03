@@ -68,8 +68,8 @@ namespace sferes {
                 ofs << "FORMAT: INDIV_INDEX, DATA\n";
                 for (int i{0}; i < reconstruction.rows(); ++i)
                 {
-                    ofs << i << ", "  <<  reconstruction.row(i).format(CommaInitFmt) << "\n";
-                    ofs << i << ", " <<  traj.row(i).format(CommaInitFmt) << "\n";
+                    ofs << i << ", RECON, "  <<  reconstruction.row(i).format(CommaInitFmt) << "\n";
+                    ofs << i << ", ACTUAL, " <<  traj.row(i).format(CommaInitFmt) << "\n";
                 }
 
                 #else //VAE or AE
