@@ -63,7 +63,7 @@ namespace sferes {
         // angle first
         _params[0] = this->_gen.data(0) * Params::parameters::max_angle;
         // dpf
-        _params[1] = this->_gen.data(1) * Params::parameters::max_dpf;
+        _params[1] = this->_gen.data(1) * (Params::parameters::max_dpf - Params::parameters::min_dpf) + Params::parameters::min_dpf;
       }
       float data(size_t i) const {
         assert(i < size());

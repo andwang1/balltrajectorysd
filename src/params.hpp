@@ -31,7 +31,7 @@ struct Params {
     SFERES_CONST size_t nb_epochs = 20000;
     SFERES_CONST size_t min_num_epochs = 100;
     //
-    SFERES_CONST size_t running_mean_num_epochs = 5;
+    SFERES_CONST size_t running_mean_num_epochs = 50;
     SFERES_CONST float CV_fraction = 0.80;
     SFERES_CONST float learning_rate = 1e-3;
     static bool full_loss;
@@ -40,8 +40,8 @@ struct Params {
     // input = qd::gen_dim
     SFERES_CONST size_t en_hid_dim1 = 10;
     // latent_dim = qd::behav_dim
-    SFERES_CONST size_t de_hid_dim1 = 40;
-    SFERES_CONST size_t de_hid_dim2 = 60;
+    SFERES_CONST size_t de_hid_dim1 = 30;
+    SFERES_CONST size_t de_hid_dim2 = 50;
     // output_dim = sim::trajectory_length
 
     // KL weight
@@ -55,7 +55,7 @@ struct Params {
     };
 
     // influences l; targeted size of pop
-    SFERES_CONST int resolution = 20000; 
+    SFERES_CONST int resolution = 6000; 
     
     struct nov {
         static double l;
@@ -83,6 +83,7 @@ struct Params {
         // this gets used in phen.hpp to transform the genotype to phenotype
         // maximum value of parameters
         // 0 not needed since minimum for genotype is 0 by default
+        SFERES_CONST double min_dpf = 0.1f;
         SFERES_CONST double max_dpf = 0.3f;
         // minimum value
         SFERES_CONST double max_angle = 2 * M_PI;
