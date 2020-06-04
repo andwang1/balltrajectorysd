@@ -1,14 +1,22 @@
 import matplotlib.pyplot as plt
 import time
+import os
 from exp_config import *
 
+variant = "vae"
+random = "0.2"
 GEN_NUMBER = 6000
 
-BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/results_balltrajectorysd_vae/'
-DIR_PATH = 'gen8000_pctrandom0.0_fulllossfalse/2020-06-01_18_33_58_145220/'
+vae_loss = "fulllosstrue"
+
+BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/second_run/'
+EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}/'
+os.chdir(BASE_PATH+EXP_PATH)
+PID = os.listdir()[0] + "/"
+os.chdir(BASE_PATH)
 FILE_NAME = f'traj_{GEN_NUMBER}.dat'
 
-FILE = BASE_PATH + DIR_PATH + FILE_NAME
+FILE = BASE_PATH + EXP_PATH + PID + FILE_NAME
 
 # PLOTTING PARAMETERS
 PAUSE = 2
@@ -62,34 +70,35 @@ for indiv in plotting_data:
     ax1 = f.add_subplot(spec[:2, :], aspect='equal', adjustable='box')
     ax1.set_ylim([ROOM_H, 0])
     ax1.set_xlim([0, ROOM_W])
+    ax1.set_title("Trajectories")
 
     ax2 = f.add_subplot(spec[2, :])
     ax2.set_ylim([0, max(pred_error)])
     ax2.set_xlim([0, len_trajectory / 2])
     ax2.set_xlabel("Trajectory Step")
     ax2.yaxis.grid(True)
-
-    ax3 = f.add_subplot(spec[3, :])
-    ax3.set_ylim([0, max(var)])
-    ax3.set_xlim([0, len_trajectory / 2])
-    ax3.set_xlabel("Trajectory Step")
-    ax3.yaxis.grid(True)
-
-    ax1.set_title("Trajectories")
     ax2.set_title("L2 Error", loc="left")
-    ax3.set_title("Decoder Variance", loc="left")
+
+    if vae_loss == "fulllosstrue":
+        ax3 = f.add_subplot(spec[3, :])
+        ax3.set_ylim([0, max(var)])
+        ax3.set_xlim([0, len_trajectory / 2])
+        ax3.set_xlabel("Trajectory Step")
+        ax3.yaxis.grid(True)
+        ax3.set_title("Decoder Variance", loc="left")
 
     plt.subplots_adjust(hspace=0.6)
 
     for i, j in zip(x_label, y_label):
         ax1.scatter(i, j, c="black")
-        plt.pause(0.00001)
+        plt.pause(0.00000001)
 
     for index, (i, j, e, v) in enumerate(zip(x_pred, y_pred, pred_error, var)):
         ax1.scatter(i, j, c="red")
         ax2.scatter(index, e, s=4, c="black")
-        ax3.scatter(index, v, s=4, c="green")
-        plt.pause(0.001)
+        if vae_loss == "fulllosstrue":
+            ax3.scatter(index, v, s=4, c="green")
+        plt.pause(0.00000001)
 
     time.sleep(PAUSE)
     plt.close()
