@@ -45,7 +45,7 @@ struct Params {
     // output_dim = sim::trajectory_length
 
     // KL weight
-    SFERES_CONST size_t beta = 0;
+    SFERES_CONST size_t beta = 1;
     };
 
     struct update {
@@ -95,7 +95,7 @@ struct Params {
     };
 
     struct stat {
-        SFERES_CONST size_t save_trajectories = 2000;
+        SFERES_CONST size_t save_trajectories = 3000;
         SFERES_CONST size_t save_model = 10000;
         SFERES_CONST size_t save_diversity = 500;
     };

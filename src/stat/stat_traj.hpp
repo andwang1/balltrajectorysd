@@ -18,7 +18,7 @@ namespace sferes {
             template<typename EA>
             void refresh(EA &ea) 
             {
-                if ((ea.gen() % Params::stat::save_trajectories == 0) || (ea.gen() == 1) ) 
+                if ((ea.gen() % Params::stat::save_trajectories == 0)) 
                 {
                    std::string prefix = "traj_" + boost::lexical_cast<std::string>(ea.gen());
                     _write_trajectories(prefix, ea);
