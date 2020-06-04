@@ -1,5 +1,5 @@
 //
-// Created by Luca Grillotti on 29/04/2020.
+// Created by Andy Wang
 //
 
 #ifndef PARAMS_HPP
