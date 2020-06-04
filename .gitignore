@@ -2,6 +2,9 @@
 .vscode/
 *.pyc
 
+*txt
+*pk
+
 results*/
 resources/ae*
 resources/checkpoint

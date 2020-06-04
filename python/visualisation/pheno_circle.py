@@ -1,15 +1,24 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 from matplotlib.collections import LineCollection
 from exp_config import *
 
-GEN_NUMBER = 0
+variant = "aurora"
+random = "0.0"
+GEN_NUMBER = 6000
 
-BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/results_balltrajectorysd_aurora/'
-DIR_PATH = 'gen8000_pctrandom0_fulllossfalse/2020-06-01_18_24_03_122344/'
+vae_loss = "fulllosstrue"
+# _{vae_loss}
+
+BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/second_run/'
+EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}/'
+os.chdir(BASE_PATH+EXP_PATH)
+PID = os.listdir()[0] + "/"
+os.chdir(BASE_PATH)
 FILE_NAME = f'archive_{GEN_NUMBER}.dat'
 
-FILE = BASE_PATH + DIR_PATH + FILE_NAME
+FILE = BASE_PATH + EXP_PATH + PID + FILE_NAME
 
 # descriptors = []
 phenotypes = []
@@ -49,5 +58,6 @@ fig.colorbar(colour_data, ax=ax1)
 # Set the values used for colormapping
 lc.set_array(np.array(colours))
 lc.set_linewidth(1)
-
-plt.show()
+plt.title(f"Solution space in Polar Coordinates - Gen {GEN_NUMBER}")
+plt.savefig(f"phenocircle_{variant}_{random}.pdf")
+# plt.show()

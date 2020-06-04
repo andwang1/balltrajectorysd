@@ -1,19 +1,29 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from exp_config import *
+import os
 
-GEN_NUMBER = 7500
 
-BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/results_balltrajectorysd_aurora/'
-DIR_PATH = 'gen8000_pctrandom0_fulllossfalse/2020-06-01_18_24_03_122344/'
+variant = "vae"
+random = "0.0"
+GEN_NUMBER = 6000
+
+vae_loss = "fulllosstrue"
+# _{vae_loss}
+
+BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/second_run/'
+EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}/'
+os.chdir(BASE_PATH+EXP_PATH)
+PID = os.listdir()[0] + "/"
+os.chdir(BASE_PATH)
 FILE_NAME = f'diversity{GEN_NUMBER}.dat'
 
-FILE = BASE_PATH + DIR_PATH + FILE_NAME
+FILE = BASE_PATH + EXP_PATH + PID + FILE_NAME
 
 with open(FILE, "r") as f:
     lines = f.readlines()
     max_diversity = int(lines[0].strip().split(":")[-1])
-    achieved_diversity = float(lines[1].strip())
+    achieved_diversity = round(float(lines[1].strip()),5)
     # bitmap prints in reverse order
     diversity_grid = lines[2].strip().split(",")[::-1]
 
@@ -29,7 +39,7 @@ for i in diversity_grid:
         column = []
 
 # plot colours
-fig = plt.figure()
+fig = plt.figure(figsize=(15,15))
 plt.ylim([DISCRETISATION, 0])
 plt.xlim([0, DISCRETISATION])
 
@@ -45,4 +55,12 @@ plt.title(f"Diversity - BinsTransversed / TotalBins - Gen {GEN_NUMBER}")
 plt.xlabel("X")
 plt.ylabel("Y")
 
-plt.show()
+ax1 = fig.add_subplot()
+textbox = f"Score: {achieved_diversity} of {max_diversity}"
+props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+# place a text box in upper left in axes coords
+ax1.text(0.787, 1.03, textbox, transform=ax1.transAxes, fontsize=12,
+    verticalalignment='top', bbox=props)
+
+plt.savefig(f"diversity_{variant}_{random}.pdf")
+# plt.show()
