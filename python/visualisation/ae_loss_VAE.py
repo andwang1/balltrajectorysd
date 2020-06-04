@@ -4,7 +4,7 @@ import os
 SHOW_TRAIN_LINES = False
 
 variant = "vae"
-random = "0.0"
+random = "0.2"
 GEN_NUMBER = 6000
 
 vae_loss = "fulllosstrue"
@@ -74,7 +74,7 @@ ax1.legend(lns, labs, loc='best')
 KL_ax = ax2.twinx()
 ax2.set_ylabel("Total Loss")
 KL_ax.set_ylabel("KL")
-ax2.set_ylim([0, max(total_recon)])
+ax2.set_ylim([min(total_recon), max(total_recon)])
 KL_ax.set_ylim([0, max(KL)])
 ln3 = ax2.plot(range(len(total_recon)), total_recon, c="red", label="Total Recon Loss")
 ln4 = KL_ax.plot(range(len(total_recon)), KL, c="blue", label="KL")
