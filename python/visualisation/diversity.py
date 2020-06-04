@@ -4,15 +4,17 @@ from exp_config import *
 import os
 
 
+VAE = True
 variant = "vae"
 random = "0.0"
 GEN_NUMBER = 6000
 
-vae_loss = "fulllosstrue"
-# _{vae_loss}
+vae_loss = "fulllossfalse"
 
 BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/second_run/'
 EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}/'
+if VAE:
+    EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}/'
 os.chdir(BASE_PATH+EXP_PATH)
 PID = os.listdir()[0] + "/"
 os.chdir(BASE_PATH)
@@ -62,5 +64,8 @@ props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 ax1.text(0.787, 1.03, textbox, transform=ax1.transAxes, fontsize=12,
     verticalalignment='top', bbox=props)
 
-plt.savefig(f"diversity_{variant}_{random}.pdf")
+if VAE:
+    plt.savefig(f"diversity_{variant}_{random}_{vae_loss}.pdf")
+else:
+    plt.savefig(f"diversity_{variant}_{random}.pdf")
 # plt.show()

@@ -4,15 +4,18 @@ import os
 from matplotlib.collections import LineCollection
 from exp_config import *
 
-variant = "aurora"
+VAE = True
+variant = "vae"
 random = "0.0"
 GEN_NUMBER = 6000
 
-vae_loss = "fulllosstrue"
+vae_loss = "fulllossfalse"
 # _{vae_loss}
 
 BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/second_run/'
 EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}/'
+if VAE:
+    EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}/'
 os.chdir(BASE_PATH+EXP_PATH)
 PID = os.listdir()[0] + "/"
 os.chdir(BASE_PATH)
@@ -59,5 +62,10 @@ fig.colorbar(colour_data, ax=ax1)
 lc.set_array(np.array(colours))
 lc.set_linewidth(1)
 plt.title(f"Solution space in Polar Coordinates - Gen {GEN_NUMBER}")
-plt.savefig(f"phenocircle_{variant}_{random}.pdf")
+
+if VAE:
+    plt.savefig(f"phenocircle_{variant}_{random}_{vae_loss}.pdf")
+else:
+    plt.savefig(f"phenocircle_{variant}_{random}.pdf")
+
 # plt.show()
