@@ -66,26 +66,16 @@ namespace sferes {
 
                 #endif
 
-                // training frequency
-                if (Params::update::update_frequency == -1) 
+                if (boost::fusion::at_c<0>(ea.fit_modifier()).is_train_gen())
                 {
-                    if (Params::update::update_period > 0 && 
-                       (ea.gen() == 1 || ea.gen() == last_update + Params::update::update_period * std::pow(2, update_id - 1))) 
-                    {
-                        ofs << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_epochs_trained() << "/" << Params::ae::nb_epochs << ", IS_TRAIN";
-                        update_id++;
-                    }
-                } 
-                else if (ea.gen() > 0) 
-                {
-                    if ((ea.gen() % Params::update::update_frequency == 0) || ea.gen() == 1) 
+                    #ifndef AURORA
+                    ofs << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_random_extension_ratio() << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_epochs_trained() << "/" << Params::ae::nb_epochs << ", IS_TRAIN";
+                    #else
                     ofs << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_epochs_trained() << "/" << Params::ae::nb_epochs << ", IS_TRAIN";
+                    #endif
                 }
                 ofs << "\n";
             }
-        private:
-        size_t last_update{0};
-        size_t update_id{0};
         };
 
     }

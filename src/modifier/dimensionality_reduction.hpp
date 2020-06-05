@@ -37,7 +37,7 @@ namespace sferes {
                  * first update descriptors (only every k steps)
                  * assign those values to the population (every step)
                  * */
-
+                _is_train_gen = false;
                 if (Params::update::update_frequency == -1) 
                 {// NOTE: THERE's BEEN A CHANGE to update_period
                     if (Params::update::update_period > 0 && 
@@ -46,6 +46,7 @@ namespace sferes {
                         update_id++;
                         last_update = ea.gen();
                         update_descriptors(ea);
+                        _is_train_gen = true;
                     }
                 } 
                 else if (ea.gen() > 0) 
@@ -53,6 +54,7 @@ namespace sferes {
                     if ((ea.gen() % Params::update::update_frequency == 0) || ea.gen() == 1) 
                     {
                         update_descriptors(ea);
+                        _is_train_gen = true;
                     }
                 }
 
@@ -133,12 +135,12 @@ namespace sferes {
                 // put together for training
                 extended_phen = Mat(phen_d.rows() + additional_phen.rows(), phen_d.cols());
                 extended_traj = Mat(traj_d.rows() + additional_traj.rows(), traj_d.cols());
-                extended_phen << phen_d, additional_phen;
-                extended_traj << traj_d, additional_traj;
+                extended_phen << additional_phen, phen_d;
+                extended_traj << additional_traj, traj_d;
 
-                extended_is_traj = is_trajectory;
+                extended_is_traj = additional_is_traj;
                 extended_is_traj.reserve(is_trajectory.size() + additional_is_traj.size());
-                extended_is_traj.insert(extended_is_traj.end(), additional_is_traj.begin(), additional_is_traj.end());
+                extended_is_traj.insert(extended_is_traj.end(), is_trajectory.begin(), is_trajectory.end());
             }
 
             template<typename EA>
@@ -197,6 +199,7 @@ namespace sferes {
                     {++count_has_random;}
                 }
                 std::cout << "Additional Phen (hasrandom / total): " << count_has_random << "/" << num_copies << "\n";
+                _random_extension_ratio = double(count_has_random) / num_copies;
             }
 
             void get_phen(const pop_t &pop, Mat &data) const {
@@ -407,6 +410,12 @@ namespace sferes {
                 // _prep.deapply(scaled_reconstruction, reconstruction);
             }
 
+            double get_random_extension_ratio() const
+            {return _random_extension_ratio;}
+
+            bool is_train_gen() const
+            {return _is_train_gen;}
+
             NetworkLoader *get_network_loader() const {
                 return &*network;
             }
@@ -421,6 +430,8 @@ namespace sferes {
             RescaleFeature _prep;
             size_t last_update;
             size_t update_id;
+            double _random_extension_ratio{-1};
+            bool _is_train_gen;
         };
     }
 }
