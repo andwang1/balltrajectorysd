@@ -34,6 +34,8 @@ struct Params {
     SFERES_CONST size_t running_mean_num_epochs = 5;
     SFERES_CONST float CV_fraction = 0.80;
     SFERES_CONST float learning_rate = 1e-3;
+
+    SFERES_CONST float pct_extension = 0.2;
     static bool full_loss;
 
     // network neurons        

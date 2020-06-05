@@ -65,25 +65,36 @@ namespace sferes {
             void update_descriptors(EA &ea) {
                 Mat phen_d, traj_d;
                 std::vector<int> is_trajectory;
-                collect_dataset(phen_d, traj_d, is_trajectory, ea, true); // gather the data from the indiv in the archive into a dataset
-                // change train_netework
+                std::vector<typename EA::indiv_t> content;
 
-                // IF OPTION ENABLED -> get top % of reconstruction errors (aggregate, since dont know which ones are good) - call get stats
-                // implement a debug option to print out how many are random, which are the target ones (get from fitness: num_random)
-                // copy the phenotypes fully (need to create the content vector here, and pass it to collect_dataset)
-                // call a new function (eval) that returns indices of highest reconstruction error
-                // get a new vector of phenotypes, evaluate it
-                // either append to existing vector and adapt collect_dataset a bit, or pass into collect_dataset and concat matrices
+                collect_dataset(phen_d, traj_d, is_trajectory, ea, content, true);
 
+                #ifndef AURORA
+                // add additionally the phenotypes that had the largest loss in the evaluation but with regenerated trajectories
+                if (Params::ae::pct_extension > 0.001)
+                {
+                    Mat extended_phen, extended_traj;
+                    std::vector<int> extended_is_traj;
+                    extend_dataset(phen_d, traj_d, is_trajectory, ea, content, extended_phen, extended_traj, extended_is_traj, Params::ae::pct_extension);
+                    // add to stat pct of random of extension                
 
+                    std::cout << "BEFORE TRAINING" << std::endl;
+                    // collect_dataset(phen_d, traj_d, is_trajectory, ea, content, true);
+                    train_network(extended_phen, extended_traj, extended_is_traj);
+                }
+                else
+                {train_network(phen_d, traj_d, is_trajectory);}
+
+                #else // AURORA
                 train_network(phen_d, traj_d, is_trajectory);
+                #endif
+
                 update_container(ea);  // clear the archive and re-fill it using the new network
             }
 
             template<typename EA>
-            void collect_dataset(Mat &phen_d, Mat &traj_d, std::vector<int> &is_trajectory, EA &ea, bool training = false) const {
-                std::vector<typename EA::indiv_t> content;
-                
+            void collect_dataset(Mat &phen_d, Mat &traj_d, std::vector<int> &is_trajectory, 
+                                EA &ea, std::vector<typename EA::indiv_t> &content, bool training = false) const {
                 // content will contain all phenotypes
                 if (ea.gen() > 0) {
                     ea.container().get_full_content(content);
@@ -95,13 +106,6 @@ namespace sferes {
                 if (training)
                 {std::random_shuffle (content.begin(), content.end());}
                 
-                collect_dataset(phen_d, traj_d, is_trajectory, ea, content, training);
-            }
-
-            template<typename EA>
-            void collect_dataset(Mat &phen_d, Mat &traj_d, std::vector<int> &is_trajectory,
-                    EA &ea, const std::vector<typename EA::indiv_t>& content, bool training = false) const {
-                
                 // number of phenotypes
                 size_t pop_size = content.size();
                 get_phen(content, phen_d);
@@ -112,7 +116,96 @@ namespace sferes {
                 }
             }
 
-            // test that this works
+            template<typename EA>
+            void extend_dataset(const Mat &phen_d, const Mat &traj_d, std::vector<int> &is_trajectory, EA &ea, std::vector<typename EA::indiv_t> &content, 
+                                Mat &extended_phen, Mat &extended_traj, std::vector<int> &extended_is_traj, float pct_extension)
+            {
+                // extend dataset with the phenotypes with the pct_extension largest recon losses
+                // phenotypes will be copied but trajectories will be regenerated, i.e. can have new random trajectories
+                std::vector<typename EA::indiv_t> copied_phen;
+                get_additional_phenos(phen_d, traj_d, is_trajectory, content, ea, copied_phen, pct_extension);
+
+                // shuffle ahead of training
+                std::random_shuffle (copied_phen.begin(), copied_phen.end());
+                // retrieve the matrix data
+                Mat additional_phen, additional_traj;
+                std::vector<int> additional_is_traj;
+                get_phen(copied_phen, additional_phen);
+                get_trajectories(copied_phen, additional_traj, additional_is_traj);
+
+                // put together for training
+                extended_phen = Mat(phen_d.rows() + additional_phen.rows(), phen_d.cols());
+                extended_traj = Mat(traj_d.rows() + additional_traj.rows(), traj_d.cols());
+                extended_phen << phen_d, additional_phen;
+                extended_traj << traj_d, additional_traj;
+
+                std::cout << "AFTER MATRIX" << std::endl;
+
+                extended_is_traj = is_trajectory;
+                extended_is_traj.reserve(is_trajectory.size() + additional_is_traj.size());
+                extended_is_traj.insert(extended_is_traj.end(), additional_is_traj.begin(), additional_is_traj.end());
+
+                std::cout << "AFTER VECRTOR" << std::endl;
+            }
+
+            template<typename EA>
+            void get_additional_phenos(const Mat &phen_d, const Mat &traj_d, std::vector<int> &is_trajectory, std::vector<typename EA::indiv_t> &content, EA &ea,
+                                        std::vector<typename EA::indiv_t> &copied_phen, float pct_extension)
+            {
+                // do we want to init here?
+                _prep.init(phen_d);
+                Mat scaled_data;
+                _prep.apply(phen_d, scaled_data);
+                
+                Eigen::VectorXi is_trajectories;
+                get_network_loader()->vector_to_eigen(is_trajectory, is_trajectories);
+
+                Mat descriptors, reconstruction, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var;
+                network->eval(scaled_data, traj_d, is_trajectories, descriptors, reconstruction, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var);
+
+                int num_copies = pct_extension * phen_d.rows();
+                copy_pheno(content, recon_loss, copied_phen, num_copies, ea);
+            }
+
+            std::vector<size_t> sort_indexes(const Mat &vector) 
+            {
+                // initialize original index locations
+                std::vector<size_t> idx(vector.size());
+                // fill
+                std::iota(idx.begin(), idx.end(), 0);
+
+                // sort indexes based on comparing values in v, std::stable_sort instead of std::sort to avoid unnecessary index re-orderings
+                // when v contains elements of equal values 
+                stable_sort(idx.begin(), idx.end(),
+                    [&vector](size_t i1, size_t i2) {return vector(i1) > vector(i2);});
+                return idx;
+            }
+
+            template<typename EA>
+            void copy_pheno(const std::vector<typename EA::indiv_t> &content, const Mat &recon_loss, std::vector<typename EA::indiv_t> &copied_phen, size_t num_copies, EA &ea)
+            {
+                // sort phenotypes based on recon loss
+                std::vector<size_t> sorted_indices = sort_indexes(recon_loss);
+                
+                // initialise new phenotypes
+                copied_phen.resize(num_copies);
+                BOOST_FOREACH (indiv_t& indiv, copied_phen) 
+                {indiv = indiv_t(new Phen());}
+                
+                int count_has_random{0};
+                // copy and generate new trajectories
+                for (size_t i{0}; i < num_copies; ++i)
+                {
+                    *(copied_phen[i]) = *(content[sorted_indices[i]]);
+                    copied_phen[i]->fit().eval(*copied_phen[i]);
+
+                    // record the number of individuals that have a random trajectory attached
+                    if (content[sorted_indices[i]]->fit().num_trajectories() > 0)
+                    {++count_has_random;}
+                }
+                std::cout << "Additional Phen (hasrandom / total): " << count_has_random << "/" << num_copies << "\n";
+            }
+
             void get_phen(const pop_t &pop, Mat &data) const {
                 data = Mat(pop.size(), pop[0]->size());
                 for (size_t i = 0; i < pop.size(); i++) {

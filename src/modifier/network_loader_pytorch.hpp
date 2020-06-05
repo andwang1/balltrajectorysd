@@ -268,7 +268,7 @@ public:
     float training(const MatrixXf_rm &phen_d, const MatrixXf_rm &traj_d, std::vector<int> &is_trajectories, bool full_train = false, int generation = 1000) 
     {
         AutoEncoder auto_encoder = std::static_pointer_cast<AutoEncoderImpl>(this->m_auto_encoder_module.ptr());
-
+        std::cout << "Total Size Dataset incl. readditions: " << phen_d.rows() << std::endl;
         MatrixXf_rm train_phen, valid_phen, train_traj, valid_traj;
         size_t l_train_traj = this->split_dataset(phen_d, traj_d, train_phen, valid_phen, train_traj, valid_traj);
         // split the bool vector according to the same split
@@ -279,10 +279,6 @@ public:
         {
             val_is_trajectories = train_is_trajectories;
         }
-
-        // is this needed?
-        // train_is_trajectories.resize(l_train_traj);
-        // val_is_trajectories.resize(is_trajectories.size() - l_train_traj);
 
         // change vectors to eigen
         Eigen::VectorXi tr_is_traj, val_is_traj, is_traj;
