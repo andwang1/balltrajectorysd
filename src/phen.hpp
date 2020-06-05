@@ -57,13 +57,51 @@ namespace sferes {
 #ifdef EIGEN_CORE_H
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif
-      Custom_Phen() : _params((*this)._gen.size()) { }
+      Custom_Phen() : _params(Params::qd::phen_dim), split(static_cast<int>((*this)._gen.size() / 2)) { }
       typedef float type_t;
       void develop() {
-        // angle first
-        _params[0] = this->_gen.data(0) * Params::parameters::max_angle;
-        // dpf
-        _params[1] = this->_gen.data(1) * (Params::parameters::max_dpf - Params::parameters::min_dpf) + Params::parameters::min_dpf;
+        if ((*this)._gen.size() == 2)
+        {
+            // angle first
+            _params[0] = this->_gen.data(0) * Params::parameters::max_angle;
+            // dpf
+            _params[1] = this->_gen.data(1) * (Params::parameters::max_dpf - Params::parameters::min_dpf) + Params::parameters::min_dpf;
+        }
+        // simple summation
+        else
+        {
+            // need to do this in here bcs of the reevaluation possiblity
+            std::fill(_params.begin(), _params.end(), 0);
+            for (int i{0}; i < split; ++i)
+            {_params[0] += this->_gen.data(i);}
+
+            for (int i{split}; i < (*this)._gen.size(); ++i)
+            {_params[1] += this->_gen.data(i);}
+
+            // normalise to 0 - 1 and then scale to max min range
+            _params[0] /= split * Params::parameters::max_angle;
+            _params[1] /= ((*this)._gen.size() - split) * (Params::parameters::max_dpf - Params::parameters::min_dpf) + Params::parameters::min_dpf;
+            
+        }
+        // non linearity (relu)
+        // gen is scaled to -2, 2
+      //   else
+      //   {
+      //       double x{1};
+
+      //       for (int i{0}; i < split; ++i)
+      //       {
+                
+                
+      //           _params[0] += (this->_gen.data(i) * 2 - 4);
+      //           if ((i % 2) == 0)
+      //           {_params[0] = std::max(_params[0], 0);}
+                
+      //       }
+      //       for (int i{split}; i < this->size(); ++i)
+      //       {_params[1] += this->_gen.data(i);}
+      //   }
+
       }
       float data(size_t i) const {
         assert(i < size());
@@ -92,6 +130,7 @@ namespace sferes {
       }
     protected:
       std::vector<float> _params;
+      int split;
     };
     template<typename G, typename F, typename P, typename E>
     std::ostream& operator<<(std::ostream& output, const Custom_Phen< G, F, P, E >& e) {
