@@ -30,7 +30,7 @@ FIT_QD(Trajectory)
     template <typename Indiv> 
     void eval(Indiv & ind){
 
-        // get the data from ind which is the geno type
+        // get the data from ind which is the phenotype
         // genotype specifies the size, = 2? and then need to specify the phenotype max min stuff
         float angle = ind.data(0);
         float dpf = ind.data(1);
@@ -44,7 +44,7 @@ FIT_QD(Trajectory)
         generate_traj(single_traj, wall_impacts, angle, dpf);
         trajectories[0] = single_traj;
         
-        // track number of trajectories
+        // track number of random trajectories
         m_num_trajectories = 0;
 
         // generate random trajectories

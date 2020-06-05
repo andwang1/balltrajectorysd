@@ -360,7 +360,7 @@ public:
                     // std::cout << std::flush << '\r';
                 }
                 
-                long num_trajectories {std::get<2>(tup).size()};
+                long num_trajectories {static_cast<long>(std::get<2>(tup).size())};
                 loss_tensor /= num_trajectories;
                 loss_tensor.backward();
                 // std::cout << "GRADS" << std::endl;
