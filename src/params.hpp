@@ -35,7 +35,7 @@ struct Params {
     SFERES_CONST float CV_fraction = 0.80;
     SFERES_CONST float learning_rate = 1e-3;
 
-    SFERES_CONST float pct_extension = 0.2;
+    static double pct_extension;
     static bool full_loss;
 
     // network neurons        
@@ -47,7 +47,7 @@ struct Params {
     // output_dim = sim::trajectory_length
 
     // KL weight
-    SFERES_CONST size_t beta = 0;
+    static size_t beta;
     };
 
     struct update {
@@ -107,6 +107,8 @@ double Params::nov::l;
 double Params::random::pct_random;
 bool Params::ae::full_loss;
 size_t Params::pop::nb_gen;
+size_t Params::ae::beta;
+double Params::ae::pct_extension;
 
 
 #endif //PARAMS_HPP

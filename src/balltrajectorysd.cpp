@@ -123,6 +123,8 @@ struct Arguments {
     double pct_random;
     bool full_loss;
     size_t number_gen;
+    size_t beta;
+    double pct_extension;
 };
 
 void get_arguments(const boost::program_options::options_description &desc, Arguments &arg, int argc, char **argv) {
@@ -137,6 +139,8 @@ void get_arguments(const boost::program_options::options_description &desc, Argu
     arg.pct_random = vm["pct-random"].as<double>();
     arg.full_loss = vm["full-loss"].as<bool>();
     arg.number_gen = vm["number-gen"].as<size_t>();
+    arg.beta = vm["beta"].as<size_t>();
+    arg.pct_extension = vm["pct-extension"].as<double>();
 }
 
 int main(int argc, char **argv) {
@@ -152,6 +156,10 @@ int main(int argc, char **argv) {
                 ("pct-random", boost::program_options::value<double>(), "Set Pct of random trajectories");
     desc.add_options()
                 ("full-loss", boost::program_options::value<bool>(), "Full VAE loss or just L2");
+    desc.add_options()
+                ("beta", boost::program_options::value<size_t>(), "Beta Coefficient");
+    desc.add_options()
+                ("pct-extension", boost::program_options::value<double>(), "% of Phenotypes to regenerate for training");
 
     get_arguments(desc, arg, argc, argv);
 
@@ -170,6 +178,10 @@ int main(int argc, char **argv) {
     Params::random::pct_random = arg.pct_random;
     // VAE loss (full_loss) or L2 loss
     Params::ae::full_loss = arg.full_loss;
+    // KL Beta
+    Params::ae::beta = arg.beta;
+    // Additional phenotypes to retrain on
+    Params::ae::pct_extension = arg.pct_extension;
 
 
     typedef Trajectory<params_t> fit_t;
@@ -190,7 +202,6 @@ int main(int argc, char **argv) {
     typedef sferes::qd::container::Archive<phen_t, storage_t, params_t> container_t;
 
     typedef sferes::eval::Parallel<params_t> eval_t;
-
 
     typedef boost::fusion::vector<
                     sferes::stat::CurrentGen<phen_t, params_t>,

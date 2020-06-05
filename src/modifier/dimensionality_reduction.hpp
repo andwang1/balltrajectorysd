@@ -77,9 +77,6 @@ namespace sferes {
                     std::vector<int> extended_is_traj;
                     extend_dataset(phen_d, traj_d, is_trajectory, ea, content, extended_phen, extended_traj, extended_is_traj, Params::ae::pct_extension);
                     // add to stat pct of random of extension                
-
-                    std::cout << "BEFORE TRAINING" << std::endl;
-                    // collect_dataset(phen_d, traj_d, is_trajectory, ea, content, true);
                     train_network(extended_phen, extended_traj, extended_is_traj);
                 }
                 else
@@ -139,13 +136,9 @@ namespace sferes {
                 extended_phen << phen_d, additional_phen;
                 extended_traj << traj_d, additional_traj;
 
-                std::cout << "AFTER MATRIX" << std::endl;
-
                 extended_is_traj = is_trajectory;
                 extended_is_traj.reserve(is_trajectory.size() + additional_is_traj.size());
                 extended_is_traj.insert(extended_is_traj.end(), additional_is_traj.begin(), additional_is_traj.end());
-
-                std::cout << "AFTER VECRTOR" << std::endl;
             }
 
             template<typename EA>
