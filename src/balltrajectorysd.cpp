@@ -204,7 +204,6 @@ int main(int argc, char **argv) {
     typedef sferes::eval::Parallel<params_t> eval_t;
 
     typedef boost::fusion::vector<
-                    sferes::stat::CurrentGen<phen_t, params_t>,
                     sferes::stat::QdContainer<phen_t, params_t>,
                     sferes::stat::QdProgress<phen_t, params_t>,
                     sferes::stat::Losses<phen_t, params_t>,
