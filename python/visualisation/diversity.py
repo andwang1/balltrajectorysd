@@ -4,7 +4,7 @@ from exp_config import *
 import os
 
 
-def plot_diversity_in_dir(path, save_path=None):
+def plot_diversity_in_dir(path, generate_images=True, save_path=None):
     os.chdir(path)
     files = os.listdir()
 
@@ -45,44 +45,46 @@ def plot_diversity_in_dir(path, save_path=None):
                 rows.append(column)
                 column = []
 
-        # plot colours
-        fig = plt.figure(figsize=(15, 15))
-        plt.ylim([DISCRETISATION, 0])
-        plt.xlim([0, DISCRETISATION])
+        if generate_images:
+            # plot colours
+            fig = plt.figure(figsize=(15, 15))
+            plt.ylim([DISCRETISATION, 0])
+            plt.xlim([0, DISCRETISATION])
 
-        # vmin/vmax sets limits
-        color = plt.pcolormesh(rows, vmin=0, vmax=1)
+            # vmin/vmax sets limits
+            color = plt.pcolormesh(rows, vmin=0, vmax=1)
 
-        # plot grid
-        plt.grid(which="both")
-        plt.xticks(range(DISCRETISATION), np.arange(0, ROOM_W, ROOM_W / DISCRETISATION))
-        plt.yticks(range(DISCRETISATION), np.arange(0, ROOM_H, ROOM_H / DISCRETISATION))
-        fig.colorbar(color)
-        plt.title(f"Diversity - BinsTransversed / TotalBins - Gen {GEN_NUMBER}")
-        plt.xlabel("X")
-        plt.ylabel("Y")
+            # plot grid
+            plt.grid(which="both")
+            plt.xticks(range(DISCRETISATION), np.arange(0, ROOM_W, ROOM_W / DISCRETISATION))
+            plt.yticks(range(DISCRETISATION), np.arange(0, ROOM_H, ROOM_H / DISCRETISATION))
+            fig.colorbar(color)
+            plt.title(f"Diversity - BinsTransversed / TotalBins - Gen {GEN_NUMBER}")
+            plt.xlabel("X")
+            plt.ylabel("Y")
 
-        ax1 = fig.add_subplot()
-        textbox = f"Score: {achieved_diversity} of {max_diversity}"
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        # place a text box in upper left in axes coords
-        ax1.text(0.787, 1.03, textbox, transform=ax1.transAxes, fontsize=12,
-                 verticalalignment='top', bbox=props)
+            ax1 = fig.add_subplot()
+            textbox = f"Score: {achieved_diversity} of {max_diversity}"
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+            # place a text box in upper left in axes coords
+            ax1.text(0.787, 1.03, textbox, transform=ax1.transAxes, fontsize=12,
+                     verticalalignment='top', bbox=props)
 
-        if save_path:
-            os.chdir(save_path)
+            if save_path:
+                os.chdir(save_path)
 
-        plt.savefig(f"diversity_{GEN_NUMBER}.png")
+            plt.savefig(f"diversity_{GEN_NUMBER}.png")
+            plt.close()
+
+    if generate_images:
+        plt.plot(div_generations, div_scores, label="Diversity")
+        plt.xlabel("Generations")
+        plt.ylabel("Diversity")
+        plt.title("Diversity over Generations")
+        plt.hlines(max_diversity, 0, div_generations[-1], linestyles="--", label="Max Diversity")
+        plt.legend(loc=4)
+        plt.savefig("diversity.png")
         plt.close()
-
-    plt.plot(div_generations, div_scores, label="Diversity")
-    plt.xlabel("Generations")
-    plt.ylabel("Diversity")
-    plt.title("Diversity over Generations")
-    plt.hlines(max_diversity, 0, div_generations[-1], linestyles="--", label="Max Diversity")
-    plt.legend(loc=4)
-    plt.savefig("diversity.png")
-    plt.close()
 
     return {gen: score for gen, score in zip(div_generations, div_scores)}, max_diversity
 

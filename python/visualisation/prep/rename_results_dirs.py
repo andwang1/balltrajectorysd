@@ -1,7 +1,7 @@
 import os
-variant = "ae"
+variant = "vae"
 
-os.chdir(f"/home/andwang1/airl/balltrajectorysd/results_exp1/repeated_run1/results_balltrajectorysd_{variant}")
+os.chdir(f"/home/andwang1/airl/balltrajectorysd/results_exp1/test/results_balltrajectorysd_{variant}")
 dir_names = os.listdir()
 
 for name in dir_names:
