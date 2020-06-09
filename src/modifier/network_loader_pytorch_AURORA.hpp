@@ -120,8 +120,8 @@ public:
 
     void get_reconstruction(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, 
                             MatrixXf_rm &reconstruction) {
-        MatrixXf_rm descriptors, recon_loss, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var;
-        eval(phen, traj, is_traj, descriptors, reconstruction, recon_loss, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var);
+        MatrixXf_rm descriptors, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var;
+        eval(phen, traj, is_traj, descriptors, reconstruction, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var);
     }
 
     float get_avg_recon_loss(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, bool is_train_set = false) {

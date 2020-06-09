@@ -127,8 +127,8 @@ public:
 
     void get_reconstruction(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, 
                             MatrixXf_rm &reconstruction) {
-        MatrixXf_rm descriptors, recon_loss, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var;
-        eval(phen, traj, is_traj, descriptors, reconstruction, recon_loss, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var);
+        MatrixXf_rm descriptors, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var;
+        eval(phen, traj, is_traj, descriptors, reconstruction, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var);
     }
 
     float get_avg_recon_loss(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, bool is_train_set = false) {
@@ -455,12 +455,13 @@ public:
         torch::Tensor KL = -0.5 * TParams::ae::beta * (1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar));
         #endif
 
-        torch::Tensor L2 = torch::empty({traj.rows(), TParams::sim::num_trajectory_elements}, torch::device(this->m_device));
+        torch::Tensor L2 = torch::empty({filtered_traj.rows(), TParams::sim::num_trajectory_elements}, torch::device(this->m_device));
         torch::Tensor L2_actual_traj = torch::empty(phen.rows(), torch::device(this->m_device));
         torch::Tensor recon_loss_unreduced = torch::empty_like(L2, torch::device(this->m_device));
 
         int index{0};
         int internal_avg_counter{0};
+
         for (int i{0}; i < boundaries.size(); ++i)
         {
             if (boundaries[i] && i > 0)
