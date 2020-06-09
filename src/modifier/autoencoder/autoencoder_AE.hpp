@@ -24,7 +24,6 @@ struct AutoEncoderImpl : torch::nn::Module {
 
     torch::Tensor forward(const torch::Tensor &x) {
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
-        // std::cout << x << "AE" << std::endl;
         return m_decoder(m_encoder(x, encoder_mu, encoder_logvar), decoder_logvar);
     }
 

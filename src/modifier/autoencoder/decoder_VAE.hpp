@@ -38,6 +38,7 @@ struct DecoderImpl : torch::nn::Module {
                 torch::Tensor mu, output;
                 decode(z, mu, logvar);
                 return mu;
+                // if sample output as well
                 // sample_output(mu, logvar, output);
                 // return output;
         }

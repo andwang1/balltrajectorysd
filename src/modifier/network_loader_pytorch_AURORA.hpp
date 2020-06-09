@@ -116,7 +116,6 @@ public:
         return stc::exact(this)->training(phen_d, traj_d, is_trajectories, full_train, generation);
     }
 
-    
 
     void get_reconstruction(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, 
                             MatrixXf_rm &reconstruction) {
@@ -137,7 +136,6 @@ public:
     torch::nn::AnyModule& auto_encoder() {
         return this->m_auto_encoder_module;
     }
-
     int32_t m_global_step;
 
 
@@ -278,15 +276,6 @@ public:
         vector_to_eigen(train_is_trajectories, tr_is_traj);
         vector_to_eigen(val_is_trajectories, val_is_traj);
         vector_to_eigen(is_trajectories, is_traj);
-        
-        // std::cout << "BEFORE AVG" << std::endl;
-        // std::cout << train_phen.rows() << std::endl;
-        // std::cout << valid_phen.rows() << std::endl;
-        // std::cout << train_traj.rows() << std::endl;
-        // std::cout << valid_traj.rows() << std::endl;
-        // std::cout << tr_is_traj.size() << std::endl;
-        // std::cout << val_is_traj.size() << std::endl;
-
 
         float init_tr_recon_loss = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj, true);
         float init_vl_recon_loss = this->get_avg_recon_loss(valid_phen, valid_traj, val_is_traj);
@@ -321,7 +310,6 @@ public:
                 // for training can just take the sum as usual, for eval need to do some averaging as there are fewer phenotypes than trajectories
                 torch::Tensor loss_tensor = torch::sum(torch::pow(traj - reconstruction_tensor, 2), {1}).mean();
                 loss_tensor.backward();
-
                 
                 this->m_adam_optimiser.step();
                 ++epoch;
@@ -409,13 +397,6 @@ public:
         torch::Tensor averaged_descriptors_tensor = torch::zeros({phen.rows(), TParams::qd::behav_dim}, torch::device(this->m_device));
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows(), torch::device(this->m_device));
         torch::Tensor recon_loss_unreduced = torch::pow(traj_tensor - reconstruction_tensor, 2);
-
-        // std::cout << "INPUT" << traj_tensor.sizes() << std::endl;
-        // std::cout << "OUTPUT" << reconstruction_tensor.sizes() << std::endl;
-        // std::cout << "DESC" << descriptors_tensor.sizes() << std::endl;
-        // std::cout << "LOSS_UNRED" << recon_loss_unreduced.sizes() << std::endl;
-        // std::cout << "PHENROWS" << phen.rows() << std::endl;
-
 
         int index{0};
         int internal_avg_counter{0};

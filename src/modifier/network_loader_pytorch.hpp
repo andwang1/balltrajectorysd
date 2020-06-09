@@ -275,6 +275,7 @@ public:
         std::vector<int> train_is_trajectories(is_trajectories.begin(), is_trajectories.begin() + l_train_traj);
         std::vector<int> val_is_trajectories(is_trajectories.begin() + l_train_traj, is_trajectories.end());
 
+        // if the dataset is too small -> see split_dataset
         if (train_traj.rows() == valid_traj.rows())
         {
             val_is_trajectories = train_is_trajectories;
@@ -286,15 +287,6 @@ public:
         vector_to_eigen(val_is_trajectories, val_is_traj);
         vector_to_eigen(is_trajectories, is_traj);
         
-        // std::cout << "BEFORE AVG" << std::endl;
-        // std::cout << train_phen.rows() << std::endl;
-        // std::cout << valid_phen.rows() << std::endl;
-        // std::cout << train_traj.rows() << std::endl;
-        // std::cout << valid_traj.rows() << std::endl;
-        // std::cout << tr_is_traj.size() << std::endl;
-        // std::cout << val_is_traj.size() << std::endl;
-
-
         float init_tr_recon_loss = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj, true);
         float init_vl_recon_loss = this->get_avg_recon_loss(valid_phen, valid_traj, val_is_traj);
 
@@ -319,6 +311,7 @@ public:
                 // not necessary as layers enforce grad
                 // std::get<0>(tup).set_requires_grad(true);
 
+                // tup[1] is the trajectories tensor
 		        torch::Tensor traj = std::get<1>(tup).to(this->m_device);
 
                 // tup[0] is the phenotype
@@ -337,11 +330,10 @@ public:
                 {
                     if (std::get<2>(tup)[i])
                     {++index;}
-                    // tup[1] is the trajectories tensor
-                    // std::cout << "BEFORE NORM" << std::endl;
+                    
                     // std::cout << "recon" << reconstruction_tensor[index] << std::endl;
                     // std::cout << "traj" << std::get<1>(tup)[i] << std::endl;
-                    // loss_tensor / (2 * torch::exp(decoder_logvar) + 0.0001) + 0.5 * (decoder_logvar + log_2_pi)
+
                     if (TParams::ae::full_loss)
                     {
                         loss_tensor += torch::sum(torch::pow(traj[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index]))
@@ -351,7 +343,7 @@ public:
                     {
                         loss_tensor += torch::sum(torch::pow(traj[i] - reconstruction_tensor[index], 2));
                     }
-                    // std::cout << "L2\t" << torch::norm(std::get<1>(tup)[i] - reconstruction_tensor[index], 2, {0}).item<double>();
+                    // std::cout << "L2\t" << torch::sum(torch::pow(std::get<1>(tup)[i] - reconstruction_tensor[index], 2)).item<double>();
                     // std::cout << "\tVAR\t" << torch::mean(torch::exp(decoder_logvar[index])).item<double>();
                     // std::cout << std::flush << '\r';
                 }
@@ -359,10 +351,7 @@ public:
                 long num_trajectories {static_cast<long>(std::get<2>(tup).size())};
                 loss_tensor /= num_trajectories;
                 loss_tensor.backward();
-                // std::cout << "GRADS" << std::endl;
-                // std::cout << encoder_mu.grad() << "MU" << std::endl;
-                // std::cout << encoder_logvar.grad() << "LOGVAR"<< std::endl;
-                // std::cout << std::get<0>(tup).grad() << "INPUT"<< std::endl;
+
                 // std::cout << "ACTUAL LOSS" << loss_tensor.item<float>() << std::endl;
                 
                 this->m_adam_optimiser.step();
@@ -384,21 +373,17 @@ public:
                     this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj) < init_tr_recon_loss)
                     {
                     _continue = false;
-                    // std::cout << "CONTINUEFALSE" << std::endl;
                     }
             }
 
-
             float recon_loss_t = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj);
             float recon_loss_v = this->get_avg_recon_loss(valid_phen, valid_traj, val_is_traj);
-
 
             std::cout.precision(5);
             std::cout << "training dataset: " << train_phen.rows() << "  valid dataset: " << valid_phen.rows() << " - ";
             std::cout << std::setw(5) << epoch << "/" << std::setw(5) << TParams::ae::nb_epochs;
             std::cout << " recon loss (t): " << std::setw(8) << recon_loss_t;
             std::cout << " (v): " << std::setw(8) << recon_loss_v;
-            // std::cout << " (var): " << std::setw(8) << recon_loss_v;
             std::cout << std::flush << '\r';
         }
 
@@ -447,6 +432,7 @@ public:
         torch::Tensor descriptors_tensor;
         torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent(phen_tensor.to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar, descriptors_tensor);
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows(), torch::device(this->m_device));
+        
         // std::cout << traj_tensor << "SCALEDTRAJ" << std::endl;
         // std::cout << reconstruction_tensor << "SCALEDRECON" << std::endl;
 

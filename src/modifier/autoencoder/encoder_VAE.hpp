@@ -13,7 +13,6 @@ struct EncoderImpl : torch::nn::Module {
         m_linear_v(torch::nn::Linear(en_hid_dim2, latent_dim)),
         m_device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
         {
-
                 register_module("linear_1", m_linear_1);
                 register_module("linear_2", m_linear_2);
                 register_module("linear_m", m_linear_m);
@@ -30,7 +29,6 @@ struct EncoderImpl : torch::nn::Module {
 
         void reparametrize(const torch::Tensor &mu, const torch::Tensor &logvar, torch::Tensor &z)
         {
-                
                 z = torch::randn_like(logvar, torch::device(m_device).requires_grad(true)) * torch::exp(0.5 * logvar) + mu;
         }
 
