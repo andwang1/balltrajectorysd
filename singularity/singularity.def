@@ -10,6 +10,7 @@ From: airl_lab/default/airl_env:pytorch_ci
     ./resources/fix_build.py /git/sferes2
 
 %post
+
     export LD_LIBRARY_PATH="/workspace/lib:$LD_LIBRARY_PATH"
     cd /git/sferes2
     mkdir balltrajectorysd
@@ -21,6 +22,53 @@ From: airl_lab/default/airl_env:pytorch_ci
     apt-get install -y  python3-matplotlib python3-numpy python3.6-dev python3-opencv python3-pip python3.6-tk graphviz xdg-utils
     apt-get install -y  gdb
     alias pip="/usr/local/anaconda/bin/pip"
+
+   cd /git
+   git clone https://github.com/erincatto/box2d.git ./box2d
+   cd ./box2d
+   sed -i 's/STATIC/SHARED'/g ./src/CMakeLists.txt
+   sed -i 's/#define b2_velocityThreshold\t\t1.0f/#define b2_velocityThreshold\t\t0.0f/' ./include/box2d/b2_settings.h
+   mkdir build
+   cd build
+   cmake -DBOX2D_BUILD_UNIT_TESTS=OFF -DBOX2D_BUILD_TESTBED=OFF -DCMAKE_INSTALL_PREFIX:PATH=/workspace ../
+   cmake --build .
+   mv src/libbox2d.so /workspace/lib/
+   cp -r ../include/box2d /workspace/include
+   
+
+   #----- UPDATE CORRADE AND MAGNUM. To be done in base images when we do the overall update for robot_dart as well ----#
+   cd /git
+   git clone https://github.com/mosra/corrade.git
+   cd corrade/
+   mkdir build
+   cd build
+   cmake -DCMAKE_INSTALL_PREFIX:PATH=/workspace ..
+   make -j
+   make install
+   cd /git
+   rm -rf corrade/
+
+   cd /git
+   git clone https://github.com/mosra/magnum.git
+   cd magnum
+   mkdir build
+   cd build
+   cmake -DCMAKE_INSTALL_PREFIX:PATH=/workspace -DWITH_AUDIO=ON -DWITH_DEBUGTOOLS=ON -DWITH_GL=ON -DWITH_MESHTOOLS=ON -DWITH_PRIMITIVES=ON -DWITH_SCENEGRAPH=ON -DWITH_SHADERS=ON -DWITH_TEXT=ON -DWITH_TEXTURETOOLS=ON -DWITH_TRADE=ON -DWITH_GLFWAPPLICATION=ON -DWITH_WINDOWLESSGLXAPPLICATION=ON -DWITH_OPENGLTESTER=ON -DWITH_ANYAUDIOIMPORTER=ON -DWITH_ANYIMAGECONVERTER=ON -DWITH_ANYIMAGEIMPORTER=ON -DWITH_ANYSCENEIMPORTER=ON -DWITH_MAGNUMFONT=ON -DWITH_OBJIMPORTER=ON -DWITH_TGAIMPORTER=ON -DWITH_WAVAUDIOIMPORTER=ON ..
+   make -j
+   make install
+   cd /git
+   rm -rf magnum
+
+   #----- END ------#
+
+   cd /git
+   git clone https://gitlab.doc.ic.ac.uk/AIRL/students_projects/2019-2020/andy_wang/tools/robox2d.git ./robox2d
+   cd ./robox2d
+   ./waf configure --prefix /workspace --shared --magnum_install_dir  /workspace  --magnum_integration_install_dir /workspace --magnum_plugins_install_dir /workspace --corrade_install_dir /workspace
+   ./waf
+   ./waf install
+   
+
 
    cd /git/sferes2/exp/
    mkdir balltrajectorysd
