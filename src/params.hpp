@@ -9,15 +9,19 @@ using namespace sferes::gen::evo_float;
 
 struct Params {
     struct sim {
-    SFERES_CONST double ROOM_H = 5;
-    SFERES_CONST double ROOM_W = 5;
+    SFERES_CONST float ROOM_H = 5.f;
+    SFERES_CONST float ROOM_W = 5.f;
 
     // fixed at first or random initialised from main?
-    SFERES_CONST double start_x = 2.5;
-    SFERES_CONST double start_y = 2.5;
+    SFERES_CONST float start_x = 2.8f;
+    SFERES_CONST float start_y = 3.f;
     SFERES_CONST size_t trajectory_length = 50;
     // 2D
     SFERES_CONST int num_trajectory_elements = 2 * trajectory_length;
+    SFERES_CONST float radius = 0.15f;
+    SFERES_CONST bool enable_graphics = true;
+    SFERES_CONST float max_force = 1.5f;
+    SFERES_CONST float sim_duration = 10.f;
     };
 
     struct random {
@@ -89,11 +93,12 @@ struct Params {
         SFERES_CONST double min_dpf = 0;
         SFERES_CONST double max_dpf = 0.3f;
         // minimum value
-        SFERES_CONST double max_angle = 2 * M_PI;
+        SFERES_CONST double min_angle = -M_PI;
+        SFERES_CONST double max_angle = M_PI;
     };
 
     struct qd {
-        SFERES_CONST size_t gen_dim = 14;
+        SFERES_CONST size_t gen_dim = 4;
         SFERES_CONST size_t phen_dim = 2;
         SFERES_CONST size_t behav_dim = 2;
     };
