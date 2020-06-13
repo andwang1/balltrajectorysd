@@ -12,6 +12,12 @@
 #include <fstream>
 #include <random>
 
+#include <box2d/box2d.h>
+#include <robox2d/simu.hpp>
+#include <robox2d/robot.hpp>
+#include <robox2d/common.hpp>
+#include <robox2d/gui/magnum/graphics.hpp>
+
 // print statements for debugging
 bool VERBOSE = false;
 
@@ -22,42 +28,97 @@ namespace rng {
     std::uniform_real_distribution<> rng(0, 1);
 }
 
+
+class Arm : public robox2d::Robot {
+public:
+  
+  Arm(std::shared_ptr<b2World> world, std::array<int, Params::random::max_num_random + 1> &is_random_traj){
+
+    size_t nb_joints=Params::qd::gen_dim;
+    float arm_length=1.5f;
+    float seg_length = arm_length / (float) nb_joints;
+
+    // create walls one by one as GUI needs seperate bodies, so cannot use one body for multiple fixtures (TODO create diff variant for non GUI run?)
+    // specify width and height to each side from a central location
+    b2Body* ceiling = robox2d::common::createBox(world, {Params::sim::ROOM_W / 2, 0.01}, b2_staticBody, {Params::sim::ROOM_W / 2, Params::sim::ROOM_H, 0.f});
+    b2Body* floor = robox2d::common::createBox(world, {Params::sim::ROOM_W / 2, 0.01}, b2_staticBody, {Params::sim::ROOM_W / 2, 0.f, 0.f});
+    b2Body* right = robox2d::common::createBox(world, {0.01, Params::sim::ROOM_H / 2}, b2_staticBody, {Params::sim::ROOM_W, Params::sim::ROOM_H / 2, 0.f});
+    b2Body* left = robox2d::common::createBox(world, {0.01, Params::sim::ROOM_H / 2}, b2_staticBody, {0, Params::sim::ROOM_H / 2, 0.f});
+
+    // base in the center of the room
+    b2Body* body = robox2d::common::createBox( world,{arm_length*0.025f, arm_length*0.025f}, b2_staticBody,  {Params::sim::ROOM_W / 2, Params::sim::ROOM_H / 2,0.f} );
+    b2Vec2 anchor = body->GetWorldCenter();
+    // body will always represent the body created in the previous iteration
+    
+    for(size_t i =0; i < nb_joints; i++)
+    {
+      float density = 1.0f/std::pow(1.5,i);
+	    _end_effector = robox2d::common::createBox( world,{seg_length*0.5f , arm_length*0.01f }, b2_dynamicBody, {(0.5f+i)*seg_length + Params::sim::ROOM_W / 2, Params::sim::ROOM_H / 2,0.0f}, density );
+      this->_servos.push_back(std::make_shared<robox2d::common::Servo>(world,body, _end_effector, anchor));
+
+      body=_end_effector;
+      anchor = _end_effector->GetWorldCenter() + b2Vec2(seg_length*0.5 , 0.0f);
+    }
+
+    // in this order so that first observation retrieved in simu.run is the actual trajectory
+    // start at 1 because first one is the actual ball
+    for (int i{1}; i < is_random_traj.size(); ++i)
+    {
+        if (is_random_traj[i])
+        {
+            // use rng to generate position and force
+            float pos_x = rng::rng(rng::gen) * (Params::sim::start_x - 2 * Params::sim::radius) + Params::sim::radius;
+            float pos_y = rng::rng(rng::gen) * (Params::sim::start_y - 2 * Params::sim::radius) + Params::sim::radius;
+            float force_x = rng::rng(rng::gen) * Params::sim::max_force;
+            float force_y = rng::rng(rng::gen) * Params::sim::max_force;
+            
+            b2Body* random_ball = robox2d::common::createCircle( world, Params::sim::radius, b2_dynamicBody,  {pos_x, pos_y, 0.f}, 0.2f);
+            b2Vec2 force{force_x, force_y};
+            random_ball->ApplyForce(force, random_ball->GetWorldCenter(), true);
+        }
+    }
+    b2Body* ball = robox2d::common::createCircle( world, Params::sim::radius, b2_dynamicBody,  {Params::sim::start_x, Params::sim::start_y, 0.f}, 0.2f );
+  }
+  
+  b2Vec2 get_end_effector_pos(){return _end_effector->GetWorldCenter(); }
+  
+private:
+  b2Body* _end_effector;
+};
+
 FIT_QD(Trajectory)
 {
     public:
-    Trajectory(){}
+    Trajectory(){
+        _params.resize(Params::qd::gen_dim);
+
+        for (Eigen::VectorXf &traj : trajectories)
+            {traj.resize(Params::sim::num_trajectory_elements);}
+
+        std::fill(is_random_trajectories.begin(), is_random_trajectories.end(), 0);
+
+        // *100 timesteps in simulation, *2 two coordinates for each timestep
+        full_trajectory.resize(static_cast<int>(Params::sim::sim_duration * 100 * 2));
+    }
 
     template <typename Indiv> 
     void eval(Indiv & ind){
 
-        // get the data from ind which is the phenotype
-        // genotype specifies the size, = 2? and then need to specify the phenotype max min stuff
-        float angle = ind.data(0);
-        float dpf = ind.data(1);
-
-        _angle = angle;
-        _dpf = dpf;
-
-        // generate actual true trajectory from phenotype
-        Eigen::VectorXf single_traj;
-        single_traj.resize(Params::sim::num_trajectory_elements);
-        generate_traj(single_traj, wall_impacts, angle, dpf);
-        trajectories[0] = single_traj;
-        
+        for (size_t i = 0; i < ind.size(); ++i)
+        _params[i] = ind.data(i);
         // track number of random trajectories
         m_num_trajectories = 0;
 
+        // first trajectory is actual trajectory
+        is_random_trajectories[0] = 1;
+
         // generate random trajectories
+        // pass in boolean vector to the simulate function
         for (int i{1}; i < Params::random::max_num_random + 1; ++i)
         {
             float prob = rng::rng(rng::gen);
             if (prob <= Params::random::pct_random)
             {
-                angle = rng::rng(rng::gen) * Params::parameters::max_angle;
-                if (Params::random::is_random_dpf)
-                {dpf = rng::rng(rng::gen) * Params::parameters::max_dpf;}
-                // generate a random trajectory
-                generate_traj(single_traj, angle, dpf);
                 // 1 means it is a trajectory
                 is_random_trajectories[i] = 1;
                 ++m_num_trajectories;
@@ -66,378 +127,64 @@ FIT_QD(Trajectory)
             {
                 is_random_trajectories[i] = 0;
             }
-            trajectories[i] = single_traj;
         }
+        // populates member vars
+        simulate(_params, is_random_trajectories);
+
         // FITNESS: constant because we're interested in exploration
         this->_value = -1;
-
     }
     
-
-    // generates trajectories
-    // tried making a rref or pointer but doesnt seem to hold, so need to use array of eigenvectors instead of matrix directly
-    void generate_traj(Eigen::VectorXf &traj, double angle, double dist_per_frame)
-    {
+    // generate trajectories during the algorithm
+    void simulate(Eigen::VectorXd &ctrl_pos, std::array<int, Params::random::max_num_random + 1> &is_random_traj){
+        robox2d::Simu simu;
+        simu.add_floor();
         
-        float start_x = Params::sim::start_x;
-        float start_y = Params::sim::start_y;
+        auto rob = std::make_shared<Arm>(simu.world(), is_random_traj);
+        auto ctrl = std::make_shared<robox2d::control::ConstantPos>(ctrl_pos);
+        rob->add_controller(ctrl);
+        simu.add_robot(rob);
 
-        float ROOM_H = Params::sim::ROOM_H;
-        float ROOM_W = Params::sim::ROOM_W;
-
-        size_t trajectory_length = Params::sim::trajectory_length;
-
-        // put this somewhere else? not necessarily needed
-        assert (dist_per_frame < ROOM_H);
-        assert (dist_per_frame < ROOM_W);
-
-        // assert not in wall?
-        float current_x = start_x;
-        float current_y = start_y;
-        float current_angle = angle;
-
-        // put starting position as first observation
-        traj(0) = start_x;
-        traj(1) = start_y;
-
-        if (VERBOSE)
+        if (Params::sim::enable_graphics)
         {
-            std::cout << "(" << start_x << ", " << start_y << ")," << std::endl;
+            auto graphics = std::make_shared<robox2d::gui::Graphics<>>(simu.world());
+            simu.set_graphics(graphics);
         }
-
-        // start at 1 since start point is the first frame
-        for (int i {1}; i < trajectory_length; ++i)
-        {
-            if (VERBOSE)
-            {std::cout << "Angle" << current_angle * 180 / M_PI << std::endl;}
-            float x_delta = dist_per_frame * cos(current_angle);
-            float y_delta = dist_per_frame * sin(current_angle);
-            
-            // save these for impact point calculations
-            float previous_x = current_x;
-            float previous_y = current_y;
-            float previous_angle = current_angle;
-            bool impact{false};
-            
-            current_x += x_delta;
-            current_y += y_delta;
-
-            if (current_x < 0)
-            {
-                impact = true;
-                current_x *= -1;
-                // coming from below
-                if (current_angle < M_PI) {current_angle = (M_PI - current_angle);}
-                else {current_angle = (3 * M_PI - current_angle);}
-            }
-            if (current_y < 0)
-            {
-                impact = true;
-                current_y *= -1;
-                current_angle = (2 * M_PI - current_angle);
-            }
-            if (current_x > ROOM_W)
-            {
-                impact = true;
-                current_x = 2 * ROOM_W - current_x;
-                if (current_angle < M_PI) {current_angle = (M_PI - current_angle);}
-                else {current_angle = (3 * M_PI - current_angle);}
-            }
-            if (current_y > ROOM_H)
-            {
-                impact = true;
-                current_y = 2 * ROOM_H - current_y;
-                current_angle = (2 * M_PI - current_angle);
-            }
-            traj(i * 2) = current_x;
-            traj(i * 2 + 1) = current_y;
-            if (VERBOSE)
-            {
-                std::cout << "(" << current_x << ", " << current_y << ")," << std::endl;
-            }
-        }
+        simu.run(Params::sim::sim_duration, trajectories, Params::sim::trajectory_length);
     }
 
-    // generates trajectories and the impact points
-    // tried making a rref or pointer but doesnt seem to hold, so need to use array of eigenvectors instead of matrix directly
-    void generate_traj(Eigen::VectorXf &traj, std::vector<float> &wall_impacts, double angle, double dist_per_frame)
-    {
+    // generate full trajectory for diversity calc
+    void simulate(Eigen::VectorXd &ctrl_pos){
+    // simulating
+        robox2d::Simu simu;
+        simu.add_floor();
+
+        // no random trajectories
+        std::array<int, Params::random::max_num_random + 1> is_random_traj;
+        std::fill(is_random_traj.begin(), is_random_traj.end(), 0);
         
-        float start_x = Params::sim::start_x;
-        float start_y = Params::sim::start_y;
+        auto rob = std::make_shared<Arm>(simu.world(), is_random_traj);
+        auto ctrl = std::make_shared<robox2d::control::ConstantPos>(ctrl_pos);
+        rob->add_controller(ctrl);
+        simu.add_robot(rob);
 
-        float ROOM_H = Params::sim::ROOM_H;
-        float ROOM_W = Params::sim::ROOM_W;
-
-        size_t trajectory_length = Params::sim::trajectory_length;
-
-        // the wall impacts
-        wall_impacts.clear();
-
-        // put this somewhere else? not necessarily needed
-        assert (dist_per_frame < ROOM_H);
-        assert (dist_per_frame < ROOM_W);
-
-        // assert not in wall?
-        float current_x = start_x;
-        float current_y = start_y;
-        float current_angle = angle;
-
-        // put starting position as first observation
-        traj(0) = start_x;
-        traj(1) = start_y;
-
-        if (VERBOSE)
+        if (Params::sim::enable_graphics)
         {
-            std::cout << "(" << start_x << ", " << start_y << ")," << std::endl;
+            auto graphics = std::make_shared<robox2d::gui::Graphics<>>(simu.world());
+            simu.set_graphics(graphics);
         }
-
-        // start at 1 since start point is the first frame
-        for (int i {1}; i < trajectory_length; ++i)
-        {
-            if (VERBOSE)
-            {std::cout << "Angle" << current_angle * 180 / M_PI << std::endl;}
-            float x_delta = dist_per_frame * cos(current_angle);
-            float y_delta = dist_per_frame * sin(current_angle);
-            
-            // save these for impact point calculations
-            float previous_x = current_x;
-            float previous_y = current_y;
-            float previous_angle = current_angle;
-            bool impact{false};
-            
-            current_x += x_delta;
-            current_y += y_delta;
-
-            if (current_x < 0)
-            {
-                impact = true;
-                current_x *= -1;
-                // coming from below
-                if (current_angle < M_PI) {current_angle = (M_PI - current_angle);}
-                else {current_angle = (3 * M_PI - current_angle);}
-            }
-            if (current_y < 0)
-            {
-                impact = true;
-                current_y *= -1;
-                current_angle = (2 * M_PI - current_angle);
-            }
-            if (current_x > ROOM_W)
-            {
-                impact = true;
-                current_x = 2 * ROOM_W - current_x;
-                if (current_angle < M_PI) {current_angle = (M_PI - current_angle);}
-                else {current_angle = (3 * M_PI - current_angle);}
-            }
-            if (current_y > ROOM_H)
-            {
-                impact = true;
-                current_y = 2 * ROOM_H - current_y;
-                current_angle = (2 * M_PI - current_angle);
-            }
-            traj(i * 2) = current_x;
-            traj(i * 2 + 1) = current_y;
-            if (VERBOSE)
-            {
-                std::cout << "(" << current_x << ", " << current_y << ")," << std::endl;
-            }
-            
-            if (impact)
-            {generate_impact_points(wall_impacts, previous_x, previous_y, previous_angle, x_delta, y_delta, dist_per_frame);}
-        }
+    
+        // get full trajectory
+        simu.run(Params::sim::sim_duration, full_trajectory);
     }
-
-    void generate_impact_points(std::vector<float> &wall_impacts, float previous_x, float previous_y, float previous_angle, 
-                            float x_delta, float y_delta, float dist_per_frame)
-    {
-
-        float epsilon = 1e-5;
-
-        float ROOM_H = Params::sim::ROOM_H;
-        float ROOM_W = Params::sim::ROOM_W;
-
-        float projected_x = previous_x + x_delta;
-        float projected_y = previous_y + y_delta;
-
-        bool double_impact{false};
-        // check if there will be two impacts
-        if (((projected_x > ROOM_W - epsilon) && (projected_y > ROOM_H - epsilon)) || ((projected_x < 0 + epsilon) && (projected_y < 0 + epsilon)) ||
-            ((projected_x > ROOM_W - epsilon) && (projected_y < 0 + epsilon)) || ((projected_x < 0 + epsilon) && (projected_y > ROOM_H - epsilon)))
-        {
-            double_impact = true;
-            if (VERBOSE)
-            {std::cout << "DOUBLE IPMACT"<< std::endl;}
-        }
-        // set to {-50} if suspect falling through the net and want to debug
-        float impact_1_x;
-        float impact_1_y;
-        float impact_2_x;
-        float impact_2_y;
-        float new_angle;
-
-        if (previous_x + x_delta > ROOM_W - epsilon)
-        {
-            impact_1_x = ROOM_W;
-            impact_1_y = previous_y + tan(previous_angle) * (ROOM_W - previous_x);
-            if (double_impact)
-            // one of the two conditions below must hold if there is a double impact
-            {
-                bool reorder{false};
-                if (impact_1_y > ROOM_H - epsilon)
-                // ball hits the upper y axis limit first, so recalculate
-                {
-                    reorder = true;
-                    impact_1_x = previous_x + (ROOM_H - previous_y) / tan(previous_angle);
-                    impact_1_y = ROOM_H;
-                }
-                else if (impact_1_y < 0 + epsilon)
-                // ball hits the lower y axis limit first
-                {
-                    reorder = true;
-                    impact_1_x = previous_x - previous_y / tan(previous_angle);
-                    impact_1_y = 0;
-                }
-                else
-                // no reordering required
-                {
-                    impact_2_y = ROOM_H;
-                    if (previous_angle < M_PI)
-                    {
-                        new_angle = (M_PI - previous_angle);
-                        impact_2_x = ROOM_W + (ROOM_H - impact_1_y) / tan(new_angle);
-                    }
-                    else 
-                    {
-                        new_angle = (3 * M_PI - previous_angle);
-                        impact_2_x = ROOM_W - impact_1_y / tan(new_angle);
-                    }
-                }
-                if (reorder)
-                // calculate second impact point after reordering
-                {
-                    new_angle = (2 * M_PI - previous_angle);
-                    impact_2_x = ROOM_W;
-                    impact_2_y = impact_1_y + tan(new_angle) * (ROOM_W - impact_1_x);
-                }
-            }
-        }
-        else if (previous_x + x_delta < 0 + epsilon)
-        {
-            impact_1_x = 0;
-            impact_1_y = previous_y - tan(previous_angle) * previous_x;
-            if (double_impact)
-            {
-                bool reorder{false};
-                if (impact_1_y > ROOM_H - epsilon)
-                {
-                    reorder = true;
-                    impact_1_x = previous_x + (ROOM_H - previous_y) / tan(previous_angle);
-                    impact_1_y = ROOM_H;
-                }
-                else if (impact_1_y < 0 + epsilon)
-                {
-                    reorder = true;
-                    impact_1_x = previous_x - previous_y / tan(previous_angle);
-                    impact_1_y = 0;
-                }
-                else
-                {
-                    impact_2_y = 0;
-                    if (previous_angle < M_PI) 
-                    {
-                        new_angle = (M_PI - previous_angle);
-                        impact_2_x = (ROOM_H - impact_1_y) / tan(new_angle);
-                    }
-                    else 
-                    {
-                        new_angle = (3 * M_PI - previous_angle);
-                        impact_2_x = impact_1_y / -tan(new_angle);
-                    }
-                }
-                if (reorder)
-                {
-                    new_angle = (2 * M_PI - previous_angle);
-                    impact_2_x = 0;
-                    impact_2_y = impact_1_y + tan(new_angle) * -impact_1_x;
-                }
-            }
-        }
-        // if there is no double impact and the x limits are not exceeded, then the impact is on y    
-        if ((previous_y + y_delta > ROOM_H - epsilon) && !double_impact)
-        {
-            impact_1_x = previous_x + (ROOM_H - previous_y) / tan(previous_angle);
-            impact_1_y = ROOM_H;
-        }
-        if ((previous_y + y_delta < 0 + epsilon) && !double_impact)
-        {
-            impact_1_x = previous_x - previous_y / tan(previous_angle);
-            impact_1_y = 0;
-        }
-
-        wall_impacts.push_back(impact_1_x);
-        wall_impacts.push_back(impact_1_y);
-        if (VERBOSE)
-        {
-            std::cout << "IMPACT1 X " << impact_1_x << std::endl;
-            std::cout << "IMPACT1 Y " << impact_1_y << std::endl;
-        }
-        // this will give two impact if the points are the same, e.g. 10,10 can add a norm comparison to make it only be one
-        if (double_impact)
-        {
-            wall_impacts.push_back(impact_2_x);
-            wall_impacts.push_back(impact_2_y);
-            if (VERBOSE)
-            {
-                std::cout << "IMPACT2 X " << impact_2_x << std::endl;
-                std::cout << "IMPACT2 Y " << impact_2_y << std::endl;
-            }
-        }
-
-        if (VERBOSE)
-        {
-            std::cout << "GENERATEIMPACT ENTER\n"  <<
-             "PREV_X" << previous_x << "\n" <<
-             "PREV_Y" << previous_y  <<"\n" <<
-             "PREV_ANGLE" << previous_angle << "\n" <<
-             "x_delta" << x_delta <<"\n" <<
-             "y_delta" << y_delta <<"\n" <<
-             "impact1x" << impact_1_x <<"\n" <<
-             "impact1y" << impact_1_y <<"\n" <<
-            std::endl;
-            if (double_impact)
-            {
-               std::cout << "impact2x" << impact_2_x <<"\n" <<
-             "impact2y" << impact_2_y << std::endl;
-            }
-        }
-
-        //debug
-        assert(impact_1_x < ROOM_W + 1);
-        assert(impact_1_y < ROOM_H + 1);
-        assert(impact_1_x > -1);
-        assert(impact_1_y > -1);
-        if (double_impact)
-        {
-        assert(impact_2_x < ROOM_W + 1);
-        assert(impact_2_y < ROOM_H + 1);
-        assert(impact_2_x > -1);
-        assert(impact_2_y > -1);
-        }
-        if (VERBOSE)
-        {std::cout << "GENERATE IMPACT EXIT" << std::endl;}
-    }
-
-
+    
     template<typename block_t>
     void get_flat_observations(block_t &data) const 
     {
         for (size_t row {0}; row < (Params::random::max_num_random + 1); ++row)
         {   
             for (size_t i{0}; i < Params::sim::num_trajectory_elements; ++i)
-            {
-                data(row, i) = trajectories[row](i);
-            }
+                {data(row, i) = trajectories[row](i);}
         }
     }
 
@@ -449,17 +196,12 @@ FIT_QD(Trajectory)
     {
         return is_random_trajectories.at(index);
     }
-
+    
     int calculate_diversity_bins(std::bitset<Params::nov::discretisation * Params::nov::discretisation> &crossed_buckets)
     {
-        
-        Eigen::VectorXf impact_pts = Eigen::Map<Eigen::VectorXf> (wall_impacts.data(), wall_impacts.size());
-        Eigen::VectorXf traj = trajectories[0];
-        Eigen::Vector2f start = traj.head<2>();
-        Eigen::Vector2f end = traj.tail<2>();
-        Eigen::Vector2f impact_pt;
-        Eigen::Vector2f slope;
-        Eigen::Vector2f current;
+        // generate trajectory again but without additional random balls
+        simulate(_params);
+
 
         double ROOM_H = Params::sim::ROOM_H;
         double ROOM_W = Params::sim::ROOM_W;
@@ -468,77 +210,20 @@ FIT_QD(Trajectory)
         double discrete_length_x {ROOM_W / discretisation};
         double discrete_length_y {ROOM_H / discretisation};
 
-        // how many sub steps do we want to make
-        double factor_divider {10};
+        int bucket_number{-1};
 
-        double factor;
-        double max_factor;
-
-        for (int i{0}; i < impact_pts.size() + 2; i += 2)
+        for (int j{0}; j < full_trajectory.size(); j+=2)
         {
-            // not a nice way, includes the end point of the trajectory into the for loop with the above +2
-            if (i >= impact_pts.size()) 
-            {impact_pt = end;}
-            else
-            {impact_pt = impact_pts.segment(i, 2);}
+            int bucket_x = full_trajectory[j] / discrete_length_x;
+            int bucket_y = full_trajectory[j+1] / discrete_length_y;
+            bucket_number = bucket_y * discretisation + bucket_x;
             
             if (VERBOSE)
-            {std::cout << "IMPACTPT" << impact_pt << std::endl;}
-
-            slope = impact_pt - start;
-            slope.normalize();
-
-            // create factor such that we move from bucket to bucket on one axis
-            // pick the axis where there is most change to restrict
-            // max factor calculation so we know when to stop
-            if (abs(slope(0)) > abs(slope(1)))
             {
-                factor = abs((discrete_length_x / factor_divider) / slope(0));
-                max_factor = abs((impact_pt(0) - start(0)) / slope(0));
+                std::cout << "Bx " << bucket_x << "By " << bucket_y << "Bnum " << bucket_number << std::endl;
             }
-            else
-            {
-                factor = abs((discrete_length_y / factor_divider) / slope(1));
-                max_factor = abs((impact_pt(1) - start(1)) / slope(1));
-            }
-
-            if (VERBOSE)
-            {std::cout << "\nSTART\n" << start << "\nEND\n" << impact_pt << "\nSLOPE\n" << slope << "\nFactor " << factor << "MAXFACTOR" << max_factor << std::endl;}
-
-            for (int j{0}; j * factor < max_factor; ++j)
-            // the end point of one line is included as the start point in the next line
-            {
-                current = start + j * factor * slope;
-                
-                int bucket_x = current(0) / discrete_length_x;
-                int bucket_y = current(1) / discrete_length_y;
-                // at the edge of the image, the bucket would be for the box outside the image, so subtract 1 to keep it inside
-                if (bucket_x == discretisation) {bucket_x -= 1;}
-                if (bucket_y == discretisation) {bucket_y -= 1;}
-                int bucket_number = bucket_y * discretisation + bucket_x;
-                
-                if (VERBOSE)
-                {
-                    std::cout << "START" << start << std::endl;
-                    std::cout << "IMAPCT" << impact_pt << std::endl;
-                    std::cout << j * factor << "MAX: " << max_factor << std::endl;
-                    std::cout << "\nCURRENT POS\n" << current << std::endl;
-                    std::cout << "Bx " << bucket_x << "By " << bucket_y << "Bnum " << bucket_number << std::endl;
-                    std::cout << "WALL" << wall_impacts << std::endl;
-                    std::cout << "ANGLE" << _angle << "DPF" << _dpf << std::endl;
-                }
-                crossed_buckets.set(bucket_number);
-            }
-            start = impact_pt;
+            crossed_buckets.set(bucket_number);
         }
-
-        // end point of trajectory needs to be added
-        int bucket_x = end(0) / discrete_length_x;
-        int bucket_y = end(1) / discrete_length_y;
-        if (bucket_x == discretisation) {bucket_x -= 1;}
-        if (bucket_y == discretisation) {bucket_y -= 1;}
-        int bucket_number = bucket_y * discretisation + bucket_x;
-        crossed_buckets.set(bucket_number);
 
         if (VERBOSE)
         {
@@ -576,81 +261,17 @@ FIT_QD(Trajectory)
     //     }
     // }
 
- 
-    
-
-
-    // start pos constrained by room width
-    // angle constrained by 2* M_PI
-    // dist 80kph @ 60fps ~ 0.35m / frame
-
-    // void generate_random_data(int num_examples, bool is_random_start = true, bool is_random_dpf = true)
-    // {
-    //     // Will be used to obtain a seed for the random number engine
-    //     std::random_device rd;  
-    //     //Standard mersenne_twister_engine seeded with rd()
-    //     std::mt19937 gen(rd()); 
-    //     std::uniform_real_distribution<> rng_start_x(0, ROOM_W);
-    //     std::uniform_real_distribution<> rng_start_y(0, ROOM_H);
-    //     std::uniform_real_distribution<> rng_angle(0, 2 * M_PI);
-    //     std::uniform_real_distribution<> rng_dpf(0, 0.35);
-
-    //     std::ofstream data_file;
-    //     data_file.open("data.txt");
-    //     // comma seperated print
-    //     Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "\n");
-
-    //     double start_x, start_y, angle, dpf;
-
-    //     // initialise randomly once if keeping start and dpf fixed
-    //     if (!is_random_start)
-    //     {
-    //         start_x = rng_start_x(gen);
-    //         start_y = rng_start_x(gen);
-    //     }
-    //     if (!is_random_dpf)
-    //     {dpf = rng_dpf(gen);}
-
-    //     Eigen::VectorXd traj(trajectory_length * 2);
-    //     Eigen::VectorXd traj_impact_points;
-
-    //     for (int i{0}; i < num_examples; ++i)
-    //     {
-    //         if (is_random_start)
-    //         {
-    //             start_x = rng_start_x(gen);
-    //             start_y = rng_start_x(gen);
-    //         }
-    //         if (is_random_dpf)
-    //         {dpf = rng_dpf(gen);}
-
-    //         angle = rng_angle(gen);
-
-    //         generate_traj(traj, traj_impact_points, start_x, start_y, angle, dpf);
-    //         // first line INPUTS
-    //         data_file << start_x << "," <<  start_y << "," << angle << "," << dpf;
-    //         // second line is TRAJECTORY
-    //         data_file << traj.format(CommaInitFmt);
-    //         // third line is IMPACT
-    //         data_file << traj_impact_points.format(CommaInitFmt) << "\n";
-    //     }
-    //     data_file.close();
-    // }
-
     private:
     // using matrix directly does not work, see above comment at generate_traj, will not stay in mem after assigining
     // Eigen::Matrix<double, Params::random::max_num_random + 1, Params::sim::trajectory_length> trajectories;
     
     // random trajectories + 1 real one
     std::array<Eigen::VectorXf, Params::random::max_num_random + 1> trajectories;
-    std::array<int, Params::random::max_num_random + 1> is_random_trajectories {1};
+    Eigen::VectorXf full_trajectory;
+    std::array<int, Params::random::max_num_random + 1> is_random_trajectories;
     size_t m_num_trajectories;
-    std::vector<float> wall_impacts;
+    Eigen::VectorXd _params;
     float m_entropy;
-
-    // for debugging
-    float _angle;
-    float _dpf;
 };
 
 #endif //TRAJECTORY_HPP
