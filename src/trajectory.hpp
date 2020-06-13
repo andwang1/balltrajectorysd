@@ -40,10 +40,15 @@ public:
 
     // create walls one by one as GUI needs seperate bodies, so cannot use one body for multiple fixtures (TODO create diff variant for non GUI run?)
     // specify width and height to each side from a central location
+    if (Params::sim::enable_graphics)
+    {
     b2Body* ceiling = robox2d::common::createBox(world, {Params::sim::ROOM_W / 2, 0.01}, b2_staticBody, {Params::sim::ROOM_W / 2, Params::sim::ROOM_H, 0.f});
     b2Body* floor = robox2d::common::createBox(world, {Params::sim::ROOM_W / 2, 0.01}, b2_staticBody, {Params::sim::ROOM_W / 2, 0.f, 0.f});
     b2Body* right = robox2d::common::createBox(world, {0.01, Params::sim::ROOM_H / 2}, b2_staticBody, {Params::sim::ROOM_W, Params::sim::ROOM_H / 2, 0.f});
     b2Body* left = robox2d::common::createBox(world, {0.01, Params::sim::ROOM_H / 2}, b2_staticBody, {0, Params::sim::ROOM_H / 2, 0.f});
+    }
+    else
+    {b2Body* room = robox2d::common::createRoom(world, {Params::sim::ROOM_W, Params::sim::ROOM_H});}
 
     // base in the center of the room
     b2Body* body = robox2d::common::createBox( world,{arm_length*0.025f, arm_length*0.025f}, b2_staticBody,  {Params::sim::ROOM_W / 2, Params::sim::ROOM_H / 2,0.f} );
