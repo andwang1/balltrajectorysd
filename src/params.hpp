@@ -19,7 +19,7 @@ struct Params {
     // 2D
     SFERES_CONST int num_trajectory_elements = 2 * trajectory_length;
     SFERES_CONST float radius = 0.15f;
-    SFERES_CONST bool enable_graphics = true;
+    SFERES_CONST bool enable_graphics = false;
     SFERES_CONST float max_force = 1.5f;
     SFERES_CONST float sim_duration = 10.f;
     };
