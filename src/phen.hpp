@@ -57,13 +57,14 @@ namespace sferes {
 #ifdef EIGEN_CORE_H
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif
-      Custom_Phen() : _params(Params::qd::phen_dim), split(static_cast<int>((*this)._gen.size() / 2))  
+      Custom_Phen() : _params(Params::qd::gen_dim), split(static_cast<int>((*this)._gen.size() / 2))  
       {}
       typedef float type_t;
       void develop() {
         // need to do this in here bcs of the reevaluation possiblity
         std::fill(_params.begin(), _params.end(), 0);
-        simple_summation();
+        for (unsigned i = 0; i < _params.size(); ++i)
+          _params[i] = this->_gen.data(i) * (Params::parameters::max_angle - Params::parameters::min_angle) + Params::parameters::min_angle;
       }
 
       void simple_summation() {
