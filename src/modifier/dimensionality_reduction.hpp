@@ -199,6 +199,27 @@ namespace sferes {
                 _random_extension_ratio = double(count_has_random) / num_copies;
             }
 
+            template<typename EA>
+            void regenerate_pheno(const std::vector<typename EA::indiv_t> &content, std::vector<typename EA::indiv_t> &regenerated_phenos, std::vector<size_t> &indices, EA &ea) const
+            {
+                for (size_t i{0}; i < content.size(); ++i)
+                {
+                    // if has random trajectory
+                    if (content[i]->fit().num_trajectories() > 0)
+                    {
+                        // record index
+                        indices.push_back(i);
+                        // create new phen and copy
+                        regenerated_phenos.push_back(indiv_t(new Phen()));
+                        *(regenerated_phenos[regenerated_phenos.size() - 1]) = *(content[i]);
+                        // regenerate trajectory but without any random observations
+                        (regenerated_phenos[regenerated_phenos.size() - 1])->fit().simulate(content[i]->fit().params());
+                    }
+                }
+                assert(indices.size() == regenerated_phenos.size());
+            }
+
+
             void get_geno(const pop_t &pop, Mat &data) const {
                 data = Mat(pop.size(), pop[0]->gen().size());
                 for (size_t i = 0; i < pop.size(); ++i) {
