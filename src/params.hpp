@@ -13,7 +13,7 @@ struct Params {
     SFERES_CONST float ROOM_W = 5.f;
 
     // fixed at first or random initialised from main?
-    SFERES_CONST float start_x = 2.8f;
+    SFERES_CONST float start_x = 3.55f;
     SFERES_CONST float start_y = 3.f;
     SFERES_CONST size_t trajectory_length = 50;
     // 2D
