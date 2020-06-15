@@ -102,15 +102,9 @@ namespace sferes {
             tmp[temp_index] += res[input_counter] * (this->_gen.data(i) * 2.5 - 0.5);
         }
 
-        // std::cout << "PARAMS1" << _params[0] << std::endl;
-        // std::cout << "PARAMS2" << _params[1] << std::endl;
         // flip distribution by making the negative be + 2 -> tried, very sparse so not good
-        
         _params[0] = std::max(tmp[0], 0.f);
         _params[1] = std::max(tmp[1], 0.f);
-
-        // std::cout << "PARAMS1" << _params[0] << std::endl;
-        // std::cout << "PARAMS2" << _params[1] << std::endl;
 
         // floor division, 4.001 so that multiples of 4 are still in the same exponent group
         int exponent = static_cast<int>((*this)._gen.size() / 4.001) * 2 + 2;
@@ -139,9 +133,6 @@ namespace sferes {
         assert(_params[0] < 1.1);
         assert(_params[1] < 1.1);
 
-        // std::cout << "PARAMS1POSTDIV" << _params[0] << std::endl;
-        // std::cout << "PARAMS2POSTDIV" << _params[1] << std::endl;
-
         _params[0] *= Params::parameters::max_angle;
         _params[1] *= (Params::parameters::max_dpf - Params::parameters::min_dpf) + Params::parameters::min_dpf;        
 
@@ -155,7 +146,7 @@ namespace sferes {
           for (int i{split}; i < (*this)._gen.size(); ++i)
           {_params[1] += this->_gen.data(i) / std::pow(10.f, i - split);}
 
-          // making sure angle is bounded, gives better distribution
+          // making sure angle is bounded, wrapping gives better distribution
           if (_params[0] > 1)
           {_params[0] -= 1;}
 

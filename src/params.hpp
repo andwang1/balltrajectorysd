@@ -9,12 +9,12 @@ using namespace sferes::gen::evo_float;
 
 struct Params {
     struct sim {
-    SFERES_CONST double ROOM_H = 5;
-    SFERES_CONST double ROOM_W = 5;
+    SFERES_CONST float ROOM_H = 5;
+    SFERES_CONST float ROOM_W = 5;
 
     // fixed at first or random initialised from main?
-    SFERES_CONST double start_x = 2.5;
-    SFERES_CONST double start_y = 2.5;
+    SFERES_CONST float start_x = 2.5;
+    SFERES_CONST float start_y = 2.5;
     SFERES_CONST size_t trajectory_length = 50;
     // 2D
     SFERES_CONST int num_trajectory_elements = 2 * trajectory_length;
