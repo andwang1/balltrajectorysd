@@ -14,14 +14,14 @@ struct DecoderImpl : torch::nn::Module {
         m_linear_3(torch::nn::Linear(de_hid_dim2, output_dim)),
         m_device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
         {
-        register_module("linear_1", m_linear_1);
-        register_module("linear_2", m_linear_2);
-        register_module("linear_3", m_linear_3);
+            register_module("linear_1", m_linear_1);
+            register_module("linear_2", m_linear_2);
+            register_module("linear_3", m_linear_3);
         }
 
         torch::Tensor forward(const torch::Tensor &z, torch::Tensor &tmp) 
         {
-                return m_linear_3(torch::relu(m_linear_2(torch::relu(m_linear_1(z)))));
+            return m_linear_3(torch::relu(m_linear_2(torch::relu(m_linear_1(z)))));
         }
 
         torch::nn::Linear m_linear_1, m_linear_2, m_linear_3;

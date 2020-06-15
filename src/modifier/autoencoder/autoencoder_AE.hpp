@@ -17,7 +17,8 @@ struct AutoEncoderImpl : torch::nn::Module {
             #else
             m_encoder(Encoder(input_dim, en_hid_dim1, en_hid_dim2, latent_dim)),
             #endif
-            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim)) {
+            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim)) 
+    {
         register_module("encoder", m_encoder);
         register_module("decoder", m_decoder);
     }

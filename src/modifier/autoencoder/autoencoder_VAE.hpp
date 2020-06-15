@@ -13,14 +13,14 @@
 struct AutoEncoderImpl : torch::nn::Module {
     AutoEncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim, int de_hid_dim1, int de_hid_dim2, int output_dim) :
             m_encoder(Encoder(input_dim, en_hid_dim1, en_hid_dim2, latent_dim)),
-            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim)) {
+            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim)) 
+    {
         register_module("encoder", m_encoder);
         register_module("decoder", m_decoder);
     }
 
     torch::Tensor forward(const torch::Tensor &x) {
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
-        // std::cout << x << "AE" << std::endl;
         return m_decoder(m_encoder(x, encoder_mu, encoder_logvar), decoder_logvar);
     }
 

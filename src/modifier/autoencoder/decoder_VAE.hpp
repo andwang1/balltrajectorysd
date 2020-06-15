@@ -15,32 +15,32 @@ struct DecoderImpl : torch::nn::Module {
         m_linear_v(torch::nn::Linear(de_hid_dim2, output_dim)),
         m_device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
         {
-        register_module("linear_1", m_linear_1);
-        register_module("linear_2", m_linear_2);
-        register_module("linear_m", m_linear_m);
-        register_module("linear_v", m_linear_v);
+            register_module("linear_1", m_linear_1);
+            register_module("linear_2", m_linear_2);
+            register_module("linear_m", m_linear_m);
+            register_module("linear_v", m_linear_v);
         }
 
         void decode(const torch::Tensor &x, torch::Tensor &mu, torch::Tensor &logvar)
         {
-                torch::Tensor out = torch::relu(m_linear_2(torch::relu(m_linear_1(x))));
-                mu = m_linear_m(out);
-                logvar = m_linear_v(out);
+            torch::Tensor out = torch::relu(m_linear_2(torch::relu(m_linear_1(x))));
+            mu = m_linear_m(out);
+            logvar = m_linear_v(out);
         }
 
         void sample_output(const torch::Tensor &mu, const torch::Tensor &logvar, torch::Tensor &output)
         {
-                output = torch::randn_like(logvar, torch::device(m_device).requires_grad(true)) * torch::exp(0.5 * logvar) + mu;
+            output = torch::randn_like(logvar, torch::device(m_device).requires_grad(true)) * torch::exp(0.5 * logvar) + mu;
         }
 
         torch::Tensor forward(const torch::Tensor &z, torch::Tensor &logvar) 
         {
-                torch::Tensor mu, output;
-                decode(z, mu, logvar);
-                return mu;
-                // if sample output as well
-                // sample_output(mu, logvar, output);
-                // return output;
+            torch::Tensor mu, output;
+            decode(z, mu, logvar);
+            return mu;
+            // if sample output as well
+            // sample_output(mu, logvar, output);
+            // return output;
         }
 
         torch::nn::Linear m_linear_1, m_linear_2, m_linear_m, m_linear_v;

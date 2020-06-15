@@ -7,7 +7,6 @@
 #include <iomanip>
 #include <tuple>
 
-#include "preprocessor.hpp"
 #include "autoencoder/autoencoder_AE.hpp"
 #include "autoencoder/encoder_AE.hpp"
 #include "autoencoder/decoder_AE.hpp"
@@ -191,10 +190,7 @@ public:
                           torch::nn::AnyModule(AutoEncoder(TParams::qd::gen_dim, TParams::ae::en_hid_dim1, TParams::ae::en_hid_dim2, TParams::qd::behav_dim, 
                                                            TParams::ae::de_hid_dim1, TParams::ae::de_hid_dim2, TParams::sim::num_trajectory_elements))),
             log_2_pi(log(2 * M_PI)),
-            _epochs_trained(0)
-             {
-                _prep_traj.init();
-             }
+            _epochs_trained(0) {}
 
     typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXf_rm;
 
@@ -434,7 +430,6 @@ public:
 
     float log_2_pi;
     int _epochs_trained;
-    RescaleFeature _prep_traj;
 };
 
 #endif
