@@ -51,19 +51,6 @@ namespace sferes {
                 ofs.precision(17);
                 Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "");
 
-                // std::cout << "SIZES" <<
-                // // descriptors.rows() << "\n" <<
-                // recon_loss_unred.rows() << "\n" <<
-                // recon_loss_unred.cols() << std::endl;
-                // reconstruction.rows() << "\n" <<
-                // L2_loss.rows() << "\n" <<
-                // KL_loss.rows() << "\n" <<
-                // decoder_var.rows() << "\n" << std::endl;
-
-                // std::cout << "pop" << ea.pop().size() << std::endl;
-                // std::cout << "traj" << filtered_traj.rows() << ",c " << filtered_traj.cols() << std::endl;
-                // std::cout << "reconstruction" << reconstruction.rows() << ",c " << reconstruction.cols() << std::endl;
-
                 #ifdef AURORA
                 ofs << "FORMAT: INDIV_INDEX, DATA\n";
                 for (int i{0}; i < reconstruction.rows(); ++i)

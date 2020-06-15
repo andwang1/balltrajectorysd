@@ -7,7 +7,6 @@
 #include <iomanip>
 #include <tuple>
 
-#include "preprocessor.hpp"
 
 #ifdef VAE
 #include "autoencoder/autoencoder_VAE.hpp"
@@ -51,7 +50,8 @@ public:
               MatrixXf_rm &KL_loss,
               MatrixXf_rm &decoder_var,
               bool is_train_set = false) {
-        stc::exact(this)->eval(phen, traj, is_traj, descriptors, reconstructed_data, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var, is_train_set);
+        stc::exact(this)->eval(phen, traj, is_traj, descriptors, reconstructed_data, recon_loss, recon_loss_unred, 
+                               L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var, is_train_set);
     }
     
     void prepare_batches(std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>> &batches, 
@@ -62,8 +62,8 @@ public:
     size_t split_dataset(const MatrixXf_rm &phen_d, const MatrixXf_rm &traj_d,
                        MatrixXf_rm &train_phen, MatrixXf_rm &valid_phen, 
                        MatrixXf_rm &train_traj, MatrixXf_rm &valid_traj) 
-        {
-        size_t l_train_phen{0}, l_valid_phen{0}, l_train_traj{0}, l_valid_traj{0};
+    {
+        size_t l_train_phen, l_valid_phen, l_train_traj, l_valid_traj;
         
         if (phen_d.rows() > 500) 
         {
@@ -102,18 +102,19 @@ public:
         
         int filtered_row_index{0};
 
-        // loop through all trajectories, filter out bad ones and note where the boundaries lie
+        // loop through all trajectories, filter out trajectories that are not actual trajectories and note where the boundaries lie between phenotypes
         for (int i{0}; i < is_trajectory.size(); ++i)
         {
             if (is_trajectory(i) == 1)
             {
                 filtered_trajectories.row(filtered_row_index) = trajectories.row(i);
                 ++filtered_row_index;
+
                 // marking which trajectories belong to which phenotype, the first trajectory is the boundary marker
                 if (i % (TParams::random::max_num_random + 1) == 0)
-                {boundaries.push_back(true);}
+                    {boundaries.push_back(true);}
                 else
-                {boundaries.push_back(false);}
+                    {boundaries.push_back(false);}
             }
         }
     }
@@ -152,7 +153,7 @@ protected:
     torch::nn::AnyModule m_auto_encoder_module;
     torch::optim::Adam m_adam_optimiser;
     torch::Device m_device;
-    double log_2_pi;
+    double _log_2_pi;
 
 
     void get_torch_tensor_from_eigen_matrix(const MatrixXf_rm &M, torch::Tensor &T) const {
@@ -199,40 +200,33 @@ public:
             TParentLoader(TParams::qd::behav_dim,
                           torch::nn::AnyModule(AutoEncoder(TParams::qd::gen_dim, TParams::ae::en_hid_dim1, TParams::ae::en_hid_dim2, TParams::qd::behav_dim, 
                                                            TParams::ae::de_hid_dim1, TParams::ae::de_hid_dim2, TParams::sim::num_trajectory_elements))),
-            log_2_pi(log(2 * M_PI)),
-            _epochs_trained(0)
-             {
-                _prep_traj.init();
-             }
+            _log_2_pi(log(2 * M_PI)),
+            _epochs_trained(0) {}
 
     typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXf_rm;
 
     void prepare_batches(std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>> &batches, 
                         const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_trajectory) const 
     {
-        if (phen.rows() <= TParams::ae::batch_size) {
-            batches = std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>>(1);
-        } else {
-            batches = std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>>(floor(phen.rows() / (TParams::ae::batch_size)));
-        }
+        if (phen.rows() <= TParams::ae::batch_size) 
+            {batches = std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>>(1);} 
+        else 
+            {batches = std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>>(floor(phen.rows() / (TParams::ae::batch_size)));}
 
         // in loop do filtering before passing to make tuple
         if (batches.size() == 1) 
         {
-                // filtering
-                MatrixXf_rm filtered_traj, scaled_filtered_traj;
-                std::vector<bool> boundaries;
-                this->filter_trajectories(traj, is_trajectory,filtered_traj, boundaries);
+            // filtering
+            MatrixXf_rm filtered_traj, scaled_filtered_traj;
+            std::vector<bool> boundaries;
+            this->filter_trajectories(traj, is_trajectory, filtered_traj, boundaries);
 
-                // scaling initialised in eval run before training
-                // _prep_traj.apply(filtered_traj, scaled_filtered_traj);
-
-                torch::Tensor T1, T2;
-                this->get_tuple_from_eigen_matrices(phen, filtered_traj, boundaries, T1, T2, batches[0]);
+            torch::Tensor T1, T2;
+            this->get_tuple_from_eigen_matrices(phen, filtered_traj, boundaries, T1, T2, batches[0]);
         } 
         else 
         {
-            for (size_t ind = 0; ind < batches.size(); ind++) 
+            for (size_t ind = 0; ind < batches.size(); ++ind) 
             {
                 // filtering
                 MatrixXf_rm filtered_traj, scaled_filtered_traj;
@@ -242,8 +236,6 @@ public:
                                                     is_trajectory.segment(ind * TParams::ae::batch_size * (TParams::random::max_num_random + 1), TParams::ae::batch_size * (TParams::random::max_num_random + 1)),
                                                     filtered_traj,
                                                     boundaries);
-
-                // _prep_traj.apply(filtered_traj, scaled_filtered_traj);
 
                 torch::Tensor T1, T2;
                 this->get_tuple_from_eigen_matrices(phen.middleRows(ind * TParams::ae::batch_size, TParams::ae::batch_size),
@@ -268,6 +260,7 @@ public:
     float training(const MatrixXf_rm &phen_d, const MatrixXf_rm &traj_d, std::vector<int> &is_trajectories, bool full_train = false, int generation = 1000) 
     {
         AutoEncoder auto_encoder = std::static_pointer_cast<AutoEncoderImpl>(this->m_auto_encoder_module.ptr());
+        auto_encoder->train();
         std::cout << "Total Size Dataset incl. readditions: " << phen_d.rows() << std::endl;
         MatrixXf_rm train_phen, valid_phen, train_traj, valid_traj;
         size_t l_train_traj = this->split_dataset(phen_d, traj_d, train_phen, valid_phen, train_traj, valid_traj);
@@ -275,6 +268,7 @@ public:
         std::vector<int> train_is_trajectories(is_trajectories.begin(), is_trajectories.begin() + l_train_traj);
         std::vector<int> val_is_trajectories(is_trajectories.begin() + l_train_traj, is_trajectories.end());
 
+        // if the dataset is too small -> see split_dataset
         if (train_traj.rows() == valid_traj.rows())
         {
             val_is_trajectories = train_is_trajectories;
@@ -286,15 +280,6 @@ public:
         vector_to_eigen(val_is_trajectories, val_is_traj);
         vector_to_eigen(is_trajectories, is_traj);
         
-        // std::cout << "BEFORE AVG" << std::endl;
-        // std::cout << train_phen.rows() << std::endl;
-        // std::cout << valid_phen.rows() << std::endl;
-        // std::cout << train_traj.rows() << std::endl;
-        // std::cout << valid_traj.rows() << std::endl;
-        // std::cout << tr_is_traj.size() << std::endl;
-        // std::cout << val_is_traj.size() << std::endl;
-
-
         float init_tr_recon_loss = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj, true);
         float init_vl_recon_loss = this->get_avg_recon_loss(valid_phen, valid_traj, val_is_traj);
 
@@ -319,11 +304,11 @@ public:
                 // not necessary as layers enforce grad
                 // std::get<0>(tup).set_requires_grad(true);
 
+                // tup[1] is the trajectories tensor
 		        torch::Tensor traj = std::get<1>(tup).to(this->m_device);
 
                 // tup[0] is the phenotype
                 torch::Tensor reconstruction_tensor = auto_encoder->forward_(std::get<0>(tup).to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar);
-                
                 torch::Tensor loss_tensor = torch::zeros(1, torch::device(this->m_device));
 
                 #ifdef VAE
@@ -337,34 +322,17 @@ public:
                 {
                     if (std::get<2>(tup)[i])
                     {++index;}
-                    // tup[1] is the trajectories tensor
-                    // std::cout << "BEFORE NORM" << std::endl;
-                    // std::cout << "recon" << reconstruction_tensor[index] << std::endl;
-                    // std::cout << "traj" << std::get<1>(tup)[i] << std::endl;
-                    // loss_tensor / (2 * torch::exp(decoder_logvar) + 0.0001) + 0.5 * (decoder_logvar + log_2_pi)
+
                     if (TParams::ae::full_loss)
-                    {
-                        loss_tensor += torch::sum(torch::pow(traj[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index]))
-                                + 0.5 * (decoder_logvar[index] + log_2_pi));
-                    }
+                    {loss_tensor += torch::sum(torch::pow(traj[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi));}
                     else
-                    {
-                        loss_tensor += torch::sum(torch::pow(traj[i] - reconstruction_tensor[index], 2));
-                    }
-                    // std::cout << "L2\t" << torch::norm(std::get<1>(tup)[i] - reconstruction_tensor[index], 2, {0}).item<double>();
-                    // std::cout << "\tVAR\t" << torch::mean(torch::exp(decoder_logvar[index])).item<double>();
-                    // std::cout << std::flush << '\r';
+                    {loss_tensor += torch::sum(torch::pow(traj[i] - reconstruction_tensor[index], 2));}
                 }
                 
                 long num_trajectories {static_cast<long>(std::get<2>(tup).size())};
                 loss_tensor /= num_trajectories;
                 loss_tensor.backward();
-                // std::cout << "GRADS" << std::endl;
-                // std::cout << encoder_mu.grad() << "MU" << std::endl;
-                // std::cout << encoder_logvar.grad() << "LOGVAR"<< std::endl;
-                // std::cout << std::get<0>(tup).grad() << "INPUT"<< std::endl;
-                // std::cout << "ACTUAL LOSS" << loss_tensor.item<float>() << std::endl;
-                
+
                 this->m_adam_optimiser.step();
                 ++epoch;
             }
@@ -382,23 +350,17 @@ public:
                 // if the running average on the val set is increasing and train loss is higher than at the beginning
                 if ((previous_avg.array() - previous_avg[0]).mean() > 0 && epoch > TParams::ae::min_num_epochs &&
                     this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj) < init_tr_recon_loss)
-                    {
-                    _continue = false;
-                    // std::cout << "CONTINUEFALSE" << std::endl;
-                    }
+                        {_continue = false;}
             }
-
 
             float recon_loss_t = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj);
             float recon_loss_v = this->get_avg_recon_loss(valid_phen, valid_traj, val_is_traj);
-
 
             std::cout.precision(5);
             std::cout << "training dataset: " << train_phen.rows() << "  valid dataset: " << valid_phen.rows() << " - ";
             std::cout << std::setw(5) << epoch << "/" << std::setw(5) << TParams::ae::nb_epochs;
             std::cout << " recon loss (t): " << std::setw(8) << recon_loss_t;
             std::cout << " (v): " << std::setw(8) << recon_loss_v;
-            // std::cout << " (var): " << std::setw(8) << recon_loss_v;
             std::cout << std::flush << '\r';
         }
 
@@ -425,6 +387,7 @@ public:
     {
         torch::NoGradGuard no_grad;
         AutoEncoder auto_encoder = std::static_pointer_cast<AutoEncoderImpl>(this->m_auto_encoder_module.ptr());
+        auto_encoder->eval();
 
         torch::Tensor phen_tensor, traj_tensor;
         this->get_torch_tensor_from_eigen_matrix(phen, phen_tensor);
@@ -432,25 +395,14 @@ public:
         MatrixXf_rm filtered_traj, scaled_filtered_traj;
         std::vector<bool> boundaries;
         this->filter_trajectories(traj, is_trajectory, filtered_traj, boundaries);
-
-        // initialise with the whole filtered training dataset, the mean and var will be reused by the training (eval runs before training)
-        // if (is_train_set)
-        // {_prep_traj.init(filtered_traj);}
-
-        // _prep_traj.apply(filtered_traj, scaled_filtered_traj);
-
         this->get_torch_tensor_from_eigen_matrix(filtered_traj, traj_tensor);
 	    traj_tensor = traj_tensor.to(this->m_device);
 
-        torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
-                
-        torch::Tensor descriptors_tensor;
+        torch::Tensor encoder_mu, encoder_logvar, decoder_logvar, descriptors_tensor;
         torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent(phen_tensor.to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar, descriptors_tensor);
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows(), torch::device(this->m_device));
-        // std::cout << traj_tensor << "SCALEDTRAJ" << std::endl;
-        // std::cout << reconstruction_tensor << "SCALEDRECON" << std::endl;
-
-        // stats
+        
+        // KL divergence
         #ifdef VAE
         torch::Tensor KL = -0.5 * TParams::ae::beta * (1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar));
         #endif
@@ -474,7 +426,7 @@ public:
             #ifdef VAE
             if (TParams::ae::full_loss)
             {
-                recon_loss_unreduced[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + log_2_pi);
+                recon_loss_unreduced[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi);
                 reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]);
             }
             else
@@ -508,20 +460,15 @@ public:
         this->get_eigen_matrix_from_torch_tensor(recon_loss_unreduced.cpu(), recon_loss_unred);
         this->get_eigen_matrix_from_torch_tensor(L2_actual_traj.cpu(), L2_loss_real_trajectories);
 
-        // _prep_traj.deapply(scaled_reconstructed_data, reconstructed_data);
-        // std::cout << "UNSCALED RECON" << reconstructed_data << std::endl;
-
         #ifdef VAE
         this->get_eigen_matrix_from_torch_tensor(torch::exp(decoder_logvar).cpu(), decoder_var);
         this->get_eigen_matrix_from_torch_tensor(L2.cpu(), L2_loss);
         this->get_eigen_matrix_from_torch_tensor(KL.cpu(), KL_loss);
         #endif
-        // std::cout << "Eval: Total num of trajectories " << boundaries.size() << ", Num random trajectories " << boundaries.size() - phen.rows() << ", (random ratio: " << 1 - float(phen.rows())/boundaries.size() <<")" << std::endl;
     }
 
-    float log_2_pi;
+    float _log_2_pi;
     int _epochs_trained;
-    RescaleFeature _prep_traj;
 };
 
 #endif
