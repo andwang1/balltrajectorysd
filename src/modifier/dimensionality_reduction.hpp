@@ -371,7 +371,7 @@ namespace sferes {
 
             void update_l(const pop_t &pop) const {
                 constexpr float alpha = 5e-6f;
-                Params::nov::l *= (1 - alpha * (static_cast<float>(Params::resolution) - static_cast<float>(pop.size())));
+                Params::nov::l *= (1 - alpha * (static_cast<float>(Params::qd::resolution) - static_cast<float>(pop.size())));
             }
 
             void get_matrix_behavioural_descriptors(const pop_t &pop, Mat &matrix_behavioural_descriptors) const 
@@ -403,7 +403,7 @@ namespace sferes {
                 abs_matrix = (eigensolver.eigenvectors().transpose() * abs_matrix.transpose()).transpose();
                 double volume = (abs_matrix.colwise().maxCoeff() - abs_matrix.colwise().minCoeff()).prod();
 
-                Params::nov::l = static_cast<float>(0.5 * std::pow(volume / Params::resolution, 1. / matrix_behavioural_descriptors.cols()));
+                Params::nov::l = static_cast<float>(0.5 * std::pow(volume / Params::qd::resolution, 1. / matrix_behavioural_descriptors.cols()));
             }
 
             void distance(const Mat &X, Mat_dist &dist) const {
