@@ -48,7 +48,7 @@ class VAE_FC(nn.Module):
         de_mu, de_logvar = self.decode(z)
         return self.sample_output(de_mu, de_logvar), torch.exp(de_logvar), en_mu, en_logvar
 
-    def loss_function(self, en_mu, en_logvar, de_logvar, pred_traj, label_traj):
+    def loss_function(self, en_mu, en_logvar, de_logvar, pred_traj, label_traj, full_loss = True):
         KL_loss = -0.5 * torch.sum(1 + en_logvar - en_mu.pow(2) - torch.exp(en_logvar))
         L2_loss = F.mse_loss(pred_traj, label_traj, reduction="sum")
         recon_loss = torch.sum(((label_traj - pred_traj) ** 2) / (2 * (torch.exp(de_logvar) + 0.0001)) + 0.5 * (
@@ -58,5 +58,8 @@ class VAE_FC(nn.Module):
             print("LABEL", label_traj)
             print("LOGVAR", de_logvar)
             print("VAR", torch.exp(de_logvar))
-        loss = recon_loss + self.beta * KL_loss
+        if full_loss:
+            loss = recon_loss + self.beta * KL_loss
+        else:
+            loss = L2_loss + self.beta * KL_loss
         return loss, KL_loss, L2_loss
