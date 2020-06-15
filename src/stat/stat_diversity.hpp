@@ -44,13 +44,11 @@ namespace sferes {
                 reset_array();
 
                 // loop through all objects and get their bitmap
-                int i{0};
                 for (auto it = ea.pop().begin(); it != ea.pop().end(); ++it)
                 {
                     div_t indiv_diversity{0};
                     int bucket_index = (*it)->fit().calculate_diversity_bins(indiv_diversity);
                     _array_div[bucket_index] |= indiv_diversity;
-                    ++i;
                 }
 
                 for (int j{0}; j < _nums_covered_buckets.size(); ++j)
