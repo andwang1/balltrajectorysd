@@ -99,7 +99,7 @@ struct Params {
     };
 
     struct stat {
-        SFERES_CONST size_t save_trajectories = 3000;
+        SFERES_CONST size_t save_trajectories = 6000;
         SFERES_CONST size_t save_model = 10000;
         SFERES_CONST size_t save_diversity = 500;
         SFERES_CONST size_t save_distances = 500;
