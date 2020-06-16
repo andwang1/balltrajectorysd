@@ -52,6 +52,8 @@ struct Params {
     SFERES_CONST size_t de_hid_dim1 = 30;
     SFERES_CONST size_t de_hid_dim2 = 60;
     // output_dim = sim::trajectory_length
+
+    SFERES_CONST bool bias = true;
     };
 
     struct update {

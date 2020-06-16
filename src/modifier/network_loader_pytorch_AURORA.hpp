@@ -189,7 +189,7 @@ public:
     explicit NetworkLoaderAutoEncoder() :
             TParentLoader(TParams::qd::behav_dim,
                           torch::nn::AnyModule(AutoEncoder(TParams::qd::gen_dim, TParams::ae::en_hid_dim1, TParams::ae::en_hid_dim2, TParams::qd::behav_dim, 
-                                                           TParams::ae::de_hid_dim1, TParams::ae::de_hid_dim2, TParams::sim::num_trajectory_elements))),
+                                                           TParams::ae::de_hid_dim1, TParams::ae::de_hid_dim2, TParams::sim::num_trajectory_elements, TParams::ae::bias))),
             _log_2_pi(log(2 * M_PI)),
             _epochs_trained(0) {}
 

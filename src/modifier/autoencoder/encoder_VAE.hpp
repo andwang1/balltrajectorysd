@@ -6,11 +6,11 @@
 #define VAE_ENCODER_HPP
 
 struct EncoderImpl : torch::nn::Module {
-    EncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim) :
-        m_linear_1(torch::nn::Linear(input_dim, en_hid_dim1)),
-        m_linear_2(torch::nn::Linear(en_hid_dim1, en_hid_dim2)),
-        m_linear_m(torch::nn::Linear(en_hid_dim2, latent_dim)),
-        m_linear_v(torch::nn::Linear(en_hid_dim2, latent_dim)),
+    EncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim, bool bias) :
+        m_linear_1(torch::nn::Linear(torch::nn::LinearOptions(input_dim, en_hid_dim1).with_bias(true))),
+        m_linear_2(torch::nn::Linear(torch::nn::LinearOptions(en_hid_dim1, en_hid_dim2).with_bias(true))),
+        m_linear_m(torch::nn::Linear(torch::nn::LinearOptions(en_hid_dim2, latent_dim).with_bias(true))),
+        m_linear_v(torch::nn::Linear(torch::nn::LinearOptions(en_hid_dim2, latent_dim).with_bias(true))),
         m_device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
         {
             register_module("linear_1", m_linear_1);
