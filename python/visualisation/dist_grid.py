@@ -39,6 +39,7 @@ def plot_dist_grid_in_dir(path, generate_images=True, save_path=None):
             total = int(lines[1].strip().split(",")[4].split("/")[1])
             # bitmap prints in reverse order
             distance_grid = lines[2].strip().split(",")
+            # min_max_grid = lines[3].strip().split(",")
 
         dist_values.append(mean_distance)
         dist_values_exclzero.append(mean_distance_exclzero)
@@ -46,28 +47,28 @@ def plot_dist_grid_in_dir(path, generate_images=True, save_path=None):
         var_values_exclzero.append(var_distance_exclzero)
         percentage_moved.append(int(100 * moved / total))
 
-        rows = []
-        column = []
-        counter_x = 0
-        for i in distance_grid:
-            if float(i) == -1:
-                column.append(float(-90))
-            else:
-                column.append(float(i))
-            counter_x += 1
-            if counter_x >= DISCRETISATION:
-                counter_x = 0
-                rows.append(column)
-                column = []
-
         if generate_images:
+            rows = []
+            column = []
+            counter_x = 0
+            for i in distance_grid:
+                if float(i) == -1:
+                    column.append(float(-90))
+                else:
+                    column.append(float(i))
+                counter_x += 1
+                if counter_x >= DISCRETISATION:
+                    counter_x = 0
+                    rows.append(column)
+                    column = []
+
+            # variance grid
             # plot colours
             fig = plt.figure(figsize=(15, 15))
             plt.ylim([DISCRETISATION, 0])
             plt.xlim([0, DISCRETISATION])
 
             # vmin/vmax sets limits
-            print(rows)
             color = plt.pcolormesh(rows, vmin=-20, vmax=100)
 
             # plot grid
@@ -89,8 +90,47 @@ def plot_dist_grid_in_dir(path, generate_images=True, save_path=None):
             if save_path:
                 os.chdir(save_path)
 
-            plt.savefig(f"distance_{GEN_NUMBER}.png")
+            plt.savefig(f"distance_var_{GEN_NUMBER}.png")
             plt.close()
+
+            # # minmax grid
+            # rows = []
+            # column = []
+            # counter_x = 0
+            # for i in min_max_grid:
+            #     if float(i) == -1:
+            #         column.append(float(-90))
+            #     else:
+            #         column.append(float(i))
+            #     counter_x += 1
+            #     if counter_x >= DISCRETISATION:
+            #         counter_x = 0
+            #         rows.append(column)
+            #         column = []
+            #
+            # # plot colours
+            # fig = plt.figure(figsize=(15, 15))
+            # plt.ylim([DISCRETISATION, 0])
+            # plt.xlim([0, DISCRETISATION])
+            #
+            # # vmin/vmax sets limits
+            # color = plt.pcolormesh(rows, vmin=-20, vmax=100)
+            #
+            # # plot grid
+            # plt.grid(which="both")
+            # plt.xticks(range(DISCRETISATION), np.arange(0, ROOM_W, ROOM_W / DISCRETISATION))
+            # plt.yticks(range(DISCRETISATION), np.arange(0, ROOM_H, ROOM_H / DISCRETISATION))
+            # fig.colorbar(color)
+            # plt.title(f"Max - Min of Distances - Gen {GEN_NUMBER}")
+            # plt.xlabel("X")
+            # plt.ylabel("Y")
+            #
+            # ax1 = fig.add_subplot()
+            # if save_path:
+            #     os.chdir(save_path)
+            #
+            # plt.savefig(f"distance_minmax_{GEN_NUMBER}.png")
+            # plt.close()
 
     if generate_images:
         f = plt.figure(figsize=(10, 5))
