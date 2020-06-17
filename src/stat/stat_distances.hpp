@@ -53,7 +53,7 @@ namespace sferes {
                 }
                 
                 Eigen::VectorXf var_grid(Params::nov::discretisation * Params::nov::discretisation);
-                var_grid.fill(-1);
+                var_grid.fill(-20);
 
                 for (int i{0}; i < Params::nov::discretisation * Params::nov::discretisation; ++i)
                 {
@@ -74,6 +74,23 @@ namespace sferes {
                     var_grid[i] /= (distances_per_bucket[i].size() - 1);
                 }
 
+                Eigen::VectorXf min_max_grid(Params::nov::discretisation * Params::nov::discretisation);
+                min_max_grid.fill(-20);
+
+                for (int i{0}; i < Params::nov::discretisation * Params::nov::discretisation; ++i)
+                {
+                    if (distances_per_bucket[i].size() == 0)
+                        {continue;}
+                    else if (distances_per_bucket[i].size() == 1)
+                    {
+                        min_max_grid[i] = 0;
+                        continue;
+                    }
+
+                     auto [min, max] = std::minmax_element(distances_per_bucket[i].begin(), distances_per_bucket[i].end());
+                     min_max_grid[i] = *max - *min;
+                }
+
                 float mean_distance = distances.mean();
                 float var_distance = (distances.array() - mean_distance).square().sum() / (ea.pop().size() - 1);
 
@@ -85,7 +102,8 @@ namespace sferes {
                 Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "");
                 ofs << "Mean Distance, Var Distance, Mean Distance NonZero, Var Distance NonZero, Moved/Total\n";
                 ofs << mean_distance << ", " << var_distance << ", " << mean_distance_moved << ", " << var_distance_moved << ", " << moved_counter << "/" << ea.pop().size() << "\n";
-                ofs << var_grid.format(CommaInitFmt);
+                ofs << var_grid.format(CommaInitFmt) << "\n";
+                ofs << min_max_grid.format(CommaInitFmt);
             }
         };
     }
