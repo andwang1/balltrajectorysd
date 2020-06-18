@@ -87,8 +87,8 @@ namespace sferes {
                         continue;
                     }
 
-                     auto [min, max] = std::minmax_element(distances_per_bucket[i].begin(), distances_per_bucket[i].end());
-                     min_max_grid[i] = *max - *min;
+                     auto minmax = std::minmax_element(distances_per_bucket[i].begin(), distances_per_bucket[i].end());
+                     min_max_grid[i] = *(minmax.second) - *(minmax.first);
                 }
 
                 float mean_distance = distances.mean();
