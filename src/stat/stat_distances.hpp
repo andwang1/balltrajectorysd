@@ -37,6 +37,8 @@ namespace sferes {
 
                 std::vector<std::vector<float>> distances_per_bucket(Params::nov::discretisation * Params::nov::discretisation);
 
+                std::vector<int> indices_moved;
+
                 size_t moved_counter{0};
                 for (int i{0}; i < ea.pop().size(); ++i)
                 {
@@ -46,6 +48,7 @@ namespace sferes {
                     distances[i] = distance;
                     if (moved)
                     {
+                        indices_moved.push_back(i);
                         distances_per_bucket[bucket_index].push_back(distance);
                         distances_excl_zero[moved_counter] = distance;
                         ++moved_counter;
@@ -103,7 +106,9 @@ namespace sferes {
                 ofs << "Mean Distance, Var Distance, Mean Distance NonZero, Var Distance NonZero, Moved/Total\n";
                 ofs << mean_distance << ", " << var_distance << ", " << mean_distance_moved << ", " << var_distance_moved << ", " << moved_counter << "/" << ea.pop().size() << "\n";
                 ofs << var_grid.format(CommaInitFmt) << "\n";
-                ofs << min_max_grid.format(CommaInitFmt);
+                ofs << min_max_grid.format(CommaInitFmt) << "\n";
+                for (int &i : indices_moved)
+                    ofs << i << " ";
             }
         };
     }
