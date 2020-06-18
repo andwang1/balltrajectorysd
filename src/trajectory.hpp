@@ -189,15 +189,12 @@ FIT_QD(Trajectory)
     
     int calculate_diversity_bins(std::bitset<Params::nov::discretisation * Params::nov::discretisation> &crossed_buckets) const
     {
-        double discrete_length_x {double(Params::sim::ROOM_W) / Params::nov::discretisation};
-        double discrete_length_y {double(Params::sim::ROOM_H) / Params::nov::discretisation};
-
         int bucket_number{0};
 
         for (int j{0}; j < _full_trajectory.size(); j += 2)
         {
-            int bucket_x = _full_trajectory[j] / discrete_length_x;
-            int bucket_y = _full_trajectory[j+1] / discrete_length_y;
+            int bucket_x = _full_trajectory[j] / Params::nov::discrete_length_x;
+            int bucket_y = _full_trajectory[j+1] / Params::nov::discrete_length_y;
             bucket_number = bucket_y * Params::nov::discretisation + bucket_x;
             
             if (VERBOSE)
@@ -222,14 +219,9 @@ FIT_QD(Trajectory)
         for (int i{0}; i < manhattan_dist.size(); i+=2)
             {distance += manhattan_dist.segment<2>(i).norm();}
 
-        moved = distance > 1e-6;
-
-        double discrete_length_x {double(Params::sim::ROOM_W) / Params::nov::discretisation};
-        double discrete_length_y {double(Params::sim::ROOM_H) / Params::nov::discretisation};
-
-        int bucket_x = _full_trajectory[Params::sim::full_trajectory_length - 2] / discrete_length_x;
-        int bucket_y = _full_trajectory[Params::sim::full_trajectory_length - 1] / discrete_length_y;
-        return bucket_y * Params::nov::discretisation + bucket_x;
+        _moved = distance > 1e-6;
+        moved = _moved;
+        return get_bucket_index();
     }
 
     template<typename block_t>
@@ -257,6 +249,16 @@ FIT_QD(Trajectory)
     Eigen::VectorXd &params()
     {return _params;}
 
+    bool moved() const
+    {return _moved;}
+
+    int get_bucket_index() const
+    {
+        int bucket_x = _full_trajectory[Params::sim::full_trajectory_length - 2] / Params::nov::discrete_length_x;
+        int bucket_y = _full_trajectory[Params::sim::full_trajectory_length - 1] / Params::nov::discrete_length_y;
+        return bucket_y * Params::nov::discretisation + bucket_x;
+    }
+
     private:
     // using matrix directly does not work, see above comment at generate_traj, will not stay in mem after assigining
     // Eigen::Matrix<double, Params::random::max_num_random + 1, Params::sim::trajectory_length> trajectories;
@@ -268,6 +270,7 @@ FIT_QD(Trajectory)
     Eigen::VectorXf _full_trajectory;
     std::array<int, Params::random::max_num_random + 1> _is_trajectory;
     size_t _m_num_trajectories;
+    bool _moved;
     float _m_entropy;
 };
 

@@ -19,7 +19,7 @@ namespace sferes {
             template<typename EA>
             void refresh(EA &ea) 
             {
-                if ((ea.gen() % Params::stat::save_distances == 0)) 
+                if ((ea.gen() % Params::stat::save_diversity == 0)) 
                 {
                    std::string prefix = "distances" + boost::lexical_cast<std::string>(ea.gen());
                     _write_distances(prefix, ea);
@@ -43,7 +43,7 @@ namespace sferes {
                 for (int i{0}; i < ea.pop().size(); ++i)
                 {
                     float distance;
-                    bool moved;
+                    bool moved{false};
                     int bucket_index = ea.pop()[i]->fit().calculate_distance(distance, moved);
                     distances[i] = distance;
                     if (moved)
