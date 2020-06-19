@@ -37,7 +37,6 @@ namespace sferes {
 
                 matrix_t observations(pop_size, Params::sim::num_trajectory_elements);
                 matrix_t observations_excl_zero(pop_size, Params::sim::num_trajectory_elements);
-                std::vector<int> indices_moved;
                 std::array<std::vector<int>, Params::stat::entropy_discretisation * Params::stat::entropy_discretisation> indices_per_bucket;
 
                 size_t moved_counter{0};
@@ -47,7 +46,6 @@ namespace sferes {
                     if (ea.pop()[i]->fit().moved())
                     {
                         indices_per_bucket[ea.pop()[i]->fit().get_bucket_index(Params::stat::ent_discrete_length_x, Params::stat::ent_discrete_length_y, Params::stat::entropy_discretisation)].push_back(i);
-                        indices_moved.push_back(i);
                         
                         observations_excl_zero.row(moved_counter) = observations.row(i);
                         ++moved_counter;
@@ -121,11 +119,8 @@ namespace sferes {
                     for (int i{0}; i < Params::sim::trajectory_length; i += 2)
                     {
                         Eigen::VectorXi observations_buckets = bucket_observations_discretised.col(i) + bucket_observations_discretised.col(i + 1) * Params::stat::entropy_discretisation;
-
-                        // unique values
                         std::unordered_set<int> unique_buckets(observations_buckets.data(), observations_buckets.data() + observations_buckets.size());
-                        
-                        
+
                         for (int j : unique_buckets)
                         {
                             double p = std::count(observations_buckets.data(), observations_buckets.data() + observations_buckets.size(), j) / double(observations_buckets.size());
