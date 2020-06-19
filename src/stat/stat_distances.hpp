@@ -35,9 +35,10 @@ namespace sferes {
                 Eigen::VectorXf distances(ea.pop().size());
                 Eigen::VectorXf distances_excl_zero(ea.pop().size());
 
-                std::vector<std::vector<float>> distances_per_bucket(Params::nov::discretisation * Params::nov::discretisation);
+                std::array<std::vector<float>, Params::nov::discretisation * Params::nov::discretisation> distances_per_bucket;
 
                 std::vector<int> indices_moved;
+                std::array<std::vector<int>, Params::nov::discretisation * Params::nov::discretisation> indices_per_bucket;
 
                 size_t moved_counter{0};
                 for (int i{0}; i < ea.pop().size(); ++i)
@@ -46,6 +47,7 @@ namespace sferes {
                     bool moved{false};
                     int bucket_index = ea.pop()[i]->fit().calculate_distance(distance, moved);
                     distances[i] = distance;
+                    indices_per_bucket[bucket_index].push_back(i);
                     if (moved)
                     {
                         indices_moved.push_back(i);
@@ -103,12 +105,20 @@ namespace sferes {
                 std::ofstream ofs(fname.c_str());
                 ofs.precision(17);
                 Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "");
-                ofs << "Mean Distance, Var Distance, Mean Distance NonZero, Var Distance NonZero, Moved/Total\n";
+                ofs << "Mean Distance, Var Distance, Mean Distance NonZero, Var Distance NonZero, Moved/Total\nVar Grid, MinMax Grid, Indices of moved, Indices per bucket\n";
                 ofs << mean_distance << ", " << var_distance << ", " << mean_distance_moved << ", " << var_distance_moved << ", " << moved_counter << "/" << ea.pop().size() << "\n";
                 ofs << var_grid.format(CommaInitFmt) << "\n";
                 ofs << min_max_grid.format(CommaInitFmt) << "\n";
+
                 for (int &i : indices_moved)
-                    ofs << i << " ";
+                    {ofs << i << " ";}
+
+                for (int i{0}; i < Params::nov::discretisation * Params::nov::discretisation; ++i)
+                {
+                    ofs << "\n" << i;
+                    for (int index : indices_per_bucket[i])
+                        {ofs << ", " << index;}
+                }
             }
         };
     }
