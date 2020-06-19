@@ -6,6 +6,8 @@ import seaborn as sns
 from collections import defaultdict
 from diversity import plot_diversity_in_dir
 from dist_grid import plot_dist_grid_in_dir
+from pos_var_grid import plot_pos_var_grid_in_dir
+from entropy_grid import plot_entropy_grid_in_dir
 from ae_loss_AE import plot_loss_in_dir_AE
 from ae_loss_VAE import plot_loss_in_dir_VAE
 
@@ -22,6 +24,8 @@ variants = [exp_name.split("_")[-1] for exp_name in os.listdir(EXP_FOLDER) if
 diversity_dict = defaultdict(list)
 loss_dict = defaultdict(list)
 distance_dict = defaultdict(list)
+entropy_dict = defaultdict(list)
+pos_var_dict = defaultdict(list)
 
 for variant in variants:
     os.chdir(f"{EXP_FOLDER}/{BASE_NAME}{variant}")
@@ -38,6 +42,8 @@ for variant in variants:
     variant_diversity_dict = defaultdict(list)
     variant_loss_dict = defaultdict(list)
     variant_dist_dict = defaultdict(list)
+    variant_pos_var_dict = defaultdict(list)
+    variant_entropy_dict = defaultdict(list)
 
     for i, exp in enumerate(exp_names):
         exp_path = f"{EXP_FOLDER}/{BASE_NAME}{variant}/{exp}"
@@ -48,6 +54,8 @@ for variant in variants:
             div_dict, max_diversity = plot_diversity_in_dir(full_path, GENERATE_EACH_IMAGE)
             variant_diversity_dict[exp].append(div_dict)
             variant_dist_dict[exp].append(plot_dist_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
+            variant_pos_var_dict[exp].append(plot_pos_var_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
+            variant_entropy_dict[exp].append(plot_entropy_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
             # PID level plotting
             if variant == "vae":
                 variant_loss_dict[exp].append(plot_loss_in_dir_VAE(full_path, is_full_loss[i], GENERATE_EACH_IMAGE, PLOT_TOTAL_L2))
@@ -182,6 +190,71 @@ for variant in variants:
         plt.savefig("distance.png")
         plt.close()
 
+        # plot pos_var at experiment level
+        PV_values = np.array([repetition["PV"] for repetition in variant_pos_var_dict[exp]]).flatten()
+        PVE_values = np.array([repetition["PVE"] for repetition in variant_pos_var_dict[exp]]).flatten()
+
+        f = plt.figure(figsize=(10, 5))
+        spec = f.add_gridspec(3, 1)
+        ax1 = f.add_subplot(spec[:2, 0])
+        ln1 = sns.lineplot(generations, PV_values, estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
+                           color="red", linestyle="--")
+        ln2 = sns.lineplot(generations, PVE_values, estimator="mean", ci="sd", label="Mean Variance excl. 0s", ax=ax1,
+                           color="red")
+        ax1.set_ylabel("Mean Variance")
+
+        ax1.get_legend().remove()
+        lns = ln2.get_lines()
+        labs = [l.get_label() for l in lns]
+        ax1.legend(lns, labs, loc='best')
+
+        ax3 = f.add_subplot(spec[2, 0])
+        ax3.set_title("% Solutions Moving The Ball")
+        ax3.set_ylim([0, 100])
+        ax3.set_yticks([0, 25, 50, 75, 100])
+        ax3.yaxis.grid(True)
+        sns.lineplot(generations, PCT_values, estimator="mean", ci="sd", ax=ax3)
+        ax3.set_ylabel("%")
+        ax3.set_xlabel("Generations")
+
+        # make space between subplots
+        plt.subplots_adjust(hspace=0.6)
+
+        plt.savefig("pos_var.png")
+        plt.close()
+
+        # plot entropy at experiment level
+        EV_values = np.array([repetition["EV"] for repetition in variant_entropy_dict[exp]]).flatten()
+        EVE_values = np.array([repetition["EVE"] for repetition in variant_entropy_dict[exp]]).flatten()
+
+        f = plt.figure(figsize=(10, 5))
+        spec = f.add_gridspec(3, 1)
+        ax1 = f.add_subplot(spec[:2, 0])
+        ln1 = sns.lineplot(generations, EV_values, estimator="mean", ci="sd", label="Mean Entropy", ax=ax1,
+                           color="red", linestyle="--")
+        ln2 = sns.lineplot(generations, EVE_values, estimator="mean", ci="sd", label="Mean Entropy excl. 0s", ax=ax1,
+                           color="red")
+        ax1.set_ylabel("Mean Entropy")
+
+        ax1.get_legend().remove()
+        lns = ln2.get_lines()
+        labs = [l.get_label() for l in lns]
+        ax1.legend(lns, labs, loc='best')
+
+        ax3 = f.add_subplot(spec[2, 0])
+        ax3.set_title("% Solutions Moving The Ball")
+        ax3.set_ylim([0, 100])
+        ax3.set_yticks([0, 25, 50, 75, 100])
+        ax3.yaxis.grid(True)
+        sns.lineplot(generations, PCT_values, estimator="mean", ci="sd", ax=ax3)
+        ax3.set_ylabel("%")
+        ax3.set_xlabel("Generations")
+
+        # make space between subplots
+        plt.subplots_adjust(hspace=0.6)
+
+        plt.savefig("entropy.png")
+        plt.close()
 
     # variant plotting
     # retrieve stochasticity levels from file names
@@ -403,6 +476,108 @@ for variant in variants:
                 plt.savefig(f"distance_gen{generation}_fullloss.png")
             else:
                 plt.savefig(f"distance_gen{generation}.png")
+            plt.close()
+
+    # plot pos var across stochasticity for each generation
+    for loss_type in ["fulllosstrue", "fulllossfalse"]:
+        if variant != "vae" and loss_type == "fulllosstrue":
+            continue
+        for i, generation in enumerate(generations):
+            PV_values = []
+            PVE_values = []
+            stochasticity_values = []
+
+            for stochasticity in stochasticities:
+                # take correct dictionary according to stochasticity
+                components[1] = f"random{stochasticity}"
+                components[2] = loss_type
+                for repetition in variant_pos_var_dict["_".join(components)]:
+                    PV_values.append(repetition["PV"][i])
+                    PVE_values.append(repetition["PVE"][i])
+
+            f = plt.figure(figsize=(10, 5))
+            spec = f.add_gridspec(3, 1)
+            ax1 = f.add_subplot(spec[:2, 0])
+            ln1 = sns.lineplot(stochasticity_values, PV_values, estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
+                               color="red", linestyle="--")
+            ln2 = sns.lineplot(stochasticity_values, PVE_values, estimator="mean", ci="sd", label="Mean Variance excl. 0s",
+                               ax=ax1,
+                               color="red")
+            ax1.set_ylabel("Mean Variance")
+
+            ax1.get_legend().remove()
+            lns = ln2.get_lines()
+            labs = [l.get_label() for l in lns]
+            ax1.legend(lns, labs, loc='best')
+
+            ax3 = f.add_subplot(spec[2, 0])
+            ax3.set_title("% Solutions Moving The Ball")
+            ax3.set_ylim([0, 100])
+            ax3.set_yticks([0, 25, 50, 75, 100])
+            ax3.yaxis.grid(True)
+            sns.lineplot(stochasticity_values, PCT_values, estimator="mean", ci="sd", ax=ax3)
+            ax3.set_ylabel("%")
+            ax3.set_xlabel("Stochasticity")
+
+            # make space between subplots
+            plt.subplots_adjust(hspace=0.6)
+
+            if loss_type == "fulllosstrue":
+                plt.savefig(f"pos_var{generation}_fullloss.png")
+            else:
+                plt.savefig(f"pos_var{generation}.png")
+            plt.close()
+
+    # plot entropy across stochasticity for each generation
+    for loss_type in ["fulllosstrue", "fulllossfalse"]:
+        if variant != "vae" and loss_type == "fulllosstrue":
+            continue
+        for i, generation in enumerate(generations):
+            EV_values = []
+            EVE_values = []
+            stochasticity_values = []
+
+            for stochasticity in stochasticities:
+                # take correct dictionary according to stochasticity
+                components[1] = f"random{stochasticity}"
+                components[2] = loss_type
+                for repetition in variant_entropy_dict["_".join(components)]:
+                    EV_values.append(repetition["EV"][i])
+                    EVE_values.append(repetition["EVE"][i])
+
+            f = plt.figure(figsize=(10, 5))
+            spec = f.add_gridspec(3, 1)
+            ax1 = f.add_subplot(spec[:2, 0])
+            ln1 = sns.lineplot(stochasticity_values, EV_values, estimator="mean", ci="sd", label="Mean Entropy",
+                               ax=ax1,
+                               color="red", linestyle="--")
+            ln2 = sns.lineplot(stochasticity_values, EVE_values, estimator="mean", ci="sd",
+                               label="Mean Entropy excl. 0s",
+                               ax=ax1,
+                               color="red")
+            ax1.set_ylabel("Mean Entropy")
+
+            ax1.get_legend().remove()
+            lns = ln2.get_lines()
+            labs = [l.get_label() for l in lns]
+            ax1.legend(lns, labs, loc='best')
+
+            ax3 = f.add_subplot(spec[2, 0])
+            ax3.set_title("% Solutions Moving The Ball")
+            ax3.set_ylim([0, 100])
+            ax3.set_yticks([0, 25, 50, 75, 100])
+            ax3.yaxis.grid(True)
+            sns.lineplot(stochasticity_values, PCT_values, estimator="mean", ci="sd", ax=ax3)
+            ax3.set_ylabel("%")
+            ax3.set_xlabel("Stochasticity")
+
+            # make space between subplots
+            plt.subplots_adjust(hspace=0.6)
+
+            if loss_type == "fulllosstrue":
+                plt.savefig(f"entropy{generation}_fullloss.png")
+            else:
+                plt.savefig(f"entropy{generation}.png")
             plt.close()
 
     distance_dict[variant].append(variant_dist_dict)
