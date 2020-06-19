@@ -17,7 +17,7 @@ def plot_pos_var_grid_in_dir(path, generate_images=True, save_path=None):
 
     generations = sorted(int(gen) for gen in generations)
 
-    # for distance plot across generations
+    # for var plot across generations
     var_values = []
     var_values_exclzero = []
     percentage_moved = []
@@ -118,8 +118,8 @@ def plot_pos_var_grid_in_dir(path, generate_images=True, save_path=None):
         plt.savefig("pos_var.png")
         plt.close()
 
-    data_dict = {"gen": generations, "VD": var_values,
-                 "VDE": var_values_exclzero, "PCT": percentage_moved}
+    data_dict = {"gen": generations, "PV": var_values,
+                 "PVE": var_values_exclzero, "PCT": percentage_moved}
     return data_dict
 
 
