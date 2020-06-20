@@ -70,7 +70,7 @@ def plot_pos_var_grid_in_dir(path, generate_images=True, save_path=None):
             plt.xlim([0, DISCRETISATION])
 
             # plot grid
-            sns.heatmap(rows, vmin=-20, vmax=100, annot=rows_freq, linewidths=0.2)
+            sns.heatmap(rows, vmin=-1, vmax=ROOM_W, annot=rows_freq, linewidths=0.2)
 
             plt.xticks(range(DISCRETISATION), np.arange(0, ROOM_W, ROOM_W / DISCRETISATION))
             plt.yticks(range(DISCRETISATION), np.arange(0, ROOM_H, ROOM_H / DISCRETISATION))
@@ -125,4 +125,4 @@ def plot_pos_var_grid_in_dir(path, generate_images=True, save_path=None):
 
 if __name__ == "__main__":
     plot_pos_var_grid_in_dir(
-        "/home/andwang1/airl/balltrajectorysd/singularity/balltrajectorysd.sif/git/sferes2/build/exp/balltrajectorysd/balltrajectorysd_vae_2020-06-19_11_36_09_23459")
+        "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/vistest/2020-06-19_19_12_49_126106")
