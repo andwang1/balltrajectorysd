@@ -92,6 +92,9 @@ namespace sferes {
                 Eigen::VectorXf avg_entropy_grid(Params::stat::entropy_discretisation * Params::stat::entropy_discretisation);
                 avg_entropy_grid.fill(-20);
 
+                Eigen::VectorXi freq_grid(Params::stat::entropy_discretisation * Params::stat::entropy_discretisation);
+                freq_grid.fill(0);
+
                 for (int i{0}; i < Params::stat::entropy_discretisation * Params::stat::entropy_discretisation; ++i)
                 {
                     if (indices_per_bucket[i].size() == 0)
@@ -99,6 +102,7 @@ namespace sferes {
                     else if (indices_per_bucket[i].size() == 1)
                     {
                         avg_entropy_grid[i] = 0;
+                        freq_grid[i] = 1;
                         continue;
                     }
                     
@@ -128,6 +132,7 @@ namespace sferes {
                         }
                     }
                     avg_entropy_grid[i] = bucket_entropy_values.mean();
+                    freq_grid[i] = indices_per_bucket[i].size();
                 }
                 
                 std::ofstream ofs(fname.c_str());
@@ -135,7 +140,8 @@ namespace sferes {
                 Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "");
                 ofs << "Mean Entropy, Mean Entropy excl. Zero, Moved/Total\nEntropy grid\n";
                 ofs << entropy_values.mean() << ", " << entropy_excl_zero.mean() << ", " << moved_counter << "/" << pop_size << "\n";
-                ofs << avg_entropy_grid.format(CommaInitFmt);
+                ofs << avg_entropy_grid.format(CommaInitFmt) << "\n";
+                ofs << freq_grid.format(CommaInitFmt);
             }
         };
     }
