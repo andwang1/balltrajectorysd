@@ -35,21 +35,22 @@ def plot_latent_space_in_dir(path, save_path=None):
             lines = f.readlines()
         moved_indices = [int(i) for i in lines[5].strip().split()]
 
-        x = np.array(x)
-        y = np.array(y)
-
         is_moved = np.array([False] * len(x))
         is_moved[moved_indices] = True
 
         fig = plt.figure(figsize=(15, 15))
-        plt.ylim([-4, 4])
-        plt.xlim([-4, 4])
+        max_value = np.max(np.abs(np.array([x, y])))
+        plt.ylim([-max_value, max_value])
+        plt.xlim([-max_value, max_value])
+
+        x = np.array(x)
+        y = np.array(y)
 
         ax1 = fig.add_subplot()
         ax1.scatter(x[is_moved], y[is_moved], c="green", label="Moved")
         ax1.scatter(x[np.invert(is_moved)], y[np.invert(is_moved)], c="red", label="Not Moved")
 
-        circ = plt.Circle((0, 0), radius=1, facecolor="None", edgecolor="blue", linestyle="--")
+        circ = plt.Circle((0, 0), radius=1, facecolor="None", edgecolor="black", linestyle="--", linewidth=2)
         ax1.add_patch(circ)
 
         plt.title(f"Latent Space - Gen {GEN_NUMBER} - Total Num. {len(lines)}")
@@ -66,4 +67,4 @@ def plot_latent_space_in_dir(path, save_path=None):
 
 if __name__ == "__main__":
     plot_latent_space_in_dir(
-        "/home/andwang1/airl/balltrajectorysd/singularity/balltrajectorysd.sif/git/sferes2/build/exp/balltrajectorysd/balltrajectorysd_vae_2020-06-19_11_36_09_23459")
+        "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/vistest/2020-06-19_19_12_49_126106")
