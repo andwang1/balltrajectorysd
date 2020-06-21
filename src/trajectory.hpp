@@ -93,9 +93,7 @@ b2Body* _end_effector;
 FIT_QD(Trajectory)
 {
     public:
-    Trajectory(){
-        _params.resize(Params::qd::gen_dim);
-
+    Trajectory(): _params(Params::qd::gen_dim), _full_trajectory(Params::sim::full_trajectory_length){
         for (Eigen::VectorXf &traj : _trajectories)
             {traj.resize(Params::sim::num_trajectory_elements);}
     
@@ -103,8 +101,6 @@ FIT_QD(Trajectory)
             {traj.resize(Params::sim::num_trajectory_elements);}
 
         std::fill(_is_trajectory.begin(), _is_trajectory.end(), 0);
-
-        _full_trajectory.resize(Params::sim::full_trajectory_length);
     }
 
     template <typename Indiv> 
