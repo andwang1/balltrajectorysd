@@ -326,9 +326,7 @@ public:
                 torch::Tensor reconstruction_tensor = auto_encoder->forward_(std::get<0>(tup).to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar);
                 torch::Tensor loss_tensor = torch::zeros(1, torch::device(this->m_device));
 
-                #ifdef VAE
-                loss_tensor += -0.5 * TParams::ae::beta * torch::sum(1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar));
-                #endif
+
                 // start at -1 because first loop will take it to 0
                 int index{-1};
 
@@ -356,6 +354,9 @@ public:
                 
                 long num_trajectories {static_cast<long>(std::get<2>(tup).size())};
                 loss_tensor /= num_trajectories;
+                #ifdef VAE
+                loss_tensor += -0.5 * TParams::ae::beta * torch::sum(1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar), {1}).mean();
+                #endif
                 loss_tensor.backward();
 
                 this->m_adam_optimiser.step();
@@ -455,7 +456,7 @@ public:
                 {recon_loss_unreduced[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi);}
                 else
                 {recon_loss_unreduced[i] = torch::abs(traj_tensor[i] - reconstruction_tensor[index]) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi);}
-                reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]);
+                reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]) + torch::sum(KL[index]);
             }
             else
             {
@@ -463,7 +464,7 @@ public:
                 {recon_loss_unreduced[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2);}
                 else
                 {recon_loss_unreduced[i] = torch::abs(traj_tensor[i] - reconstruction_tensor[index]);}
-                reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]);
+                reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]) + torch::sum(KL[index]);
             }
             L2[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2);
             
