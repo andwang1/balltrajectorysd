@@ -85,6 +85,7 @@
 #include "stat/stat_distances.hpp"
 #include "stat/stat_similarity.hpp"
 #include "stat/stat_entropy.hpp"
+#include "stat/stat_notmoved_recon_var.hpp"
 
 #include "params.hpp"
 #include "trajectory.hpp"
@@ -222,7 +223,8 @@ int main(int argc, char **argv) {
                     // similarity needs to run after distances as it gets info on whether the ball moved from distances
                     sferes::stat::Similarity<phen_t, params_t>,
                     sferes::stat::Entropy<phen_t, params_t>,
-                    sferes::stat::Modifier<phen_t, params_t>
+                    sferes::stat::Modifier<phen_t, params_t>,
+                    sferes::stat::NotMovedReconVar<phen_t, params_t>
                 > stat_t;
 
 
