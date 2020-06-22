@@ -53,7 +53,7 @@ namespace sferes {
                 }
 
                 Eigen::VectorXf variance = (observations.rowwise() - observations.colwise().mean()).array().square().colwise().sum() / (ea.pop().size() - 1);
-                Eigen::VectorXf variance_excl_zero = (observations.block(0, 0, moved_counter, Params::sim::num_trajectory_elements).rowwise() - observations.block(0, 0, moved_counter, Params::sim::num_trajectory_elements).colwise().mean()).array().square().colwise().sum().array() / (moved_counter - 1);
+                Eigen::VectorXf variance_excl_zero = (observations_excl_zero.block(0, 0, moved_counter, Params::sim::num_trajectory_elements).rowwise() - observations_excl_zero.block(0, 0, moved_counter, Params::sim::num_trajectory_elements).colwise().mean()).array().square().colwise().sum().array() / (moved_counter - 1);
 
                 Eigen::VectorXf var_grid(Params::nov::discretisation * Params::nov::discretisation);
                 var_grid.fill(-20);
