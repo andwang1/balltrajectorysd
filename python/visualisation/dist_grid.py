@@ -66,7 +66,7 @@ def plot_dist_grid_in_dir(path, generate_images=True, save_path=None):
             plt.xlim([0, DISCRETISATION])
 
             # vmin/vmax sets limits
-            color = plt.pcolormesh(rows, vmin=-20, vmax=100)
+            color = plt.pcolormesh(rows, vmin=-10, vmax=50)
 
             # plot grid
             plt.grid(which="both")

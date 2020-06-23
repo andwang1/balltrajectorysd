@@ -61,4 +61,4 @@ def plot_loss_in_dir_AE(path, generate_images=True, is_aurora=False, show_train_
 
 if __name__ == "__main__":
     plot_loss_in_dir_AE(
-        "/home/andwang1/airl/balltrajectorysd/results_exp1/repeated_run1/results_balltrajectorysd_ae/gen6001_random0.1_fulllossfalse/2020-06-04_23_21_36_261296")
+        "/media/andwang1/SAMSUNG/MSC_INDIV/results_exp1/repeated_run1/L1/results_balltrajectorysd_ae/gen6001_random0.4_fulllossfalse/2020-06-11_03_38_57_107203")

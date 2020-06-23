@@ -4,20 +4,19 @@ import os
 from exp_config import *
 
 variant = "vae"
-random = "0.2"
+random = "0.4"
 GEN_NUMBER = 6000
 beta = "1"
 extension = "0"
 vae_loss = "fulllosstrue"
 
-BASE_PATH = '/home/andwang1/airl/balltrajectorysd/results_exp1/box2dtest/first_run/'
-# EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}/'
-EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}_beta{beta}_extension{extension}/'
+BASE_PATH = '/media/andwang1/SAMSUNG/MSC_INDIV/results_exp1/repeated_run1/L1/'
+EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}/'
+# EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}_beta{beta}_extension{extension}/'
 FULL_PATH = BASE_PATH + EXP_PATH
 os.chdir(FULL_PATH)
 
 pids = [dir for dir in os.listdir() if os.path.isdir(os.path.join(FULL_PATH, dir))]
-print(pids)
 PID = pids[0] + "/"
 os.chdir(BASE_PATH)
 FILE_NAME = f'traj_{GEN_NUMBER}.dat'
@@ -93,6 +92,7 @@ for indiv in plotting_data:
         ax3.yaxis.grid(True)
         ax3.set_title("Decoder Variance", loc="left")
 
+    # keep space between subplots
     plt.subplots_adjust(hspace=0.6)
 
     for i, j in zip(x_label, y_label):

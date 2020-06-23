@@ -15,8 +15,6 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
     variance = []
     train_epochs = []
 
-    data_dict = {}
-
     with open(FILE, "r") as f:
         for line in f.readlines():
             data = line.strip().split(",")
@@ -92,6 +90,7 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
         plt.close()
         # plt.show()
 
+    data_dict = {}
     data_dict["TL"] = total_recon
     data_dict["L2"] = L2
     data_dict["AL"] = actual_trajectories_L2
@@ -105,4 +104,4 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
 
 if __name__ == "__main__":
     plot_loss_in_dir_VAE(
-        "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/bigger_network/results_balltrajectorysd_vae/--number-gen=6001_--pct-random=0.2_--full-loss=true_--beta=1_--pct-extension=0/2020-06-14_17_51_34_5577")
+        "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/smaller_network/results_balltrajectorysd_vae/gen10001_random0.2_fulllosstrue_beta1_extension0/2020-06-15_11_37_36_1234")

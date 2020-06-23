@@ -2,7 +2,7 @@ import os
 import shutil
 
 search_path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_exp1/repeated_run1/results_balltrajectorysd_vae"
-dest_path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_exp1/repeated_run1/results_balltrajectorysd_vae_beta0"
+dest_path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_exp1/repeated_run1/temp"
 os.chdir(search_path)
 
 experiments = os.listdir()

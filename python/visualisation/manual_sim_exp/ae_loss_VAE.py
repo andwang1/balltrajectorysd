@@ -97,4 +97,4 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
 
 if __name__ == "__main__":
     plot_loss_in_dir_VAE(
-        "/home/andwang1/airl/balltrajectorysd/results_exp1/test/results_balltrajectorysd_vae/gen6001_random0.1_fulllosstrue/2020-06-06_07_16_34_6414")
+        "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/smaller_network/results_balltrajectorysd_vae/gen10001_random0.2_fulllosstrue_beta1_extension0/2020-06-15_11_37_36_1234")
