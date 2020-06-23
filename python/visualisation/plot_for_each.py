@@ -219,8 +219,8 @@ for variant in variants:
 
         # at experiment level, plot losses
         L2_values = np.array([repetition["L2"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]])
+        AL_values = np.array([repetition["AL"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
         if variant != "aurora":
-            AL_values = np.array([repetition["AL"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
             UL_values = np.array([repetition["UL"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
         x = list(range(START_GEN_LOSS_PLOT, len(L2_values[0]) + START_GEN_LOSS_PLOT)) * len(L2_values)
 
@@ -259,8 +259,8 @@ for variant in variants:
         # plot overall L2 and actual L2
         if PLOT_TOTAL_L2 or variant != "vae":
             ln1 = sns.lineplot(x, L2_values.flatten(), estimator="mean", ci="sd", label="Total L2", ax=ax1, color="red")
-        if variant != "aurora":
             ln2 = sns.lineplot(x, AL_values, estimator="mean", ci="sd", label="Actual L2", ax=ax1, color="blue")
+        if variant != "aurora":
             ln3 = sns.lineplot(x, UL_values, estimator="mean", ci="sd", label="Undist. L2", ax=ax1, color="brown")
         ax1.set_ylabel("L2")
 
@@ -272,7 +272,7 @@ for variant in variants:
         if variant != "aurora":
             lns = ln3.get_lines() + ln4.get_lines() if "fulllosstrue" in exp else ln3.get_lines()
         else:
-            lns = ln1.get_lines()
+            lns = ln2.get_lines()
         labs = [l.get_label() for l in lns]
         ax1.legend(lns, labs, loc='best')
 
@@ -559,8 +559,8 @@ for variant in variants:
                 continue
             for repetition in variant_loss_dict["_".join(components)]:
                 L2_values.append(repetition["L2"][START_GEN_LOSS_PLOT:])
+                AL_values.append(repetition["AL"][START_GEN_LOSS_PLOT:])
                 if variant != "aurora":
-                    AL_values.append(repetition["AL"][START_GEN_LOSS_PLOT:])
                     UL_values.append(repetition["UL"][START_GEN_LOSS_PLOT:])
                 stochasticity_values.append([stochasticity] * len(repetition["L2"][START_GEN_LOSS_PLOT:]))
 
@@ -576,8 +576,8 @@ for variant in variants:
 
         stochasticity_values = np.array(stochasticity_values).flatten()
         L2_values = np.array(L2_values).flatten()
+        AL_values = np.array(AL_values).flatten()
         if variant != "aurora":
-            AL_values = np.array(AL_values).flatten()
             UL_values = np.array(UL_values).flatten()
 
         if loss_type == "fulllosstrue":
@@ -617,8 +617,8 @@ for variant in variants:
         # plot overall L2 and actual L2
         if PLOT_TOTAL_L2 or variant != "vae":
             ln1 = sns.lineplot(stochasticity_values, L2_values, estimator="mean", ci="sd", label="Total L2", ax=ax1, color="red")
-        if variant != "aurora":
             ln2 = sns.lineplot(stochasticity_values, AL_values, estimator="mean", ci="sd", label="Actual L2", ax=ax1, color="blue")
+        if variant != "aurora":
             ln3 = sns.lineplot(stochasticity_values, UL_values, estimator="mean", ci="sd", label="Undist. L2", ax=ax1, color="brown")
         ax1.set_ylabel("L2")
 
@@ -628,7 +628,7 @@ for variant in variants:
             var_ax.get_legend().remove()
 
         if variant == "aurora":
-            lns = ln1.get_lines()
+            lns = ln2.get_lines()
         else:
             lns = ln3.get_lines() + ln4.get_lines() if loss_type == "fulllosstrue" else ln3.get_lines()
         labs = [l.get_label() for l in lns]
