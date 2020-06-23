@@ -53,7 +53,7 @@ def plot_latent_space_in_dir(path, save_path=None):
         circ = plt.Circle((0, 0), radius=1, facecolor="None", edgecolor="black", linestyle="--", linewidth=2)
         ax1.add_patch(circ)
 
-        plt.title(f"Latent Space - Gen {GEN_NUMBER} - Total Num. {len(x)} - % Moved {round(len(x[is_moved]) / len(x), 2)}")
+        plt.title(f"Latent Space - Gen {GEN_NUMBER} - Total Num. {len(x)} - % Moved {round(100 * (len(x[is_moved]) / len(x)), 0)}")
         plt.xlabel("Latent X")
         plt.ylabel("Latent Y")
         plt.legend()
