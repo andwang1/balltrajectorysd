@@ -106,7 +106,7 @@ From: airl_lab/default/airl_env:pytorch_ci
     DIRNAME=results_$1/$2_$4_$5_$6_$7_$8
     PATHNAME=$(date +%Y-%m-%d_%H_%M_%S)_$$
 
-    mkdir -p $CURPATH/$DIRNAME/$PATHNAME
+    mkdir -p $CURPATH/$DIRNAME/$PATHNAME/images
 
     cd /git/sferes2/
 
@@ -115,6 +115,7 @@ From: airl_lab/default/airl_env:pytorch_ci
     echo Launching command \'python3 /git/sferes2/exp/balltrajectorysd/python/visualisation/plot_for_each_container.py $CURPATH/$DIRNAME/$PATHNAME $1 $5\'
     python3 /git/sferes2/exp/balltrajectorysd/python/visualisation/plot_for_each_container.py $CURPATH/$DIRNAME/$PATHNAME $1 $5
     cp /git/sferes2/exp/balltrajectorysd/src/params.hpp $CURPATH/$DIRNAME/$PATHNAME
+    mv $CURPATH/$DIRNAME/$PATHNAME/*png $CURPATH/$DIRNAME/$PATHNAME/images
 
 %apprun vae
     bash -c 'sleep $[ ( $RANDOM % 90 )  + 1 ]s'
