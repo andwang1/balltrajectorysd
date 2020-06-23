@@ -68,7 +68,8 @@ def plot_entropy_grid_in_dir(path, generate_images=True, save_path=None):
             plt.xlim([0, ENTROPY_DISCRETISATION])
 
             # plot grid
-            sns.heatmap(rows, vmin=-.5, vmax=np.log2(ENTROPY_DISCRETISATION ** 2) / 2, annot=rows_freq, linewidths=0.2, cmap="coolwarm")
+            sns.heatmap(rows, vmin=-.5, vmax=np.log2(ENTROPY_DISCRETISATION ** 2) / 2, annot=rows_freq, linewidths=0.2,
+                        cmap="coolwarm", fmt=".0f")
 
             plt.xticks(range(ENTROPY_DISCRETISATION), np.arange(0, ROOM_W, ROOM_W / ENTROPY_DISCRETISATION))
             plt.yticks(range(ENTROPY_DISCRETISATION), np.arange(0, ROOM_H, ROOM_H / ENTROPY_DISCRETISATION))

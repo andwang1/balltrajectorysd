@@ -70,7 +70,7 @@ def plot_pos_var_grid_in_dir(path, generate_images=True, save_path=None):
             plt.xlim([0, DISCRETISATION])
 
             # plot grid
-            sns.heatmap(rows, vmin=-1, vmax=ROOM_W, annot=rows_freq, linewidths=0.2)
+            sns.heatmap(rows, vmin=-1, vmax=ROOM_W, annot=rows_freq, linewidths=0.2, fmt=".0f")
 
             plt.xticks(range(DISCRETISATION), np.arange(0, ROOM_W, ROOM_W / DISCRETISATION))
             plt.yticks(range(DISCRETISATION), np.arange(0, ROOM_H, ROOM_H / DISCRETISATION))
