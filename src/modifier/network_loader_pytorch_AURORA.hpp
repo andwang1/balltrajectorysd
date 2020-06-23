@@ -388,6 +388,7 @@ public:
         torch::Tensor averaged_descriptors_tensor = torch::zeros({phen.rows(), TParams::qd::behav_dim}, torch::device(this->m_device));
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows(), torch::device(this->m_device));
         torch::Tensor recon_loss_unreduced = torch::pow(traj_tensor - reconstruction_tensor, 2);
+        torch::Tensor L2_actual_traj = torch::empty(phen.rows(), torch::device(this->m_device));
 
         int index{0};
         int internal_avg_counter{0};
@@ -403,6 +404,9 @@ public:
             averaged_descriptors_tensor[index] += descriptors_tensor[i];
             reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]);
             ++internal_avg_counter;
+
+            if (boundaries[i])
+            L2_actual_traj[index] = torch::sum(recon_loss_unreduced[i]);
         }
         // outside loop, if last one is a random trajectory, then the last element in boundaries is false, and thus need to divide
         if (!boundaries[boundaries.size() - 1])
@@ -414,6 +418,7 @@ public:
         this->get_eigen_matrix_from_torch_tensor(reconstruction_tensor.cpu(), reconstructed_data);
         this->get_eigen_matrix_from_torch_tensor(reconstruction_loss.cpu(), recon_loss);
         this->get_eigen_matrix_from_torch_tensor(recon_loss_unreduced.cpu(), recon_loss_unred);
+        this->get_eigen_matrix_from_torch_tensor(L2_actual_traj.cpu(), L2_loss_real_trajectories);
     }
 
     float _log_2_pi;
