@@ -41,8 +41,10 @@ struct Params {
 
     static double pct_extension;
     static bool full_loss;
-    static bool L2_loss;
     static size_t beta;
+
+    enum class loss : unsigned int {SqRoot, L1, L2};
+    static loss loss_function;
 
     // network neurons        
     // input = qd::gen_dim
@@ -54,6 +56,8 @@ struct Params {
     // output_dim = sim::trajectory_length
 
     SFERES_CONST bool bias = true;
+
+    
     };
 
     struct update {
@@ -121,5 +125,6 @@ bool Params::ae::L2_loss;
 size_t Params::pop::nb_gen;
 size_t Params::ae::beta;
 double Params::ae::pct_extension;
+Params::ae::loss Params::ae::loss_function;
 
 #endif //PARAMS_HPP

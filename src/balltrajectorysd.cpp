@@ -128,6 +128,7 @@ struct Arguments {
     size_t number_gen;
     size_t beta;
     double pct_extension;
+    unsigned int loss_func;
 };
 
 void get_arguments(const boost::program_options::options_description &desc, Arguments &arg, int argc, char **argv) {
@@ -141,10 +142,10 @@ void get_arguments(const boost::program_options::options_description &desc, Argu
     arg.number_cpus = vm["number-cpus"].as<size_t>();
     arg.pct_random = vm["pct-random"].as<double>();
     arg.full_loss = vm["full-loss"].as<bool>();
-    arg.l2_loss = vm["l2-loss"].as<bool>();
     arg.number_gen = vm["number-gen"].as<size_t>();
     arg.beta = vm["beta"].as<size_t>();
     arg.pct_extension = vm["pct-extension"].as<double>();
+    arg.loss_func = vm["loss-func"].as<unsigned int>();
 }
 
 int main(int argc, char **argv) {
@@ -161,11 +162,11 @@ int main(int argc, char **argv) {
     desc.add_options()
                 ("full-loss", boost::program_options::value<bool>(), "Full VAE loss or just L2");
     desc.add_options()
-                ("l2-loss", boost::program_options::value<bool>(), "L2 or L1");
-    desc.add_options()
                 ("beta", boost::program_options::value<size_t>(), "Beta Coefficient");
     desc.add_options()
                 ("pct-extension", boost::program_options::value<double>(), "% of Phenotypes to regenerate for training");
+    desc.add_options()
+                ("loss-func", boost::program_options::value<unsigned int>(), "Loss function: 0 = SqRoot, 1 = L1, 2 = L2");
 
     get_arguments(desc, arg, argc, argv);
 
@@ -188,9 +189,8 @@ int main(int argc, char **argv) {
     Params::ae::beta = arg.beta;
     // Additional phenotypes to retrain on
     Params::ae::pct_extension = arg.pct_extension;
-    // L2 or L1 loss
-    Params::ae::L2_loss = arg.l2_loss;
-
+    // loss function
+    Params::ae::loss_function = static_cast<Params::ae::loss>(arg.loss_func);
 
     typedef Trajectory<params_t> fit_t;
     typedef sferes::gen::EvoFloat<Params::qd::gen_dim, params_t> gen_t;
