@@ -11,12 +11,13 @@ from visualisation.entropy_grid import plot_entropy_grid_in_dir
 from visualisation.ae_loss_AE import plot_loss_in_dir_AE
 from visualisation.ae_loss_VAE import plot_loss_in_dir_VAE
 from visualisation.latent_space import plot_latent_space_in_dir
+from visualisation.recon_notmoved_var import plot_recon_not_moved_var_in_dir
 
-GENERATE_EACH_IMAGE = True
+GENERATE_EACH_IMAGE = False
 PLOT_TOTAL_L2 = False
 START_GEN_LOSS_PLOT = 500
 
-EXP_FOLDER = "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/smaller_network"
+EXP_FOLDER = "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/first_run"
 BASE_NAME = "results_balltrajectorysd_"
 variants = [exp_name.split("_")[-1] for exp_name in os.listdir(EXP_FOLDER) if
             os.path.isdir(os.path.join(EXP_FOLDER, exp_name))]
@@ -27,6 +28,7 @@ loss_dict = defaultdict(list)
 distance_dict = defaultdict(list)
 entropy_dict = defaultdict(list)
 pos_var_dict = defaultdict(list)
+recon_var_dict = defaultdict(list)
 
 for variant in variants:
     os.chdir(f"{EXP_FOLDER}/{BASE_NAME}{variant}")
@@ -45,6 +47,7 @@ for variant in variants:
     variant_dist_dict = defaultdict(list)
     variant_pos_var_dict = defaultdict(list)
     variant_entropy_dict = defaultdict(list)
+    variant_recon_var_dict = defaultdict(list)
 
     for i, exp in enumerate(exp_names):
         exp_path = f"{EXP_FOLDER}/{BASE_NAME}{variant}/{exp}"
@@ -59,6 +62,7 @@ for variant in variants:
             variant_dist_dict[exp].append(plot_dist_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
             variant_pos_var_dict[exp].append(plot_pos_var_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
             variant_entropy_dict[exp].append(plot_entropy_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
+            variant_recon_var_dict[exp].append(plot_recon_not_moved_var_in_dir(full_path, GENERATE_EACH_IMAGE))
             # PID level plotting
             if variant == "vae":
                 variant_loss_dict[exp].append(plot_loss_in_dir_VAE(full_path, is_full_loss[i], GENERATE_EACH_IMAGE, PLOT_TOTAL_L2))
@@ -82,6 +86,22 @@ for variant in variants:
         plt.hlines(max_diversity, 0, x[-1], linestyles="--", label="Max Diversity")
         plt.legend()
         plt.savefig("diversity.png")
+        plt.close()
+
+        # plot recon var at experiment level
+        NMV_values = np.array([repetition["NMV"] for repetition in variant_recon_var_dict[exp]])
+        generations = variant_recon_var_dict[exp][0]["gen"] * len(NMV_values)
+
+        f = plt.figure(figsize=(5, 5))
+        spec = f.add_gridspec(1, 1)
+        ax1 = f.add_subplot(spec[0, 0])
+        ln1 = sns.lineplot(generations, NMV_values.flatten(), estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
+                           color="red")
+        ax1.set_ylabel("Mean Reconstruction Variance")
+        ax1.set_xlabel("Generations")
+        ax1.legend()
+        plt.title("Reconstruction Var. of No-Move solutions")
+        plt.savefig("recon_not_moved_var.png")
         plt.close()
 
         if variant == "aurora":
@@ -300,6 +320,37 @@ for variant in variants:
                 plt.savefig(f"diversity_gen{generation}_fullloss.png")
             else:
                 plt.savefig(f"diversity_gen{generation}.png")
+            plt.close()
+
+    # plot entropy across stochasticity for each generation
+    for loss_type in ["fulllosstrue", "fulllossfalse"]:
+        if variant != "vae" and loss_type == "fulllosstrue":
+            continue
+        for i, generation in enumerate(generations):
+            NMV_values = []
+
+            for stochasticity in stochasticities:
+                # take correct dictionary according to stochasticity
+                components[1] = f"random{stochasticity}"
+                components[2] = loss_type
+                for repetition in variant_recon_var_dict["_".join(components)]:
+                    NMV_values.append(repetition["NMV"][i])
+
+            f = plt.figure(figsize=(3, 5))
+            spec = f.add_gridspec(1, 1)
+            ax1 = f.add_subplot(spec[0, 0])
+            ln1 = sns.lineplot(stochasticity_values, NMV_values, estimator="mean", ci="sd", label="Mean Variance",
+                               ax=ax1,
+                               color="red", linestyle="--")
+            ax1.set_ylabel("Mean Reconstruction Variance")
+            ax1.set_xlabel("Stochasticity")
+            ax1.legend()
+            plt.title("Reconstruction Var. of No-Move solutions")
+
+            if loss_type == "fulllosstrue":
+                plt.savefig(f"recon_not_moved_var{generation}_fullloss.png")
+            else:
+                plt.savefig(f"recon_not_moved_var{generation}.png")
             plt.close()
 
     if variant == "aurora":
