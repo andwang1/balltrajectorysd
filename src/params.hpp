@@ -43,7 +43,7 @@ struct Params {
     static bool full_loss;
     static size_t beta;
 
-    enum class loss : unsigned int {SqRoot, L1, L2};
+    enum class loss : unsigned int {SmoothL1, L1, L2};
     static loss loss_function;
 
     // network neurons        
@@ -121,7 +121,6 @@ struct Params {
 double Params::nov::l;
 double Params::random::pct_random;
 bool Params::ae::full_loss;
-bool Params::ae::L2_loss;
 size_t Params::pop::nb_gen;
 size_t Params::ae::beta;
 double Params::ae::pct_extension;
