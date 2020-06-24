@@ -40,15 +40,17 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
             ax1.set_ylabel("L2")
             ax1.set_ylim([0, max(L2)])
             ln1 = ax1.plot(range(len(total_recon)), L2, c="red", label="L2 - Overall")
-            ax1.annotate(f"{round(L2[-1],2)}", (len(total_recon) - 1, L2[-1]))
+            # ax1.annotate(f"{round(L2[-1],2)}", (len(total_recon) - 1, L2[-1]))
 
         ln2 = ax1.plot(range(len(actual_trajectories_L2)), actual_trajectories_L2, c="blue", label="L2 - Actual Trajectories")
-        ax1.annotate(f"{round(actual_trajectories_L2[-1], 2)}", (len(actual_trajectories_L2) - 1, actual_trajectories_L2[-1]))
+        ax1.annotate(f"{round(actual_trajectories_L2[-1], 2)}", (len(actual_trajectories_L2) - 1, actual_trajectories_L2[-1]),
+                     xytext=(len(actual_trajectories_L2) - 1, actual_trajectories_L2[-1] * 1.5))
 
         ln3 = ax1.plot(range(len(undisturbed_actual_trajectories_L2)), undisturbed_actual_trajectories_L2, c="brown",
                        label="L2 - Undist. Actual Trajectories")
         ax1.annotate(f"{round(undisturbed_actual_trajectories_L2[-1], 2)}",
-                     (len(undisturbed_actual_trajectories_L2) - 1, undisturbed_actual_trajectories_L2[-1]))
+                     (len(undisturbed_actual_trajectories_L2) - 1, undisturbed_actual_trajectories_L2[-1]),
+                     xytext=(len(undisturbed_actual_trajectories_L2) - 1, undisturbed_actual_trajectories_L2[-1] * 0.5))
 
         if full_loss:
             var_ax = ax1.twinx()
@@ -99,8 +101,6 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
     data_dict["VAR"] = variance
     data_dict["TR_EPOCHS"] = train_epochs
     return data_dict
-
-
 
 if __name__ == "__main__":
     plot_loss_in_dir_VAE(
