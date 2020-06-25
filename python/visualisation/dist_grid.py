@@ -159,7 +159,7 @@ def plot_dist_grid_in_dir(path, generate_images=True, save_path=None):
         plt.savefig("distance.png")
         plt.close()
 
-    data_dict = {"gen": dist_generations, "MD": mean_distance, "MDE": mean_distance_exclzero, "VD": var_values,
+    data_dict = {"gen": dist_generations, "MD": dist_values, "MDE": dist_values_exclzero, "VD": var_values,
                  "VDE": var_values_exclzero, "PCT": percentage_moved}
     return data_dict
 
