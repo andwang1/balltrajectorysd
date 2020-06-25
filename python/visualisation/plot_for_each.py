@@ -13,11 +13,11 @@ from visualisation.ae_loss_VAE import plot_loss_in_dir_VAE
 from visualisation.latent_space import plot_latent_space_in_dir
 from visualisation.recon_notmoved_var import plot_recon_not_moved_var_in_dir
 
-GENERATE_EACH_IMAGE = False
+GENERATE_EACH_IMAGE = True
 PLOT_TOTAL_L2 = False
 START_GEN_LOSS_PLOT = 500
 
-EXP_FOLDER = "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/first_run"
+EXP_FOLDER = "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/smoothl1"
 BASE_NAME = "results_balltrajectorysd_"
 variants = [exp_name.split("_")[-1] for exp_name in os.listdir(EXP_FOLDER) if
             os.path.isdir(os.path.join(EXP_FOLDER, exp_name))]
@@ -437,7 +437,6 @@ for variant in variants:
         for i, generation in enumerate(generations):
             PV_values = []
             PVE_values = []
-            stochasticity_values = []
 
             for stochasticity in stochasticities:
                 # take correct dictionary according to stochasticity
@@ -489,7 +488,6 @@ for variant in variants:
         for i, generation in enumerate(generations):
             EV_values = []
             EVE_values = []
-            stochasticity_values = []
 
             for stochasticity in stochasticities:
                 # take correct dictionary according to stochasticity
