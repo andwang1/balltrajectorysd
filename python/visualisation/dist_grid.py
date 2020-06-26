@@ -149,7 +149,7 @@ def plot_dist_grid_in_dir(path, generate_images=True, save_path=None):
         ax3.set_ylim([0, 100])
         ax3.set_yticks([0, 25, 50, 75, 100])
         ax3.yaxis.grid(True)
-        ax3.plot(dist_generations, percentage_moved, label="% solutions with impact")
+        ax3.plot(dist_generations, percentage_moved)
         ax3.set_ylabel("%")
         ax3.set_xlabel("Generations")
 
