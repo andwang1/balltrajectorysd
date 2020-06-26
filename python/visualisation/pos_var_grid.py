@@ -98,6 +98,7 @@ def plot_pos_var_grid_in_dir(path, generate_images=True, save_path=None):
         ln1 = ax1.plot(generations, var_values, label="Mean Variance", color="red", linestyle="--")
         ln2 = ax1.plot(generations, var_values_exclzero, label="Mean Variance excl. 0s", color="red")
         ax1.set_ylabel("Mean Variance")
+        ax1.set_title("Variance of Trajectory Positions")
 
         lns = ln1 + ln2
         labs = [l.get_label() for l in lns]
