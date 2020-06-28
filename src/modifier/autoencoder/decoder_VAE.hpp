@@ -9,10 +9,10 @@
 
 struct DecoderImpl : torch::nn::Module {
     DecoderImpl(int latent_dim, int de_hid_dim1, int de_hid_dim2, int output_dim, bool bias) :
-        m_linear_1(torch::nn::Linear(torch::nn::LinearOptions(latent_dim, de_hid_dim1).with_bias(bias))),
-        m_linear_2(torch::nn::Linear(torch::nn::LinearOptions(de_hid_dim1, de_hid_dim2).with_bias(bias))),
-        m_linear_m(torch::nn::Linear(torch::nn::LinearOptions(de_hid_dim2, output_dim).with_bias(bias))),
-        m_linear_v(torch::nn::Linear(torch::nn::LinearOptions(de_hid_dim2, output_dim).with_bias(bias))),
+        m_linear_1(torch::nn::LinearOptions(latent_dim, de_hid_dim1).bias(bias)),
+        m_linear_2(torch::nn::LinearOptions(de_hid_dim1, de_hid_dim2).bias(bias)),
+        m_linear_m(torch::nn::LinearOptions(de_hid_dim2, output_dim).bias(bias)),
+        m_linear_v(torch::nn::LinearOptions(de_hid_dim2, output_dim).bias(bias)),
         m_device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
         {
             register_module("linear_1", m_linear_1);
