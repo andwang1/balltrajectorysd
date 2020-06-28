@@ -411,13 +411,6 @@ namespace sferes {
                 dist = dist - XY;
             }
 
-            void get_reconstruction(const Mat &geno, const Mat &traj, std::vector<int> &is_traj, Mat &reconstruction) const {
-                Eigen::VectorXi is_trajectories;
-                get_network_loader()->vector_to_eigen(is_traj, is_trajectories);
-                
-                _network->get_reconstruction(geno, traj, is_trajectories, reconstruction);
-            }
-
             double get_random_extension_ratio() const
             {return _random_extension_ratio;}
 
