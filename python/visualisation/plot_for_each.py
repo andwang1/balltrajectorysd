@@ -17,7 +17,7 @@ GENERATE_EACH_IMAGE = False
 PLOT_TOTAL_L2 = True
 START_GEN_LOSS_PLOT = 500
 
-EXP_FOLDER = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/smoothl1"
+EXP_FOLDER = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l1"
 BASE_NAME = "results_balltrajectorysd_"
 variants = [exp_name.split("_")[-1] for exp_name in os.listdir(EXP_FOLDER) if
             os.path.isdir(os.path.join(EXP_FOLDER, exp_name))]
@@ -29,6 +29,14 @@ distance_dict = defaultdict(list)
 entropy_dict = defaultdict(list)
 pos_var_dict = defaultdict(list)
 recon_var_dict = defaultdict(list)
+
+diversity_stoch_dict = {}
+loss_stoch_dict = {}
+distance_stoch_dict = {}
+entropy_stoch_dict = {}
+pos_var_stoch_dict = {}
+recon_var_stoch_dict = {}
+pct_stoch_dict = {}
 
 for variant in variants:
     os.chdir(f"{EXP_FOLDER}/{BASE_NAME}{variant}")
@@ -197,7 +205,7 @@ for variant in variants:
         ln2 = sns.lineplot(generations, EVE_values, estimator="mean", ci="sd", label="Mean Entropy excl. 0s", ax=ax1,
                            color="blue")
         ax1.set_ylabel("Mean Entropy")
-        ax1.set_title("Entropy")
+        ax1.set_title("Entropy of Trajectory Positions")
 
         ax1.get_legend().remove()
         lns = ln2.get_lines()
@@ -330,6 +338,9 @@ for variant in variants:
                 plt.savefig(f"diversity_gen{generation}_notfullloss.png")
             plt.close()
 
+        # record last generation
+        diversity_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "DIV": diversity_values}
+
     # plot entropy across stochasticity for each generation
     for loss_type in ["fulllosstrue", "fulllossfalse"]:
         if variant != "vae" and loss_type == "fulllosstrue":
@@ -363,6 +374,9 @@ for variant in variants:
             else:
                 plt.savefig(f"recon_not_moved_var{generation}_notfullloss.png")
             plt.close()
+
+        # record last generation
+        recon_var_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "NMV": NMV_values}
 
     # plot distances across stochasticity for each generation
     generations = list(variant_dist_dict[exp][0]["gen"])
@@ -437,6 +451,12 @@ for variant in variants:
                 plt.savefig(f"distance_gen{generation}_notfullloss.png")
             plt.close()
 
+        # record last generation
+        distance_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "MD": MD_values, "MDE": MDE_values,
+                                                        "VD": VD_values, "VDE": VDE_values}
+        pct_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "PCT": PCT_values}
+
+
     # plot pos var across stochasticity for each generation
     for loss_type in ["fulllosstrue", "fulllossfalse"]:
         if variant != "vae" and loss_type == "fulllosstrue":
@@ -495,7 +515,10 @@ for variant in variants:
                 plt.savefig(f"pos_var{generation}_notfullloss.png")
             plt.close()
 
-    # plot entropy across stochasticity for each generation
+        pos_var_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "PV": PV_values,
+                                                        "PVE": PVE_values}
+
+        # plot entropy across stochasticity for each generation
     for loss_type in ["fulllosstrue", "fulllossfalse"]:
         if variant != "vae" and loss_type == "fulllosstrue":
             continue
@@ -551,6 +574,9 @@ for variant in variants:
             else:
                 plt.savefig(f"entropy{generation}_notfullloss.png")
             plt.close()
+
+        entropy_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "EV": EV_values,
+                                                       "EVE": EVE_values}
 
     # plot losses across stochasticity for each generation
     for loss_type in ["fulllosstrue", "fulllossfalse"]:
@@ -667,22 +693,20 @@ for variant in variants:
 
         plt.close()
 
-    distance_dict[variant].append(variant_dist_dict)
-    diversity_dict[variant].append(variant_diversity_dict)
-    loss_dict[variant].append(variant_loss_dict)
-    entropy_dict[variant].append(variant_entropy_dict)
-    pos_var_dict[variant].append(variant_pos_var_dict)
-    recon_var_dict[variant].append(variant_recon_var_dict)
+        loss_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "L2": L2_values,
+                                                       "AL": AL_values}
 
 os.chdir(f"{EXP_FOLDER}")
 
 with open("diversity_data.pk", "wb") as f:
-    pk.dump(diversity_dict, f)
+    pk.dump(diversity_stoch_dict, f)
 with open("loss_data.pk", "wb") as f:
-    pk.dump(loss_dict, f)
+    pk.dump(loss_stoch_dict, f)
 with open("dist_data.pk", "wb") as f:
-    pk.dump(distance_dict, f)
+    pk.dump(distance_stoch_dict, f)
 with open("entropy_data.pk", "wb") as f:
-    pk.dump(entropy_dict, f)
+    pk.dump(entropy_stoch_dict, f)
 with open("posvar_data.pk", "wb") as f:
-    pk.dump(pos_var_dict, f)
+    pk.dump(pos_var_stoch_dict, f)
+with open("pct_moved_data.pk", "wb") as f:
+    pk.dump(pct_stoch_dict, f)
