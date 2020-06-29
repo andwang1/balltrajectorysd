@@ -13,11 +13,11 @@ from visualisation.ae_loss_VAE import plot_loss_in_dir_VAE
 from visualisation.latent_space import plot_latent_space_in_dir
 from visualisation.recon_notmoved_var import plot_recon_not_moved_var_in_dir
 
-GENERATE_EACH_IMAGE = True
-PLOT_TOTAL_L2 = False
+GENERATE_EACH_IMAGE = False
+PLOT_TOTAL_L2 = True
 START_GEN_LOSS_PLOT = 500
 
-EXP_FOLDER = "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/smoothl1"
+EXP_FOLDER = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l1extension03"
 BASE_NAME = "results_balltrajectorysd_"
 variants = [exp_name.split("_")[-1] for exp_name in os.listdir(EXP_FOLDER) if
             os.path.isdir(os.path.join(EXP_FOLDER, exp_name))]
@@ -161,8 +161,9 @@ for variant in variants:
         ln1 = sns.lineplot(generations, PV_values, estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
                            color="red", linestyle="--")
         ln2 = sns.lineplot(generations, PVE_values, estimator="mean", ci="sd", label="Mean Variance excl. 0s", ax=ax1,
-                           color="red")
+                           color="blue")
         ax1.set_ylabel("Mean Variance")
+        ax1.set_title("Variance of Trajectory Positions")
 
         ax1.get_legend().remove()
         lns = ln2.get_lines()
@@ -194,8 +195,9 @@ for variant in variants:
         ln1 = sns.lineplot(generations, EV_values, estimator="mean", ci="sd", label="Mean Entropy", ax=ax1,
                            color="red", linestyle="--")
         ln2 = sns.lineplot(generations, EVE_values, estimator="mean", ci="sd", label="Mean Entropy excl. 0s", ax=ax1,
-                           color="red")
+                           color="blue")
         ax1.set_ylabel("Mean Entropy")
+        ax1.set_title("Entropy")
 
         ax1.get_legend().remove()
         lns = ln2.get_lines()
@@ -325,7 +327,7 @@ for variant in variants:
             if loss_type == "fulllosstrue":
                 plt.savefig(f"diversity_gen{generation}_fullloss.png")
             else:
-                plt.savefig(f"diversity_gen{generation}.png")
+                plt.savefig(f"diversity_gen{generation}_notfullloss.png")
             plt.close()
 
     # plot entropy across stochasticity for each generation
@@ -334,6 +336,7 @@ for variant in variants:
             continue
         for i, generation in enumerate(generations):
             NMV_values = []
+            stochasticity_values = []
 
             for stochasticity in stochasticities:
                 # take correct dictionary according to stochasticity
@@ -341,8 +344,10 @@ for variant in variants:
                 components[2] = loss_type
                 for repetition in variant_recon_var_dict["_".join(components)]:
                     NMV_values.append(repetition["NMV"][i])
+                    stochasticity_values.append(stochasticity)
 
-            f = plt.figure(figsize=(3, 5))
+
+            f = plt.figure(figsize=(5, 5))
             spec = f.add_gridspec(1, 1)
             ax1 = f.add_subplot(spec[0, 0])
             ln1 = sns.lineplot(stochasticity_values, NMV_values, estimator="mean", ci="sd", label="Mean Variance",
@@ -351,12 +356,12 @@ for variant in variants:
             ax1.set_ylabel("Mean Reconstruction Variance")
             ax1.set_xlabel("Stochasticity")
             ax1.legend()
-            plt.title("Reconstruction Var. of No-Move solutions")
+            plt.title(f"Reconstruction Var. of No-Move solutions - Gen {generation}")
 
             if loss_type == "fulllosstrue":
                 plt.savefig(f"recon_not_moved_var{generation}_fullloss.png")
             else:
-                plt.savefig(f"recon_not_moved_var{generation}.png")
+                plt.savefig(f"recon_not_moved_var{generation}_notfullloss.png")
             plt.close()
 
     # plot distances across stochasticity for each generation
@@ -388,26 +393,28 @@ for variant in variants:
             spec = f.add_gridspec(5, 1)
             ax1 = f.add_subplot(spec[:2, 0])
             ln1 = sns.lineplot(stochasticity_values, MD_values, estimator="mean", ci="sd", label="Mean Distance",
-                               ax=ax1, color="red", linestyle="--")
+                               ax=ax1, color="red")
             ln2 = sns.lineplot(stochasticity_values, MDE_values, estimator="mean", ci="sd",
                                label="Mean Distance excl. 0s",
-                               ax=ax1, color="red")
-            ax1.set_title("Distance Stats over Stochasticity")
+                               ax=ax1, color="blue")
+            ax1.set_title(f"Distance Stats over Stochasticity - Gen {generation}")
             ax1.set_ylabel("Mean Distance")
             # first remove default legends automatically added then add combined set
-            ax1.get_legend().remove()
+            if ax1.get_legend():
+                ax1.get_legend().remove()
             lns = ln2.get_lines()
             labs = [l.get_label() for l in lns]
             ax1.legend(lns, labs, loc='best')
 
             ax2 = f.add_subplot(spec[2:4, 0])
             ln3 = sns.lineplot(stochasticity_values, VD_values, estimator="mean", ci="sd", label="Variance", ax=ax2,
-                               color="blue", linestyle="--")
+                               color="red")
             ln4 = sns.lineplot(stochasticity_values, VDE_values, estimator="mean", ci="sd",
                                label="Variance excl. 0s", ax=ax2,
                                color="blue")
             ax2.set_ylabel("Variance")
-            ax2.get_legend().remove()
+            if ax2.get_legend():
+                ax2.get_legend().remove()
             lns = ln4.get_lines()
             labs = [l.get_label() for l in lns]
             ax2.legend(lns, labs, loc='best')
@@ -422,12 +429,12 @@ for variant in variants:
             ax3.set_xlabel("Stochasticity")
 
             # make space between subplots
-            plt.subplots_adjust(hspace=0.6)
+            plt.subplots_adjust(hspace=1)
 
             if loss_type == "fulllosstrue":
                 plt.savefig(f"distance_gen{generation}_fullloss.png")
             else:
-                plt.savefig(f"distance_gen{generation}.png")
+                plt.savefig(f"distance_gen{generation}_notfullloss.png")
             plt.close()
 
     # plot pos var across stochasticity for each generation
@@ -437,6 +444,8 @@ for variant in variants:
         for i, generation in enumerate(generations):
             PV_values = []
             PVE_values = []
+            PCT_values = []
+            stochasticity_values = []
 
             for stochasticity in stochasticities:
                 # take correct dictionary according to stochasticity
@@ -445,20 +454,25 @@ for variant in variants:
                 for repetition in variant_pos_var_dict["_".join(components)]:
                     PV_values.append(repetition["PV"][i])
                     PVE_values.append(repetition["PVE"][i])
+                    stochasticity_values.append(stochasticity)
+                for repetition in variant_dist_dict["_".join(components)]:
+                    PCT_values.append(repetition["PCT"][i])
 
             f = plt.figure(figsize=(10, 5))
             spec = f.add_gridspec(3, 1)
             ax1 = f.add_subplot(spec[:2, 0])
             ln1 = sns.lineplot(stochasticity_values, PV_values, estimator="mean", ci="sd", label="Mean Variance",
                                ax=ax1,
-                               color="red", linestyle="--")
+                               color="red")
             ln2 = sns.lineplot(stochasticity_values, PVE_values, estimator="mean", ci="sd",
                                label="Mean Variance excl. 0s",
                                ax=ax1,
-                               color="red")
+                               color="blue")
             ax1.set_ylabel("Mean Variance")
+            ax1.set_title(f"Variance of Trajectory Positions - Gen {generation}")
 
-            ax1.get_legend().remove()
+            if ax1.get_legend():
+                ax1.get_legend().remove()
             lns = ln2.get_lines()
             labs = [l.get_label() for l in lns]
             ax1.legend(lns, labs, loc='best')
@@ -478,7 +492,7 @@ for variant in variants:
             if loss_type == "fulllosstrue":
                 plt.savefig(f"pos_var{generation}_fullloss.png")
             else:
-                plt.savefig(f"pos_var{generation}.png")
+                plt.savefig(f"pos_var{generation}_notfullloss.png")
             plt.close()
 
     # plot entropy across stochasticity for each generation
@@ -488,6 +502,8 @@ for variant in variants:
         for i, generation in enumerate(generations):
             EV_values = []
             EVE_values = []
+            PCT_values = []
+            stochasticity_values = []
 
             for stochasticity in stochasticities:
                 # take correct dictionary according to stochasticity
@@ -496,20 +512,24 @@ for variant in variants:
                 for repetition in variant_entropy_dict["_".join(components)]:
                     EV_values.append(repetition["EV"][i])
                     EVE_values.append(repetition["EVE"][i])
+                    stochasticity_values.append(stochasticity)
+                for repetition in variant_dist_dict["_".join(components)]:
+                    PCT_values.append(repetition["PCT"][i])
 
             f = plt.figure(figsize=(10, 5))
             spec = f.add_gridspec(3, 1)
             ax1 = f.add_subplot(spec[:2, 0])
             ln1 = sns.lineplot(stochasticity_values, EV_values, estimator="mean", ci="sd", label="Mean Entropy",
                                ax=ax1,
-                               color="red", linestyle="--")
+                               color="red")
             ln2 = sns.lineplot(stochasticity_values, EVE_values, estimator="mean", ci="sd",
                                label="Mean Entropy excl. 0s",
                                ax=ax1,
-                               color="red")
+                               color="blue")
             ax1.set_ylabel("Mean Entropy")
-
-            ax1.get_legend().remove()
+            ax1.set_title(f"Entropy - Gen {generation}")
+            if ax1.get_legend():
+                ax1.get_legend().remove()
             lns = ln2.get_lines()
             labs = [l.get_label() for l in lns]
             ax1.legend(lns, labs, loc='best')
@@ -529,7 +549,7 @@ for variant in variants:
             if loss_type == "fulllosstrue":
                 plt.savefig(f"entropy{generation}_fullloss.png")
             else:
-                plt.savefig(f"entropy{generation}.png")
+                plt.savefig(f"entropy{generation}_notfullloss.png")
             plt.close()
 
     # plot losses across stochasticity for each generation
@@ -553,6 +573,7 @@ for variant in variants:
 
             # if we do not have the data at the moment, skip plotting
             if not "_".join(components) in variant_loss_dict:
+                print(f"Loss data not recorded - Skipping. - Missing {'_'.join(components)}")
                 is_data_recorded = False
                 continue
             for repetition in variant_loss_dict["_".join(components)]:
@@ -621,7 +642,8 @@ for variant in variants:
         ax1.set_ylabel("L2")
 
         # add in legends, one return value of lineplot will have all lines on the axis
-        ax1.get_legend().remove()
+        if ax1.get_legend():
+            ax1.get_legend().remove()
         if loss_type == "fulllosstrue":
             var_ax.get_legend().remove()
 
@@ -641,7 +663,7 @@ for variant in variants:
         if loss_type == "fulllosstrue":
             plt.savefig(f"losses_fullloss.png")
         else:
-            plt.savefig(f"losses.png")
+            plt.savefig(f"losses_notfullloss.png")
 
         plt.close()
 
