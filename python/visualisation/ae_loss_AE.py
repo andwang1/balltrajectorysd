@@ -17,8 +17,8 @@ def plot_loss_in_dir_AE(path, generate_images=True, is_aurora=False, show_train_
         for line in f.readlines():
             data = line.strip().split(",")
             total_recon.append(float(data[1]))
+            actual_trajectories_L2.append(float(data[2]))
             if not is_aurora:
-                actual_trajectories_L2.append(float(data[2]))
                 undisturbed_actual_trajectories_L2.append(float(data[3]))
             if "IS_TRAIN" in data[-1]:
                 # gen number, epochstrained / total
@@ -36,10 +36,10 @@ def plot_loss_in_dir_AE(path, generate_images=True, is_aurora=False, show_train_
         ln1 = ax1.plot(range(len(total_recon)), total_recon, c="red", label="L2 - Overall")
         # ax1.annotate(f"{round(total_recon[-1], 2)}", (len(total_recon) - 1, total_recon[-1]))
 
-        if not is_aurora:
-            ln2 = ax1.plot(range(len(actual_trajectories_L2)), actual_trajectories_L2, c="blue", label="L2 - Actual Trajectories")
-            ax1.annotate(f"{round(actual_trajectories_L2[-1], 2)}", (len(actual_trajectories_L2) - 1, actual_trajectories_L2[-1]))#,  xytext=(len(actual_trajectories_L2) - 1, actual_trajectories_L2[-1] * 1.5))
+        ln2 = ax1.plot(range(len(actual_trajectories_L2)), actual_trajectories_L2, c="blue", label="L2 - Actual Trajectories")
+        ax1.annotate(f"{round(actual_trajectories_L2[-1], 2)}", (len(actual_trajectories_L2) - 1, actual_trajectories_L2[-1]))#,  xytext=(len(actual_trajectories_L2) - 1, actual_trajectories_L2[-1] * 1.5))
 
+        if not is_aurora:
             ln3 = ax1.plot(range(len(undisturbed_actual_trajectories_L2)), undisturbed_actual_trajectories_L2, c="brown",
                            label="L2 - Undist. Trajectories")
             ax1.annotate(f"{round(undisturbed_actual_trajectories_L2[-1], 2)}",
@@ -51,7 +51,7 @@ def plot_loss_in_dir_AE(path, generate_images=True, is_aurora=False, show_train_
                 ax1.axvline(train_gen, ls="--", lw=0.1, c="grey")
 
         # add in legends
-        lns = ln1 + ln2 + ln3 if not is_aurora else ln1
+        lns = ln1 + ln2 + ln3 if not is_aurora else ln1 + ln2
         labs = [l.get_label() for l in lns]
         ax1.legend(lns, labs, loc='best')
 
@@ -62,8 +62,8 @@ def plot_loss_in_dir_AE(path, generate_images=True, is_aurora=False, show_train_
 
     data_dict["L2"] = total_recon
     data_dict["TR_EPOCHS"] = train_epochs
+    data_dict["AL"] = actual_trajectories_L2
     if not is_aurora:
-        data_dict["AL"] = actual_trajectories_L2
         data_dict["UL"] = undisturbed_actual_trajectories_L2
     return data_dict
 
