@@ -19,7 +19,7 @@ START_GEN_LOSS_PLOT = 500
 
 results_dir = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
 groups = [group_name for group_name in os.listdir(results_dir) if
-            os.path.isdir(os.path.join(results_dir, group_name))]
+            os.path.isdir(os.path.join(results_dir, group_name)) and group_name != "plots"]
 
 for group in groups:
     EXP_FOLDER = f"{results_dir}/{group}"
