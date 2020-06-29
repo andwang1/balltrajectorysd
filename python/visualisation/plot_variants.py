@@ -7,17 +7,31 @@ path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
 os.chdir(path)
 
 plotting_groups = [
-    ["l1", "smoothl1"]
+    ["l1", "smoothl1"],
+    ["l1", "l2"],
+    ["extension03", "l2"],
+    ["l1extension03", "l1"],
+    ["l2beta0", "l2"],
+    ["l1beta0", "l1"]
 ]
 
-colours = ["blue", "red", "green", "brown", "yellow", "purple", "orange"]
+colours = ["blue", "brown", "grey", "red", "purple", "green", "pink"]
+
+# make legend bigger
+plt.rc('legend', fontsize=20)
+# make lines thicker
+plt.rc('lines', linewidth=4, linestyle='-.')
+# make font bigger
+plt.rc('font', size=20)
 
 for group in plotting_groups:
-    f = plt.figure(figsize=(5, 5))
+    save_dir = f"plots/{'_'.join(group)}"
+    os.makedirs(save_dir, exist_ok=True)
+    f = plt.figure(figsize=(20, 20))
     spec = f.add_gridspec(1, 2)
     ax1 = f.add_subplot(spec[0, :])
     colour_count = 0
-    for member in group:
+    for i, member in enumerate(group):
         with open(f"{member}/loss_data.pk", "rb") as f:
             loss_data = pk.load(f)
 
@@ -25,118 +39,131 @@ for group in plotting_groups:
             if "aurora" in variant:
                 continue
             sns.lineplot(data["stoch"], data["AL"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1, color=colours[colour_count])
+            if i == 0:
+                ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Losses - Actual L2")
     ax1.set_ylabel("L2")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"losses_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/losses_{'_'.join(group)}.png")
     plt.close()
 
-    f = plt.figure(figsize=(5, 5))
+    f = plt.figure(figsize=(20, 20))
     spec = f.add_gridspec(1, 2)
     ax1 = f.add_subplot(spec[0, :])
     colour_count = 0
-    for member in group:
+    for i, member in enumerate(group):
         with open(f"{member}/diversity_data.pk", "rb") as f:
             loss_data = pk.load(f)
 
         for variant, data in loss_data.items():
             sns.lineplot(data["stoch"], data["DIV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1, color=colours[colour_count])
+            if i == 0:
+                ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Diversity Score")
     ax1.set_ylabel("Diversity")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"diversity_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/diversity_{'_'.join(group)}.png")
     plt.close()
 
-    f = plt.figure(figsize=(5, 5))
+    f = plt.figure(figsize=(20, 20))
     spec = f.add_gridspec(1, 2)
     ax1 = f.add_subplot(spec[0, :])
     colour_count = 0
-    for member in group:
+    for i, member in enumerate(group):
         with open(f"{member}/pct_moved_data.pk", "rb") as f:
             loss_data = pk.load(f)
 
         for variant, data in loss_data.items():
             sns.lineplot(data["stoch"], data["PCT"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
+            if i == 0:
+                ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("% Solutions Moving The Ball")
     ax1.set_ylabel("%")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"pct_moved_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/pct_moved_{'_'.join(group)}.png")
     plt.close()
 
-    f = plt.figure(figsize=(5, 5))
+    f = plt.figure(figsize=(20, 20))
     spec = f.add_gridspec(1, 2)
     ax1 = f.add_subplot(spec[0, :])
     colour_count = 0
-    for member in group:
+    for i, member in enumerate(group):
         with open(f"{member}/dist_data.pk", "rb") as f:
             loss_data = pk.load(f)
 
         for variant, data in loss_data.items():
             sns.lineplot(data["stoch"], data["MDE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
+            if i == 0:
+                ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Mean Distance Moved Excl. No-Move")
     ax1.set_ylabel("Distance")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"dist_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/dist_{'_'.join(group)}.png")
     plt.close()
 
-    f = plt.figure(figsize=(5, 5))
+    f = plt.figure(figsize=(20, 20))
     spec = f.add_gridspec(1, 2)
     ax1 = f.add_subplot(spec[0, :])
     colour_count = 0
-    for member in group:
+    for i, member in enumerate(group):
         with open(f"{member}/dist_data.pk", "rb") as f:
             loss_data = pk.load(f)
 
         for variant, data in loss_data.items():
             sns.lineplot(data["stoch"], data["VDE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
+            if i == 0:
+                ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Mean Variance of Distance Moved Excl. No-Move")
     ax1.set_ylabel("Variance")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"dist_var_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/dist_var_{'_'.join(group)}.png")
     plt.close()
 
-    f = plt.figure(figsize=(5, 5))
+    f = plt.figure(figsize=(20, 20))
     spec = f.add_gridspec(1, 2)
     ax1 = f.add_subplot(spec[0, :])
     colour_count = 0
-    for member in group:
+    for i, member in enumerate(group):
         with open(f"{member}/entropy_data.pk", "rb") as f:
             loss_data = pk.load(f)
 
         for variant, data in loss_data.items():
             sns.lineplot(data["stoch"], data["EVE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
+            if i == 0:
+                ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Entropy of Trajectory Positions Excl. No-Move")
     ax1.set_ylabel("Mean Entropy")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"entropy_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/entropy_{'_'.join(group)}.png")
     plt.close()
 
-    f = plt.figure(figsize=(5, 5))
+    f = plt.figure(figsize=(20, 20))
     spec = f.add_gridspec(1, 2)
     ax1 = f.add_subplot(spec[0, :])
     colour_count = 0
-    for member in group:
+    for i, member in enumerate(group):
         with open(f"{member}/posvar_data.pk", "rb") as f:
             loss_data = pk.load(f)
 
         for variant, data in loss_data.items():
             sns.lineplot(data["stoch"], data["PV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
+            if i == 0:
+                ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Variance of Trajectory Positions")
     ax1.set_ylabel("Mean Variance")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"posvar_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/posvar_{'_'.join(group)}.png")
     plt.close()
 
-    break
