@@ -17,7 +17,7 @@ GENERATE_EACH_IMAGE = False
 PLOT_TOTAL_L2 = True
 START_GEN_LOSS_PLOT = 500
 
-EXP_FOLDER = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l1extension03"
+EXP_FOLDER = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/smoothl1"
 BASE_NAME = "results_balltrajectorysd_"
 variants = [exp_name.split("_")[-1] for exp_name in os.listdir(EXP_FOLDER) if
             os.path.isdir(os.path.join(EXP_FOLDER, exp_name))]
@@ -670,6 +670,9 @@ for variant in variants:
     distance_dict[variant].append(variant_dist_dict)
     diversity_dict[variant].append(variant_diversity_dict)
     loss_dict[variant].append(variant_loss_dict)
+    entropy_dict[variant].append(variant_entropy_dict)
+    pos_var_dict[variant].append(variant_pos_var_dict)
+    recon_var_dict[variant].append(variant_recon_var_dict)
 
 os.chdir(f"{EXP_FOLDER}")
 
@@ -679,3 +682,7 @@ with open("loss_data.pk", "wb") as f:
     pk.dump(loss_dict, f)
 with open("dist_data.pk", "wb") as f:
     pk.dump(distance_dict, f)
+with open("entropy_data.pk", "wb") as f:
+    pk.dump(entropy_dict, f)
+with open("posvar_data.pk", "wb") as f:
+    pk.dump(pos_var_dict, f)
