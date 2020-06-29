@@ -97,7 +97,7 @@ def plot_entropy_grid_in_dir(path, generate_images=True, save_path=None):
         ln1 = ax1.plot(generations, entropy_values, label="Mean Entropy", color="red", linestyle="--")
         ln2 = ax1.plot(generations, entropy_values_exclzero, label="Mean Entropy excl. 0s", color="red")
         ax1.set_ylabel("Mean Entropy")
-        ax1.set_title("Entropy")
+        ax1.set_title("Entropy of Trajectory Positions")
 
         lns = ln1 + ln2
         labs = [l.get_label() for l in lns]
