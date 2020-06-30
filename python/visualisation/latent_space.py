@@ -75,7 +75,7 @@ def plot_latent_space_in_dir(path, generate_images=True, save_path=None):
         ax1 = f.add_subplot(spec[0, 0])
         ln1 = ax1.plot(generations, latent_variance_excl_nomove, label="Variance", color="red")
         ax1.set_ylabel("Mean Variance")
-        ax1.set_title("Variance of Latent Descriptors Excl. No-Move")
+        ax1.set_title("Variance of Latent Descriptors of No-Move Solutions")
 
         lns = ln1
         labs = [l.get_label() for l in lns]
