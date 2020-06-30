@@ -38,7 +38,7 @@ else:
 
 os.chdir(path)
 os.makedirs("plots", exist_ok=True)
-image_files = [img for img in os.listdir() if "*.png" in img]
+image_files = [img for img in os.listdir() if ".png" in img]
 for image in image_files:
     shutil.move(image, f"plots/{image}")
 
