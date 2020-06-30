@@ -4,7 +4,7 @@ from exp_config import *
 import os
 
 
-def plot_latent_space_in_dir(path, save_path=None):
+def plot_latent_space_in_dir(path, generate_images=True, save_path=None):
     os.chdir(path)
     files = os.listdir()
 
@@ -14,6 +14,9 @@ def plot_latent_space_in_dir(path, save_path=None):
         if fname.startswith("distances") and ".dat" in fname:
             generations.append(fname.rstrip(r".dat")[len("distances"):])
     generations = sorted(int(gen) for gen in generations)
+
+    # for plots across generations
+    latent_variance_excl_nomove = []
 
     for GEN_NUMBER in generations:
         if save_path:
@@ -64,7 +67,27 @@ def plot_latent_space_in_dir(path, save_path=None):
         plt.savefig(f"latent_space_{GEN_NUMBER}.png")
         plt.close()
 
+        latent_variance_excl_nomove.append((np.var(x[np.invert(is_moved)]) + np.var(y[np.invert(is_moved)])) / 2)
+
+    if generate_images:
+        f = plt.figure(figsize=(5, 5))
+        spec = f.add_gridspec(1, 1)
+        ax1 = f.add_subplot(spec[0, 0])
+        ln1 = ax1.plot(generations, latent_variance_excl_nomove, label="Variance", color="red")
+        ax1.set_ylabel("Mean Variance")
+        ax1.set_title("Variance of Latent Descriptors Excl. No-Move")
+
+        lns = ln1
+        labs = [l.get_label() for l in lns]
+        ax1.legend(lns, labs, loc='best')
+
+        plt.savefig("latent_var.png")
+        plt.close()
+
+    data_dict = {"gen": generations, "LV": latent_variance_excl_nomove}
+    return data_dict
+
 
 if __name__ == "__main__":
     plot_latent_space_in_dir(
-        "/home/andwang1/airl/balltrajectorysd/results_box2d_exp1/box2dtest/vistest/2020-06-19_19_12_49_126106")
+        "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l2/results_balltrajectorysd_vae/gen6001_random1_fulllosstrue_beta1_extension0_l2true/2020-06-23_08_42_10_25136")

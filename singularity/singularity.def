@@ -116,7 +116,7 @@ From: airl_lab/default/airl_env:pytorch_ci
     python3 /git/sferes2/exp/balltrajectorysd/python/visualisation/plot_for_each_container.py $CURPATH/$DIRNAME/$PATHNAME $1 $5
     
     cp /git/sferes2/exp/balltrajectorysd/src/params.hpp $CURPATH/$DIRNAME/$PATHNAME
-    mv $CURPATH/$DIRNAME/$PATHNAME/*png $CURPATH/$DIRNAME/$PATHNAME/images
+    bash -c 'mv $CURPATH/$DIRNAME/$PATHNAME/*png $CURPATH/$DIRNAME/$PATHNAME/images'
 
     python3 /git/sferes2/exp/imagesd/python/visualisation/prep/rename_results_dir_container.py $CURPATH/$DIRNAME/$PATHNAME
 
