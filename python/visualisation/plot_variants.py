@@ -167,3 +167,22 @@ for group in plotting_groups:
     plt.savefig(f"{save_dir}/posvar_{'_'.join(group)}.png")
     plt.close()
 
+    f = plt.figure(figsize=(20, 20))
+    spec = f.add_gridspec(1, 2)
+    ax1 = f.add_subplot(spec[0, :])
+    colour_count = 0
+    for i, member in enumerate(group):
+        with open(f"{member}/recon_var_data.pk", "rb") as f:
+            loss_data = pk.load(f)
+
+        for variant, data in loss_data.items():
+            sns.lineplot(data["stoch"], data["NMV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+                         color=colours[colour_count])
+            if i == 0:
+                ax1.lines[-1].set_linestyle("--")
+            colour_count += 1
+    ax1.set_title("Reconstruction Var. of No-Move solutions")
+    ax1.set_ylabel("Mean Reconstruction Variance")
+    ax1.set_xlabel("Stochasticity")
+    plt.savefig(f"{save_dir}/recon_var_{'_'.join(group)}.png")
+    plt.close()

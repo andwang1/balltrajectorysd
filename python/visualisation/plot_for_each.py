@@ -715,3 +715,5 @@ for group in groups:
         pk.dump(pos_var_stoch_dict, f)
     with open("pct_moved_data.pk", "wb") as f:
         pk.dump(pct_stoch_dict, f)
+    with open("recon_var_data.pk", "wb") as f:
+        pk.dump(recon_var_stoch_dict, f)
