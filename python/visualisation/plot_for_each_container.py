@@ -20,8 +20,8 @@ variant = application.split("_")[-1]
 is_full_loss = "true" in sys.argv[3]
 
 print(f"PROCESSING VISUALISATIONS - {path}")
-plot_latent_space_in_dir(path)
-div_dict, max_diversity = plot_diversity_in_dir(path, GENERATE_EACH_IMAGE)
+plot_latent_space_in_dir(path, GENERATE_EACH_IMAGE)
+plot_diversity_in_dir(path, GENERATE_EACH_IMAGE)
 plot_dist_grid_in_dir(path, GENERATE_EACH_IMAGE)
 plot_pos_var_grid_in_dir(path, GENERATE_EACH_IMAGE)
 plot_entropy_grid_in_dir(path, GENERATE_EACH_IMAGE)
