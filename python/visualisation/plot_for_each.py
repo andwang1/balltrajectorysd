@@ -13,7 +13,8 @@ from visualisation.ae_loss_VAE import plot_loss_in_dir_VAE
 from visualisation.latent_space import plot_latent_space_in_dir
 from visualisation.recon_notmoved_var import plot_recon_not_moved_var_in_dir
 
-GENERATE_EACH_IMAGE = False
+GENERATE_PID_IMAGES = False
+GENERATE_EXP_IMAGES = False
 PLOT_TOTAL_L2 = True
 START_GEN_LOSS_PLOT = 500
 
@@ -28,13 +29,6 @@ for group in groups:
                 os.path.isdir(os.path.join(EXP_FOLDER, exp_name))]
 
     # store all data
-    diversity_dict = defaultdict(list)
-    loss_dict = defaultdict(list)
-    distance_dict = defaultdict(list)
-    entropy_dict = defaultdict(list)
-    pos_var_dict = defaultdict(list)
-    recon_var_dict = defaultdict(list)
-
     diversity_stoch_dict = {}
     loss_stoch_dict = {}
     distance_stoch_dict = {}
@@ -42,6 +36,7 @@ for group in groups:
     pos_var_stoch_dict = {}
     recon_var_stoch_dict = {}
     pct_stoch_dict = {}
+    latent_var_stoch_dict = {}
 
     for variant in variants:
         os.chdir(f"{EXP_FOLDER}/{BASE_NAME}{variant}")
@@ -61,6 +56,7 @@ for group in groups:
         variant_pos_var_dict = defaultdict(list)
         variant_entropy_dict = defaultdict(list)
         variant_recon_var_dict = defaultdict(list)
+        variant_latent_var_dict = defaultdict(list)
 
         for i, exp in enumerate(exp_names):
             exp_path = f"{EXP_FOLDER}/{BASE_NAME}{variant}/{exp}"
@@ -68,21 +64,23 @@ for group in groups:
             for pid in pids:
                 full_path = f"{EXP_FOLDER}/{BASE_NAME}{variant}/{exp}/{pid}"
                 print(f"PROCESSING - {full_path}")
-                if GENERATE_EACH_IMAGE:
-                    plot_latent_space_in_dir(full_path)
-                div_dict, max_diversity = plot_diversity_in_dir(full_path, GENERATE_EACH_IMAGE)
+                div_dict, max_diversity = plot_diversity_in_dir(full_path, GENERATE_PID_IMAGES)
                 variant_diversity_dict[exp].append(div_dict)
-                variant_dist_dict[exp].append(plot_dist_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
-                variant_pos_var_dict[exp].append(plot_pos_var_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
-                variant_entropy_dict[exp].append(plot_entropy_grid_in_dir(full_path, GENERATE_EACH_IMAGE))
-                variant_recon_var_dict[exp].append(plot_recon_not_moved_var_in_dir(full_path, GENERATE_EACH_IMAGE))
+                variant_latent_var_dict[exp].append(plot_latent_space_in_dir(full_path, GENERATE_PID_IMAGES))
+                variant_dist_dict[exp].append(plot_dist_grid_in_dir(full_path, GENERATE_PID_IMAGES))
+                variant_pos_var_dict[exp].append(plot_pos_var_grid_in_dir(full_path, GENERATE_PID_IMAGES))
+                variant_entropy_dict[exp].append(plot_entropy_grid_in_dir(full_path, GENERATE_PID_IMAGES))
+                variant_recon_var_dict[exp].append(plot_recon_not_moved_var_in_dir(full_path, GENERATE_PID_IMAGES))
                 # PID level plotting
                 if variant == "vae":
-                    variant_loss_dict[exp].append(plot_loss_in_dir_VAE(full_path, is_full_loss[i], GENERATE_EACH_IMAGE, PLOT_TOTAL_L2))
+                    variant_loss_dict[exp].append(plot_loss_in_dir_VAE(full_path, is_full_loss[i], GENERATE_PID_IMAGES, PLOT_TOTAL_L2))
                 elif variant == "aurora":
-                    variant_loss_dict[exp].append(plot_loss_in_dir_AE(full_path, GENERATE_EACH_IMAGE, is_aurora=True))
+                    variant_loss_dict[exp].append(plot_loss_in_dir_AE(full_path, GENERATE_PID_IMAGES, is_aurora=True))
                 else:
-                    variant_loss_dict[exp].append(plot_loss_in_dir_AE(full_path, GENERATE_EACH_IMAGE))
+                    variant_loss_dict[exp].append(plot_loss_in_dir_AE(full_path, GENERATE_PID_IMAGES))
+
+            if not GENERATE_EXP_IMAGES:
+                continue
 
             # experiment level plotting
             os.chdir(f"{EXP_FOLDER}/{BASE_NAME}{variant}/{exp}")
@@ -230,6 +228,21 @@ for group in groups:
             plt.subplots_adjust(hspace=0.6)
 
             plt.savefig("entropy.png")
+            plt.close()
+
+            # plot latent var at experiment level
+            LV_values = np.array([repetition["LV"] for repetition in variant_latent_var_dict[exp]]).flatten()
+
+            f = plt.figure(figsize=(5, 5))
+            spec = f.add_gridspec(1, 1)
+            ax1 = f.add_subplot(spec[0, 0])
+            ln1 = sns.lineplot(generations, LV_values, estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
+                               color="red", linestyle="--")
+            ax1.set_ylabel("Mean Variance")
+            ax1.set_xlabel("Generations")
+            ax1.set_title("Variance of Latent Descriptors of No-Move Solutions")
+
+            plt.savefig("latent_var.png")
             plt.close()
 
             # at experiment level, plot losses
@@ -583,6 +596,39 @@ for group in groups:
             entropy_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "EV": EV_values,
                                                            "EVE": EVE_values}
 
+        # plot latent var across stochasticity for each generation
+        for loss_type in ["fulllosstrue", "fulllossfalse"]:
+            if variant != "vae" and loss_type == "fulllosstrue":
+                continue
+            for i, generation in enumerate(generations):
+                LV_values = []
+                stochasticity_values = []
+
+                for stochasticity in stochasticities:
+                    # take correct dictionary according to stochasticity
+                    components[1] = f"random{stochasticity}"
+                    components[2] = loss_type
+                    for repetition in variant_latent_var_dict["_".join(components)]:
+                        LV_values.append(repetition["LV"][i])
+                        stochasticity_values.append(stochasticity)
+
+                f = plt.figure(figsize=(5, 5))
+                spec = f.add_gridspec(1, 1)
+                ax1 = f.add_subplot(spec[0, 0])
+                ln1 = sns.lineplot(stochasticity_values, LV_values, estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
+                                   color="red", linestyle="--")
+                ax1.set_ylabel("Mean Variance")
+                ax1.set_xlabel("Stochasticity")
+                ax1.set_title(f"Variance of Latent Descriptors of No-Move Solutions - Gen {generation}")
+
+                if loss_type == "fulllosstrue":
+                    plt.savefig(f"latent_var{generation}_fullloss.png")
+                else:
+                    plt.savefig(f"latent_var{generation}_notfullloss.png")
+                plt.close()
+
+            latent_var_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "LV": LV_values}
+
         # plot losses across stochasticity for each generation
         for loss_type in ["fulllosstrue", "fulllossfalse"]:
             if variant != "vae" and loss_type == "fulllosstrue":
@@ -717,3 +763,5 @@ for group in groups:
         pk.dump(pct_stoch_dict, f)
     with open("recon_var_data.pk", "wb") as f:
         pk.dump(recon_var_stoch_dict, f)
+    with open("latent_var_data.pk", "wb") as f:
+        pk.dump(latent_var_stoch_dict, f)
