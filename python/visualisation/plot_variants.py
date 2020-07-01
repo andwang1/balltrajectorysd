@@ -33,9 +33,9 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/loss_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
             if "aurora" in variant:
                 continue
             sns.lineplot(data["stoch"], data["AL"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1, color=colours[colour_count])
@@ -54,9 +54,9 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/diversity_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
             sns.lineplot(data["stoch"], data["DIV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1, color=colours[colour_count])
             if i == 0:
                 ax1.lines[-1].set_linestyle("--")
@@ -73,9 +73,9 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/pct_moved_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
             sns.lineplot(data["stoch"], data["PCT"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
             if i == 0:
@@ -93,9 +93,9 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/dist_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
             sns.lineplot(data["stoch"], data["MDE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
             if i == 0:
@@ -113,9 +113,9 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/dist_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
             sns.lineplot(data["stoch"], data["VDE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
             if i == 0:
@@ -133,9 +133,9 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/entropy_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
             sns.lineplot(data["stoch"], data["EVE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
             if i == 0:
@@ -153,9 +153,9 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/posvar_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
             sns.lineplot(data["stoch"], data["PV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
             if i == 0:
@@ -173,9 +173,11 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/recon_var_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
+            if "aurora" in variant:
+                continue
             sns.lineplot(data["stoch"], data["NMV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
             if i == 0:
@@ -193,9 +195,11 @@ for group in plotting_groups:
     colour_count = 0
     for i, member in enumerate(group):
         with open(f"{member}/latent_var_data.pk", "rb") as f:
-            loss_data = pk.load(f)
+            log_data = pk.load(f)
 
-        for variant, data in loss_data.items():
+        for variant, data in log_data.items():
+            if "aurora" in variant:
+                continue
             sns.lineplot(data["stoch"], data["LV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
             if i == 0:
