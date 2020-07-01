@@ -23,6 +23,7 @@ plt.rc('legend', fontsize=20)
 plt.rc('lines', linewidth=4, linestyle='-.')
 # make font bigger
 plt.rc('font', size=20)
+sns.set_style("dark")
 
 for group in plotting_groups:
     save_dir = f"plots/{'_'.join(group)}"
