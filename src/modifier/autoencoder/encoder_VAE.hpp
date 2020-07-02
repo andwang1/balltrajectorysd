@@ -33,12 +33,17 @@ struct EncoderImpl : torch::nn::Module {
         }
 
 
-        torch::Tensor forward(const torch::Tensor &x, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar)
+        torch::Tensor forward(const torch::Tensor &x, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, bool sample)
         {
-            torch::Tensor z;
             encode(x, encoder_mu, encoder_logvar);
-            reparametrize(encoder_mu, encoder_logvar, z);
-            return z;
+            if (sample)
+            {
+                torch::Tensor z;
+                reparametrize(encoder_mu, encoder_logvar, z);
+                return z;
+            }
+            else
+                {return encoder_mu;}
         }
 
 

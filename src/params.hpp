@@ -105,6 +105,7 @@ struct Params {
         SFERES_CONST size_t behav_dim = 2;
         // influences l = targeted size of pop
         SFERES_CONST int resolution = 8000; 
+        static bool sample;
     };
 
     struct stat {
@@ -125,5 +126,6 @@ size_t Params::pop::nb_gen;
 size_t Params::ae::beta;
 double Params::ae::pct_extension;
 Params::ae::loss Params::ae::loss_function;
+bool Params::qd::sample;
 
 #endif //PARAMS_HPP

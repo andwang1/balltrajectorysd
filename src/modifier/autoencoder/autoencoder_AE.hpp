@@ -29,7 +29,8 @@ struct AutoEncoderImpl : torch::nn::Module {
         return m_decoder(m_encoder(x, encoder_mu, encoder_logvar), decoder_logvar);
     }
 
-    torch::Tensor forward_get_latent(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar, torch::Tensor &corresponding_latent) {
+    torch::Tensor forward_get_latent(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar, 
+                                    torch::Tensor &corresponding_latent, bool s) {
         corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar);
         return m_decoder(corresponding_latent, decoder_logvar);
     }

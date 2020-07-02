@@ -21,16 +21,17 @@ struct AutoEncoderImpl : torch::nn::Module {
 
     torch::Tensor forward(const torch::Tensor &x) {
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
-        return m_decoder(m_encoder(x, encoder_mu, encoder_logvar), decoder_logvar);
+        return m_decoder(m_encoder(x, encoder_mu, encoder_logvar, true), decoder_logvar);
     }
 
-    torch::Tensor forward_get_latent(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar, torch::Tensor &corresponding_latent) {
-        corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar);
+    torch::Tensor forward_get_latent(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar, 
+                                    torch::Tensor &corresponding_latent, bool sample) {
+        corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar, sample);
         return m_decoder(corresponding_latent, decoder_logvar);
     }
 
     torch::Tensor forward_(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar) {
-        torch::Tensor corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar);
+        torch::Tensor corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar, true);
         return m_decoder(corresponding_latent, decoder_logvar);
     }
 

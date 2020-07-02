@@ -129,6 +129,7 @@ struct Arguments {
     size_t beta;
     double pct_extension;
     unsigned int loss_func;
+    bool sample;
 };
 
 void get_arguments(const boost::program_options::options_description &desc, Arguments &arg, int argc, char **argv) {
@@ -146,6 +147,7 @@ void get_arguments(const boost::program_options::options_description &desc, Argu
     arg.beta = vm["beta"].as<size_t>();
     arg.pct_extension = vm["pct-extension"].as<double>();
     arg.loss_func = vm["loss-func"].as<unsigned int>();
+    arg.sample = vm["sample"].as<bool>();
 }
 
 int main(int argc, char **argv) {
@@ -167,6 +169,8 @@ int main(int argc, char **argv) {
                 ("pct-extension", boost::program_options::value<double>(), "% of Phenotypes to regenerate for training");
     desc.add_options()
                 ("loss-func", boost::program_options::value<unsigned int>(), "Loss function: 0 = SqRoot, 1 = L1, 2 = L2");
+    desc.add_options()
+                ("sample", boost::program_options::value<bool>(), "Sample Encoder for BD");
 
     get_arguments(desc, arg, argc, argv);
 
@@ -191,6 +195,8 @@ int main(int argc, char **argv) {
     Params::ae::pct_extension = arg.pct_extension;
     // loss function
     Params::ae::loss_function = static_cast<Params::ae::loss>(arg.loss_func);
+    // sample encoder for BD
+    Params::qd::sample = arg.sample;
 
     typedef Trajectory<params_t> fit_t;
     typedef sferes::gen::EvoFloat<Params::qd::gen_dim, params_t> gen_t;
