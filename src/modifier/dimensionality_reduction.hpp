@@ -149,9 +149,9 @@ namespace sferes {
                 Eigen::VectorXi is_trajectories;
                 get_network_loader()->vector_to_eigen(is_trajectory, is_trajectories);
 
-                Mat descriptors, reconstruction, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var;
+                Mat descriptors, reconstruction, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var;
                 _network->eval(geno_d, traj_d, is_trajectories, descriptors, reconstruction, recon_loss, recon_loss_unred, L2_loss, 
-                               L2_loss_real_trajectories, KL_loss, decoder_var);
+                               L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var);
 
                 int num_copies = pct_extension * geno_d.rows();
                 copy_pheno(content, recon_loss, copied_pheno, num_copies, ea);
@@ -263,10 +263,10 @@ namespace sferes {
 
             void get_stats(const Mat &geno, const Mat &traj, const Eigen::VectorXi &is_traj, 
                 Mat &descriptors, Mat &reconstruction, Mat &recon_loss, Mat &recon_loss_unred,  
-                Mat &L2_loss, Mat &L2_loss_real_trajectories, Mat &KL_loss, Mat &decoder_var) const
+                Mat &L2_loss, Mat &L2_loss_real_trajectories, Mat &KL_loss, Mat &encoder_var, Mat &decoder_var) const
             {
                 _network->eval(geno, traj, is_traj, descriptors, reconstruction, recon_loss, recon_loss_unred, 
-                               L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var);
+                               L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var);
             }
 
             void train_network(const Mat &geno_d, const Mat &traj_d, std::vector<int> &is_trajectory) {
@@ -323,9 +323,9 @@ namespace sferes {
             void get_descriptor_autoencoder(const Mat &geno_d, const Mat &traj_d, const Eigen::VectorXi &is_trajectory, 
                                             Mat &latent_and_entropy) const 
             {
-                Mat descriptors, reconstructed_data, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var;
+                Mat descriptors, reconstructed_data, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var;
                 _network->eval(geno_d, traj_d, is_trajectory, descriptors, reconstructed_data, recon_loss, recon_loss_unred, 
-                               L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var, Params::qd::sample);
+                               L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var, Params::qd::sample);
 
                 latent_and_entropy = Mat(descriptors.rows(), descriptors.cols() + recon_loss.cols());
                 latent_and_entropy << descriptors, recon_loss;

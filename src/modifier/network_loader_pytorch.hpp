@@ -63,10 +63,11 @@ public:
               MatrixXf_rm &L2_loss,
               MatrixXf_rm &L2_loss_real_trajectories,
               MatrixXf_rm &KL_loss,
+              MatrixXf_rm &encoder_var,
               MatrixXf_rm &decoder_var,
               bool sample = false) {
         stc::exact(this)->eval(phen, traj, is_traj, descriptors, reconstructed_data, recon_loss, recon_loss_unred, 
-                               L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var, sample);
+                               L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var, sample);
     }
     
     void prepare_batches(std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>> &batches, 
@@ -140,8 +141,8 @@ public:
     }
 
     float get_avg_recon_loss(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, bool sample = false) {
-        MatrixXf_rm descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var;
-        eval(phen, traj, is_traj, descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, decoder_var, sample);
+        MatrixXf_rm descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var;
+        eval(phen, traj, is_traj, descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var, sample);
         return recon_loss.mean();
     }
 
@@ -404,6 +405,7 @@ public:
               MatrixXf_rm &L2_loss,
               MatrixXf_rm &L2_loss_real_trajectories,
               MatrixXf_rm &KL_loss,
+              MatrixXf_rm &encoder_var,
               MatrixXf_rm &decoder_var,
               bool sample = true) 
     {
@@ -501,6 +503,7 @@ public:
 
         #ifdef VAE
         this->get_eigen_matrix_from_torch_tensor(torch::exp(decoder_logvar).cpu(), decoder_var);
+        this->get_eigen_matrix_from_torch_tensor(torch::exp(encoder_logvar).cpu(), encoder_var);
         this->get_eigen_matrix_from_torch_tensor(L2.cpu(), L2_loss);
         this->get_eigen_matrix_from_torch_tensor(KL.cpu(), KL_loss);
         #endif
