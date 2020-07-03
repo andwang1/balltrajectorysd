@@ -14,14 +14,21 @@ from visualisation.latent_space import plot_latent_space_in_dir
 from visualisation.recon_notmoved_var import plot_recon_not_moved_var_in_dir
 
 GENERATE_PID_IMAGES = False
-GENERATE_EXP_IMAGES = False
+GENERATE_EXP_IMAGES = True
 PLOT_TOTAL_L2 = True
 START_GEN_LOSS_PLOT = 500
 
 results_dir = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
-groups = [group_name for group_name in os.listdir(results_dir) if
-            os.path.isdir(os.path.join(results_dir, group_name)) and group_name != "plots"]
+groups = {group_name for group_name in os.listdir(results_dir) if
+            os.path.isdir(os.path.join(results_dir, group_name)) and group_name != "plots"}
 
+# exclude_dirs = {"smoothl1", "l2beta0", "l2", "l1beta0", "l1"}
+# groups -= exclude_dirs
+
+only_dirs = {"smoothl1"}
+groups &= only_dirs
+
+print(groups)
 for group in groups:
     EXP_FOLDER = f"{results_dir}/{group}"
     BASE_NAME = "results_balltrajectorysd_"
@@ -247,22 +254,24 @@ for group in groups:
 
             # at experiment level, plot losses
             L2_values = np.array([repetition["L2"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]])
+            ENVAR_values = np.array([repetition["ENVAR"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
             AL_values = np.array([repetition["AL"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
             if variant != "aurora":
                 UL_values = np.array([repetition["UL"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
             x = list(range(START_GEN_LOSS_PLOT, len(L2_values[0]) + START_GEN_LOSS_PLOT)) * len(L2_values)
 
             if "fulllosstrue" in exp:
-                f = plt.figure(figsize=(10, 5))
-                spec = f.add_gridspec(2, 2)
+                f = plt.figure(figsize=(15, 10))
+                spec = f.add_gridspec(3, 2)
                 ax1 = f.add_subplot(spec[0, :])
                 ax2 = f.add_subplot(spec[1, :])
+                ax3 = f.add_subplot(spec[2, :])
                 VAR_values = np.array([repetition["VAR"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
                 TL_values = np.array([repetition["TL"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
                 KL_values = np.array([repetition["KL"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
 
                 var_ax = ax1.twinx()
-                ln4 = sns.lineplot(x, VAR_values, estimator="mean", ci="sd", label="Variance", ax=var_ax, color="green")
+                ln4 = sns.lineplot(x, VAR_values, estimator="mean", ci="sd", label="Decoder Var.", ax=var_ax, color="green")
                 var_ax.set_ylabel("Variance")
 
                 ln5 = sns.lineplot(x, TL_values, estimator="mean", ci="sd", label="Total Loss", ax=ax2, color="red")
@@ -280,9 +289,10 @@ for group in groups:
                 ax2.legend(lns, labs, loc='best')
 
             else:
-                f = plt.figure(figsize=(5, 5))
-                spec = f.add_gridspec(1, 2)
+                f = plt.figure(figsize=(10, 5))
+                spec = f.add_gridspec(2, 2)
                 ax1 = f.add_subplot(spec[0, :])
+                ax3 = f.add_subplot(spec[1, :])
 
             # plot overall L2 and actual L2
             if PLOT_TOTAL_L2 or variant != "vae":
@@ -304,11 +314,12 @@ for group in groups:
             labs = [l.get_label() for l in lns]
             ax1.legend(lns, labs, loc='best')
 
+            ln7 = sns.lineplot(x, ENVAR_values, estimator="mean", ci="sd", label="Encoder Var.", ax=ax3, color="red")
+            labs = [l.get_label() for l in ln7.get_lines()]
+            ax3.legend(ln7.get_lines(), labs, loc='best')
+
             ax1.set_title(f"Losses")
-            if "fulllosstrue" in exp:
-                ax2.set_xlabel("Generation")
-            else:
-                ax1.set_xlabel("Generation")
+            ax3.set_xlabel("Generation")
 
             plt.savefig("losses.png")
             plt.close()
@@ -536,7 +547,7 @@ for group in groups:
             pos_var_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "PV": PV_values,
                                                             "PVE": PVE_values}
 
-            # plot entropy across stochasticity for each generation
+        # plot entropy across stochasticity for each generation
         for loss_type in ["fulllosstrue", "fulllossfalse"]:
             if variant != "vae" and loss_type == "fulllosstrue":
                 continue
@@ -637,6 +648,7 @@ for group in groups:
             L2_values = []
             AL_values = []
             UL_values = []
+            ENVAR_values = []
             VAR_values = []
             TL_values = []
             KL_values = []
@@ -656,6 +668,7 @@ for group in groups:
                 for repetition in variant_loss_dict["_".join(components)]:
                     L2_values.append(repetition["L2"][START_GEN_LOSS_PLOT:])
                     AL_values.append(repetition["AL"][START_GEN_LOSS_PLOT:])
+                    ENVAR_values.append(repetition["ENVAR"][START_GEN_LOSS_PLOT:])
                     if variant != "aurora":
                         UL_values.append(repetition["UL"][START_GEN_LOSS_PLOT:])
                     stochasticity_values.append([stochasticity] * len(repetition["L2"][START_GEN_LOSS_PLOT:]))
@@ -673,6 +686,7 @@ for group in groups:
             stochasticity_values = np.array(stochasticity_values).flatten()
             L2_values = np.array(L2_values).flatten()
             AL_values = np.array(AL_values).flatten()
+            ENVAR_values = np.array(ENVAR_values).flatten()
             if variant != "aurora":
                 UL_values = np.array(UL_values).flatten()
 
@@ -681,13 +695,14 @@ for group in groups:
                 KL_values = np.array(KL_values).flatten()
                 TL_values = np.array(TL_values).flatten()
 
-                f = plt.figure(figsize=(10, 5))
-                spec = f.add_gridspec(2, 2)
+                f = plt.figure(figsize=(15, 10))
+                spec = f.add_gridspec(3, 2)
                 ax1 = f.add_subplot(spec[0, :])
                 ax2 = f.add_subplot(spec[1, :])
+                ax3 = f.add_subplot(spec[2, :])
 
                 var_ax = ax1.twinx()
-                ln4 = sns.lineplot(stochasticity_values, VAR_values, estimator="mean", ci="sd", label="Variance", ax=var_ax,
+                ln4 = sns.lineplot(stochasticity_values, VAR_values, estimator="mean", ci="sd", label="Decoder Var.", ax=var_ax,
                                    color="green")
                 var_ax.set_ylabel("Variance")
 
@@ -706,9 +721,10 @@ for group in groups:
                 ax2.legend(lns, labs, loc='best')
 
             else:
-                f = plt.figure(figsize=(5, 5))
-                spec = f.add_gridspec(1, 2)
+                f = plt.figure(figsize=(10, 5))
+                spec = f.add_gridspec(2, 2)
                 ax1 = f.add_subplot(spec[0, :])
+                ax3 = f.add_subplot(spec[1, :])
 
             # plot overall L2 and actual L2
             if PLOT_TOTAL_L2 or variant != "vae":
@@ -731,11 +747,12 @@ for group in groups:
             labs = [l.get_label() for l in lns]
             ax1.legend(lns, labs, loc='best')
 
+            ln7 = sns.lineplot(stochasticity_values, ENVAR_values, estimator="mean", ci="sd", label="Encoder Var.", ax=ax3, color="red")
+            labs = [l.get_label() for l in ln7.get_lines()]
+            ax3.legend(ln7.get_lines(), labs, loc='best')
+
             ax1.set_title(f"Losses")
-            if loss_type == "fulllosstrue":
-                ax2.set_xlabel("Stochasticity")
-            else:
-                ax1.set_xlabel("Stochasticity")
+            ax3.set_xlabel("Stochasticity")
 
             if loss_type == "fulllosstrue":
                 plt.savefig(f"losses_fullloss.png")
@@ -744,7 +761,7 @@ for group in groups:
 
             plt.close()
 
-            loss_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "L2": L2_values,
+            loss_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "L2": L2_values, "ENVAR": ENVAR_values,
                                                            "AL": AL_values}
 
     os.chdir(f"{EXP_FOLDER}")
