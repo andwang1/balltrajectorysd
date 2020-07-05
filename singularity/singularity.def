@@ -41,6 +41,7 @@ From: airl_lab/default/airl_env:pytorch_ci
    cd /git
    git clone https://github.com/mosra/corrade.git
    cd corrade/
+   git checkout 61d1b58 .
    mkdir build
    cd build
    cmake -DCMAKE_INSTALL_PREFIX:PATH=/workspace ..
@@ -52,6 +53,7 @@ From: airl_lab/default/airl_env:pytorch_ci
    cd /git
    git clone https://github.com/mosra/magnum.git
    cd magnum
+   git checkout daa6d91 .
    mkdir build
    cd build
    cmake -DCMAKE_INSTALL_PREFIX:PATH=/workspace -DWITH_AUDIO=ON -DWITH_DEBUGTOOLS=ON -DWITH_GL=ON -DWITH_MESHTOOLS=ON -DWITH_PRIMITIVES=ON -DWITH_SCENEGRAPH=ON -DWITH_SHADERS=ON -DWITH_TEXT=ON -DWITH_TEXTURETOOLS=ON -DWITH_TRADE=ON -DWITH_GLFWAPPLICATION=ON -DWITH_WINDOWLESSGLXAPPLICATION=ON -DWITH_OPENGLTESTER=ON -DWITH_ANYAUDIOIMPORTER=ON -DWITH_ANYIMAGECONVERTER=ON -DWITH_ANYIMAGEIMPORTER=ON -DWITH_ANYSCENEIMPORTER=ON -DWITH_MAGNUMFONT=ON -DWITH_OBJIMPORTER=ON -DWITH_TGAIMPORTER=ON -DWITH_WAVAUDIOIMPORTER=ON ..
