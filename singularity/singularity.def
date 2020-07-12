@@ -24,6 +24,8 @@ From: airl_lab/default/airl_env:pytorch_ci
 
    cd /git/sferes2/exp/
    mkdir balltrajectorysd
+
+
    #====================================================================================================
    exit 0 #NOTFORFINAL - the lines below this "exit" will be executed only when building the final image
    #====================================================================================================
@@ -37,17 +39,8 @@ From: airl_lab/default/airl_env:pytorch_ci
         git clone --recurse-submodules https://gitlab.doc.ic.ac.uk/AIRL/students_projects/2019-2020/andy_wang/experiments/balltrajectorysd.git balltrajectorysd/
    fi
 
+   cd balltrajectorysd
    git checkout manual_sim
-
-   if [ ! -z "${CI_COMMIT_SHA}" ]
-   then
-     echo 'Launching the experiment at commit: '${CI_COMMIT_SHA}
-     cd balltrajectorysd/
-     git checkout ${CI_COMMIT_SHA}
-     git submodule update
-   else
-     echo 'Launching the experiment from branch Master'
-   fi
 
    cd /git/sferes2/
    ./setup.sh $SETUP_ARGS
