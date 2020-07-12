@@ -31,7 +31,7 @@ struct AutoEncoderImpl : torch::nn::Module {
     }
 
     torch::Tensor forward_(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar) {
-        torch::Tensor corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar, false);
+        torch::Tensor corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar, true);
         return m_decoder(corresponding_latent, decoder_logvar);
     }
 
