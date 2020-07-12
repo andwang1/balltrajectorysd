@@ -7,27 +7,30 @@ path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
 os.chdir(path)
 
 plotting_groups = [
-    ["l1", "smoothl1_longtrain"],
-    ["l1", "l2"],
-    ["extension03", "l2"],
-    ["l1extension03", "l1"],
-    ["l1beta0extension03", "l1beta0"],
-    ["l2beta0", "l2"],
-    ["l1beta0", "l1"],
-    ["smoothl1_longtrain", "smoothl1_shorttrain"],
-    ["l1nosample", "l1"],
-    ["randomsolutions", "l1"],
-    ["randomsolutions", "l1nosample"],
+    # ["l1", "smoothl1_longtrain"],
+    # ["l1", "l2"],
+    # ["extension03", "l2"],
+    # ["l1extension03", "l1"],
+    # ["l1beta0extension03", "l1beta0"],
+    # ["l2beta0", "l2"],
+    # ["l1beta0", "l1"],
+    # ["smoothl1_longtrain", "smoothl1_shorttrain"],
+    # ["l2nosample", "l2"],
+    # ["l1nosampletrain", "l1nosample", "l1"],
+    # ["l1beta0nosampletrain", "l1nosample", "l1"],
+["l1beta0nosampletrain", "l1"],
+    # ["randomsolutions", "l1"],
+    # ["randomsolutions", "l1nosample"],
 ]
 
 colours = ["blue", "brown", "grey", "red", "purple", "green", "pink"]
 
 # make legend bigger
-plt.rc('legend', fontsize=20)
+plt.rc('legend', fontsize=35)
 # make lines thicker
 plt.rc('lines', linewidth=4, linestyle='-.')
 # make font bigger
-plt.rc('font', size=20)
+plt.rc('font', size=30)
 sns.set_style("dark")
 
 for group in plotting_groups:
@@ -51,7 +54,7 @@ for group in plotting_groups:
     ax1.set_title("Losses - Actual L2")
     ax1.set_ylabel("Mean L2")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/losses_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/losses_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -70,7 +73,7 @@ for group in plotting_groups:
     ax1.set_title("Diversity Score")
     ax1.set_ylabel("Mean Diversity")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/diversity_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/diversity_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -90,7 +93,7 @@ for group in plotting_groups:
     ax1.set_title("% Solutions Moving The Ball")
     ax1.set_ylabel("Mean %")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/pct_moved_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/pct_moved_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -110,7 +113,7 @@ for group in plotting_groups:
     ax1.set_title("Mean Distance Moved Excl. No-Move")
     ax1.set_ylabel("Mean Distance")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/dist_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/dist_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -130,7 +133,7 @@ for group in plotting_groups:
     ax1.set_title("Mean Variance of Distance Moved Excl. No-Move")
     ax1.set_ylabel("Mean Variance")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/dist_var_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/dist_var_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -150,7 +153,7 @@ for group in plotting_groups:
     ax1.set_title("Entropy of Trajectory Positions Excl. No-Move")
     ax1.set_ylabel("Mean Mean Entropy")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/entropy_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/entropy_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -170,7 +173,7 @@ for group in plotting_groups:
     ax1.set_title("Variance of Trajectory Positions")
     ax1.set_ylabel("Mean Mean Variance")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/posvar_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/posvar_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -192,7 +195,7 @@ for group in plotting_groups:
     ax1.set_title("Reconstruction Var. of No-Move solutions")
     ax1.set_ylabel("Mean Mean Reconstruction Variance")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/recon_var_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/recon_var_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -214,7 +217,7 @@ for group in plotting_groups:
     ax1.set_ylabel("Mean Mean Variance")
     ax1.set_xlabel("Stochasticity")
     ax1.set_title(f"Variance of Latent Descriptors of No-Move Solutions")
-    plt.savefig(f"{save_dir}/latent_var_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/latent_var_{'_'.join(group)}.pdf")
     plt.close()
 
     # f = plt.figure(figsize=(20, 20))
@@ -236,5 +239,5 @@ for group in plotting_groups:
     # ax1.set_ylabel("Mean Mean Variance")
     # ax1.set_xlabel("Stochasticity")
     # ax1.set_title(f"Encoder Variance")
-    # plt.savefig(f"{save_dir}/encoder_var_{'_'.join(group)}.png")
+    # plt.savefig(f"{save_dir}/encoder_var_{'_'.join(group)}.pdf")
     # plt.close()

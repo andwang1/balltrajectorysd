@@ -15,11 +15,11 @@ plotting_groups = [
 colours = ["blue", "brown", "grey", "red", "purple", "green", "pink"]
 
 # make legend bigger
-plt.rc('legend', fontsize=20)
+plt.rc('legend', fontsize=35)
 # make lines thicker
 plt.rc('lines', linewidth=4, linestyle='-.')
 # make font bigger
-plt.rc('font', size=20)
+plt.rc('font', size=30)
 sns.set_style("dark")
 
 for group in plotting_groups:
@@ -45,7 +45,7 @@ for group in plotting_groups:
     ax1.set_title("Losses - Actual L2")
     ax1.set_ylabel("Mean L2")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/losses_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/losses_{'_'.join(group)}.pdf")
     plt.close()
 
     f = plt.figure(figsize=(20, 20))
@@ -57,8 +57,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "vaefulllosstrue" in variant:
-                continue
+            # if "vaefulllosstrue" in variant:
+            #     continue
             sns.lineplot(data["stoch"], data["DIV"], estimator="mean", ci="sd", label=f"{member}-{variant[:-len('fulllossfalse')]}", ax=ax1, color=colours[colour_count])
             # if i == 0:
             #     ax1.lines[-1].set_linestyle("--")
@@ -66,7 +66,7 @@ for group in plotting_groups:
     ax1.set_title("Diversity Score")
     ax1.set_ylabel("Mean Diversity")
     ax1.set_xlabel("Stochasticity")
-    plt.savefig(f"{save_dir}/diversity_{'_'.join(group)}.png")
+    plt.savefig(f"{save_dir}/diversity_{'_'.join(group)}.pdf")
     plt.close()
 
     # f = plt.figure(figsize=(20, 20))
