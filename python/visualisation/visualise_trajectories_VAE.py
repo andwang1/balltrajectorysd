@@ -3,25 +3,11 @@ import time
 import os
 from exp_config import *
 
-variant = "vae"
-random = "0.4"
 GEN_NUMBER = 6000
-beta = "1"
-extension = "0"
-vae_loss = "fulllosstrue"
 
-BASE_PATH = '/media/andwang1/SAMSUNG/MSC_INDIV/results_exp1/repeated_run1/L1/'
-EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}/'
-# EXP_PATH = f'results_balltrajectorysd_{variant}/gen6001_random{random}_{vae_loss}_beta{beta}_extension{extension}/'
-FULL_PATH = BASE_PATH + EXP_PATH
-os.chdir(FULL_PATH)
-
-pids = [dir for dir in os.listdir() if os.path.isdir(os.path.join(FULL_PATH, dir))]
-PID = pids[0] + "/"
-os.chdir(BASE_PATH)
+FULL_PATH = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l1beta0nosampletrain/results_balltrajectorysd_vae/gen6001_random0.2_fulllosstrue_beta0_extension0_lossfunc1_samplefalse/2020-07-10_15_44_50_3204884"
 FILE_NAME = f'traj_{GEN_NUMBER}.dat'
-
-FILE = BASE_PATH + EXP_PATH + PID + FILE_NAME
+FILE = FULL_PATH + "/" + FILE_NAME
 
 # PLOTTING PARAMETERS
 PAUSE = 2
@@ -84,7 +70,7 @@ for indiv in plotting_data:
     ax2.yaxis.grid(True)
     ax2.set_title("L2 Error", loc="left")
 
-    if vae_loss == "fulllosstrue":
+    if "fulllosstrue" in FULL_PATH:
         ax3 = f.add_subplot(spec[3, :])
         ax3.set_ylim([0, max(var)])
         ax3.set_xlim([0, len_trajectory / 2])
@@ -102,7 +88,7 @@ for indiv in plotting_data:
     for index, (i, j, e, v) in enumerate(zip(x_pred, y_pred, pred_error, var)):
         ax1.scatter(i, j, c="red")
         ax2.scatter(index, e, s=4, c="black")
-        if vae_loss == "fulllosstrue":
+        if "fulllosstrue" in FULL_PATH:
             ax3.scatter(index, v, s=4, c="green")
         plt.pause(0.00000001)
 
