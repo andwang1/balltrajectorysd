@@ -58,11 +58,12 @@ def plot_latent_space_in_dir(path, generate_images=True, save_path=None):
     # Plotting
     len_trajectory = len(indiv_data[0])
 
-    # sorting along one dimension of the latent space
-    sorted_indices = np.argsort(y)
+    # sorting along one dimension of the latent space, change to other coordinate for walking in the other axis
+    sorted_indices = np.argsort(x)
 
     for index in sorted_indices[::step_size]:
-        if x[index] > 0.1 or x[index] < -0.1:
+        # change to other coordinate for walking in the other axis
+        if y[index] > 0.1 or y[index] < -0.1:
             continue
         f = plt.figure(figsize=(10, 20))
         spec = f.add_gridspec(1, 2)
@@ -107,7 +108,9 @@ def plot_latent_space_in_dir(path, generate_images=True, save_path=None):
         ax2 = f.add_subplot(spec[0, 1], aspect='equal', adjustable='box')
         ax2.set_ylim([ROOM_H, 0])
         ax2.set_xlim([0, ROOM_W])
-        ax2.set_title("Trajectories")
+        ax2.set_xlabel("Room X")
+        ax2.set_ylabel("Room Y")
+        ax2.set_title("Constructed Trajectory")
 
         ax2.scatter(x_pred, y_pred, c="black")
         plt.show()
@@ -117,4 +120,6 @@ def plot_latent_space_in_dir(path, generate_images=True, save_path=None):
 
 if __name__ == "__main__":
     plot_latent_space_in_dir(
-        "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l1/results_balltrajectorysd_vae/gen6001_random0.6_fulllossfalse_beta1_extension0_l2false/2020-06-24_22_53_13_50754")
+        "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l2/results_balltrajectorysd_vae/gen6001_random1_fulllosstrue_beta1_extension0_l2true/2020-06-23_08_38_43_138266")
+
+    # good beta=0 visual "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l1beta0/results_balltrajectorysd_vae/gen6001_random0.4_fulllosstrue_beta0_extension0_l2false/2020-06-24_16_44_25_172155")
