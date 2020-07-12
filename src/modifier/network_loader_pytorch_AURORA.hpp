@@ -21,7 +21,7 @@ public:
             m_auto_encoder_module(std::move(auto_encoder_module)),
             m_adam_optimiser(torch::optim::Adam(m_auto_encoder_module.ptr()->parameters(),
                                                 torch::optim::AdamOptions(TParams::ae::learning_rate)
-                                                        .beta1(0.5))),
+                                                        .betas(std::make_tuple(0.9, 0.999)))),
             m_device(torch::cuda::is_available() ? torch::kCUDA : torch::kCPU)
     {
         if (torch::cuda::is_available()) 
