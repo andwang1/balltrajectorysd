@@ -19,37 +19,14 @@ PROJECT_NAME = "balltrajectorysd"
 def get_relative_path(waf_tool_name):
     return PROJECT_NAME + '.' + 'waf_tools' + '.' + waf_tool_name
 
+
 def options(opt):
-    opt.load('corrade')
-    opt.load('magnum')
-    opt.load('magnum_integration')
-    opt.load('magnum_plugins')
-    opt.load('robox2d')
+    pass
 
 
-# @conf
+@conf
 def configure(conf):
-    print('conf exp:')
-    conf.load('corrade')
-    conf.load('magnum')
-    conf.load('magnum_integration')
-    conf.load('magnum_plugins')
-    conf.load('robox2d')
-
-    conf.check_corrade(components='Utility PluginManager', required=False)
-    conf.env['magnum_dep_libs'] = 'MeshTools Primitives Shaders SceneGraph GlfwApplication'
-    if conf.env['DEST_OS'] == 'darwin':
-        conf.env['magnum_dep_libs'] += ' WindowlessCglApplication'
-    else:
-        conf.env['magnum_dep_libs'] += ' WindowlessGlxApplication'
-    conf.check_magnum(components=conf.env['magnum_dep_libs'], required=False)
-    conf.check_magnum_plugins(components='AssimpImporter', required=False)
-    
-    conf.get_env()['BUILD_MAGNUM'] = True
-    conf.env['magnum_libs'] = magnum.get_magnum_dependency_libs(conf, conf.env['magnum_dep_libs'])
-    conf.check_robox2d()
-    
-    print('done')
+    pass
 
 
 def build(bld):
@@ -77,7 +54,7 @@ def build(bld):
                            source = 'src/balltrajectorysd.cpp',
                            includes='./src . ../../',
                            uselib='TBB BOOST EIGEN PTHREAD MPI'
-                                + ' PYTHON PYTORCH KDTREE SDL ROBOX2D BOX2D' + bld.env['magnum_libs'],
+                                + ' PYTHON PYTORCH KDTREE SDL',
                            use = 'sferes2',
                            target = 'balltrajectorysd',
                            variants = ['AE', 'VAE', 'AURORA'])
