@@ -25,13 +25,13 @@ struct Params {
     };
 
     struct ae {
-    SFERES_CONST size_t batch_size = 64;
-    SFERES_CONST size_t nb_epochs = 20000;
+    SFERES_CONST size_t batch_size = 256;
+    SFERES_CONST size_t nb_epochs = 5000;
     SFERES_CONST size_t min_num_epochs = 100;
     //
     SFERES_CONST size_t running_mean_num_epochs = 5;
     SFERES_CONST float CV_fraction = 0.80;
-    SFERES_CONST float learning_rate = 1e-3;
+    SFERES_CONST float learning_rate = 1e-4;
 
     static double pct_extension;
     static bool full_loss;
@@ -39,7 +39,7 @@ struct Params {
     // network neurons        
     // input = qd::gen_dim
     SFERES_CONST size_t en_hid_dim1 = 10;
-    SFERES_CONST size_t en_hid_dim2 = 30;
+    SFERES_CONST size_t en_hid_dim2 = 20;
     // latent_dim = qd::behav_dim
     SFERES_CONST size_t de_hid_dim1 = 40;
     SFERES_CONST size_t de_hid_dim2 = 60;
