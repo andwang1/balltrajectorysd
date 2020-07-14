@@ -325,7 +325,7 @@ namespace sferes {
             {
                 Mat descriptors, reconstructed_data, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var;
                 _network->eval(geno_d, traj_d, is_trajectory, descriptors, reconstructed_data, recon_loss, recon_loss_unred, 
-                               L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var, Params::qd::sample);
+                               L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var);
 
                 latent_and_entropy = Mat(descriptors.rows(), descriptors.cols() + recon_loss.cols());
                 latent_and_entropy << descriptors, recon_loss;

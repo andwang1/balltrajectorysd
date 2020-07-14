@@ -42,11 +42,8 @@ public:
                 std::cout << "Torch -> Using CUDA ; index device: " << index_device_to_use << std::endl;
             } 
             else 
-            {
-                std::cout << "Torch -> Using CUDA ; no specified index device " << std::endl;
-            }
+                {std::cout << "Torch -> Using CUDA ; no specified index device " << std::endl;}
 
-            // std::cout << "Torch -> Using CUDA" << std::endl;
         } 
         else {std::cout << "Torch -> Using CPU" << std::endl;}
 
@@ -64,10 +61,9 @@ public:
               MatrixXf_rm &L2_loss_real_trajectories,
               MatrixXf_rm &KL_loss,
               MatrixXf_rm &encoder_var,
-              MatrixXf_rm &decoder_var,
-              bool sample = false) {
+              MatrixXf_rm &decoder_var) {
         stc::exact(this)->eval(phen, traj, is_traj, descriptors, reconstructed_data, recon_loss, recon_loss_unred, 
-                               L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var, sample);
+                               L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var);
     }
     
     void prepare_batches(std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>> &batches, 
@@ -140,9 +136,9 @@ public:
         return stc::exact(this)->training(phen_d, traj_d, is_trajectories, full_train, generation);
     }
 
-    float get_avg_recon_loss(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj, bool sample = false) {
+    float get_avg_recon_loss(const MatrixXf_rm &phen, const MatrixXf_rm &traj, const Eigen::VectorXi &is_traj) {
         MatrixXf_rm descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var;
-        eval(phen, traj, is_traj, descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var, sample);
+        eval(phen, traj, is_traj, descriptors, reconst, recon_loss, recon_loss_unred, L2_loss, L2_loss_real_trajectories, KL_loss, encoder_var, decoder_var);
         return recon_loss.mean();
     }
 
@@ -288,7 +284,7 @@ public:
         vector_to_eigen(val_is_trajectories, val_is_traj);
         vector_to_eigen(is_trajectories, is_traj);
         
-        float init_tr_recon_loss = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj, true);
+        float init_tr_recon_loss = this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj);
         float init_vl_recon_loss = this->get_avg_recon_loss(valid_phen, valid_traj, val_is_traj);
 
         std::cout << "INIT recon train loss: " << init_tr_recon_loss << "   valid recon loss: " << init_vl_recon_loss << std::endl;
@@ -316,7 +312,8 @@ public:
 		        torch::Tensor traj = std::get<1>(tup).to(this->m_device);
 
                 // tup[0] is the phenotype
-                torch::Tensor reconstruction_tensor = auto_encoder->forward_(std::get<0>(tup).to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar);
+                torch::Tensor reconstruction_tensor = auto_encoder->forward_(std::get<0>(tup).to(this->m_device), encoder_mu, 
+                                                                            encoder_logvar, decoder_logvar);
                 torch::Tensor loss_tensor = torch::zeros(1, torch::device(this->m_device));
 
 
@@ -406,8 +403,7 @@ public:
               MatrixXf_rm &L2_loss_real_trajectories,
               MatrixXf_rm &KL_loss,
               MatrixXf_rm &encoder_var,
-              MatrixXf_rm &decoder_var,
-              bool sample = true) 
+              MatrixXf_rm &decoder_var) 
     {
         torch::NoGradGuard no_grad;
         AutoEncoder auto_encoder = std::static_pointer_cast<AutoEncoderImpl>(this->m_auto_encoder_module.ptr());
@@ -424,7 +420,7 @@ public:
 
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar, descriptors_tensor;
         torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent(phen_tensor.to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar, 
-                                                                                descriptors_tensor, sample);
+                                                                                descriptors_tensor, TParams::qd::sample);
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows(), torch::device(this->m_device));
         
         // KL divergence
