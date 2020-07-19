@@ -55,12 +55,6 @@
 #include <sferes/eval/parallel.hpp>
 #include <sferes/gen/evo_float.hpp>
 #include <sferes/run.hpp>
-
-#include <sferes/stat/best_fit.hpp>
-#include <sferes/stat/qd_container.hpp>
-#include <sferes/stat/qd_selection.hpp>
-#include <sferes/stat/qd_progress.hpp>
-
 #include <sferes/fit/fit_qd.hpp>
 #include <sferes/qd/container/archive.hpp>
 #include <sferes/qd/container/kdtree_storage.hpp>
@@ -69,13 +63,10 @@
 #include <sferes/qd/selector/score_proportionate.hpp>
 #include <sferes/qd/selector/noselection.hpp>
 
-#ifdef AURORA
-#include "modifier/network_loader_pytorch_AURORA.hpp"
-#else
-#include "modifier/network_loader_pytorch.hpp"
-#endif
-
-#include "modifier/dimensionality_reduction.hpp"
+#include <sferes/stat/best_fit.hpp>
+#include <sferes/stat/qd_container.hpp>
+#include <sferes/stat/qd_selection.hpp>
+#include <sferes/stat/qd_progress.hpp>
 
 #include "stat/stat_current_gen.hpp"
 #include "stat/stat_model_autoencoder.hpp"
@@ -88,38 +79,19 @@
 #include "stat/stat_entropy.hpp"
 #include "stat/stat_notmoved_recon_var.hpp"
 
+#include "modifier/dimensionality_reduction.hpp"
+
+#ifdef AURORA
+#include "modifier/network_loader_pytorch_AURORA.hpp"
+#else
+#include "modifier/network_loader_pytorch.hpp"
+#endif
+
 #include "params.hpp"
 #include "trajectory.hpp"
 #include "phen.hpp"
-
-// quick hack to have "write" access to the container, this need to be added to the main API later.
-template<typename Phen, typename Eval, typename Stat, typename FitModifier, typename Select, typename Container, typename Params, typename Exact = stc::Itself>
-class QualityDiversity_2
-        : public sferes::qd::QualityDiversity<Phen, Eval, Stat, FitModifier, Select, Container, Params, typename stc::FindExact<QualityDiversity_2<Phen, Eval, Stat, FitModifier, Select, Container, Params, Exact>, Exact>::ret> {
-
-public:
-
-    typedef Phen phen_t;
-    typedef boost::shared_ptr <Phen> indiv_t;
-    typedef typename std::vector<indiv_t> pop_t;
-    typedef typename pop_t::iterator it_t;
-
-    pop_t pop_advers;
-    // pop_t& get_pop_advers() { return this->pop_advers; }
-
-    Container &container() { return this->_container; }
-
-    void add(pop_t &pop_off, std::vector<bool> &added, pop_t &pop_parents) {
-        this->_add(pop_off, added, pop_parents);
-    }
-
-    // Same function, but without the need of parent.
-    void add(pop_t &pop_off, std::vector<bool> &added) {
-        std::cout << "adding with l: " << Params::nov::l << std::endl;
-        this->_add(pop_off, added);
-    }
-
-};
+#include "archive_2.hpp"
+#include "quality_diversity_2.hpp"
 
 struct Arguments {
     size_t number_cpus;
@@ -214,7 +186,8 @@ int main(int argc, char **argv) {
                     sferes::qd::container::SortBasedStorage< boost::shared_ptr<phen_t>>
                 >::type storage_t;
 
-    typedef sferes::qd::container::Archive<phen_t, storage_t, params_t> container_t;
+    typedef Archive_2<phen_t, storage_t, params_t> container_t;
+    // typedef sferes::qd::container::Archive<phen_t, storage_t, params_t> container_t;
 
     // if GRAPHICS
     // typedef sferes::eval::Eval<Params> eval_t;

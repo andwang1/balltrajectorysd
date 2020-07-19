@@ -87,6 +87,7 @@ namespace sferes {
                 #endif
 
                 update_container(ea);  // clear the archive and re-fill it using the new network
+                update_training_container(ea); // update all the training containers with new BDs
             }
 
             template<typename EA>
@@ -97,6 +98,9 @@ namespace sferes {
                     {ea.container().get_full_content(content);} 
                 else 
                     {content = ea.offspring();}
+
+                // get additional training content
+                ea.get_full_content_train_archives(content);
 
                 // shuffle content here before getting the data so that the trajectories are also shuffled effectively
                 if (training)
@@ -360,6 +364,33 @@ namespace sferes {
                 // dump_data(ea,stat1,stat2,added);
 
                 std::cout << "Gen " << ea.gen() << " - size population with l updated : " << ea.pop().size() << std::endl;
+            }
+
+            template<typename EA>
+            void update_training_container(EA &ea) {
+                for (int i{0}; i < Params::qd::num_train_archives; ++i)
+                {
+                    pop_t tmp_pop;
+                    // Copy of the content of the container into the _pop object.
+                    ea.train_container(i).get_full_content(tmp_pop);
+                    ea.train_container(i).erase_content();
+                    std::cout << "Container " << i << " size pop: " << tmp_pop.size() << std::endl;
+
+                    this->assign_descriptor_to_population(ea, tmp_pop);
+
+                    // update l to maintain a number of indiv lower than Params::resolution
+                    std::cout << "NEW L= " << Params::nov::l << std::endl;
+                    
+                    // Put data back into the container
+                    std::vector<bool> added(tmp_pop.size());
+                    for (size_t j{0}; j < tmp_pop.size(); ++j)
+                    {added[j] = ea.train_container(i).add(tmp_pop[j]);}
+
+                    pop_t empty;
+                    ea.train_container(i).update(tmp_pop, empty);
+
+                    std::cout << "Gen " << ea.gen() << " - container "<< i << " size after BD update : " << ea.train_container(i).archive().size() << std::endl;
+                }
             }
 
             void update_l(const pop_t &pop) const {
