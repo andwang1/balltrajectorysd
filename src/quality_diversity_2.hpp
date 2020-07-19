@@ -127,7 +127,7 @@ public:
     Container &train_container(int i)
         {return train_archives[i];}
 
-    // Main Iteration of the QD algorithm
+    // Main Iteration of the QD algorithm, overriding here so it chooses the new _add methods
     void epoch()
     {
         this->_parents.resize(Params::pop::size);
