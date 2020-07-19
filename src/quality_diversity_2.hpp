@@ -38,7 +38,8 @@ public:
         // updating the parents is not needed as that is just for the curiosity score, so dont need to do anything with pop_parents
         std::vector<bool> bool_added = added;
         pop_t copy_pop_off = pop_off;
-        add_to_train_archives(bool_added, copy_pop_off);
+        if (Params::qd::num_train_archives > 0)
+            {add_to_train_archives(bool_added, copy_pop_off);}
     }
 
     // Same function, but without the need of parent.
@@ -52,14 +53,15 @@ public:
 
         std::vector<bool> bool_added = added;
         pop_t copy_pop_off = pop_off;
-        add_to_train_archives(bool_added, copy_pop_off);
+        if (Params::qd::num_train_archives > 0)
+            {add_to_train_archives(bool_added, copy_pop_off);}
     }
 
     void add_to_train_archives(std::vector<bool> &bool_added, pop_t &copy_pop_off)
     {
         std::vector<bool> remaining;
         // loop through archives and add remaining phenotypes each time
-        for (int i{0}; i < train_archives.size(); ++i)
+        for (int i{0}; i < Params::qd::num_train_archives; ++i)
         {
             // extract the phens that were not added before
             pop_t phen_to_be_added;
@@ -115,6 +117,15 @@ public:
             }
         }
     }
+
+    void get_full_content_train_archives(std::vector<indiv_t> &content)
+    {
+        for (int i{0}; i < Params::qd::num_train_archives; ++i)
+            {train_archives[i].get_full_content(content);}
+    }
+
+    Container &train_container(int i)
+        {return train_archives[i];}
 
     // Main Iteration of the QD algorithm
     void epoch()
