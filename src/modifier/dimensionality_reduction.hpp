@@ -370,6 +370,9 @@ namespace sferes {
             void update_training_container(EA &ea) {
                 for (int i{0}; i < Params::qd::num_train_archives; ++i)
                 {
+                    if (ea.train_container(i).archive().size() == 0)
+                        continue;
+                        
                     pop_t tmp_pop;
                     // Copy of the content of the container into the _pop object.
                     ea.train_container(i).get_full_content(tmp_pop);
