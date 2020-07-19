@@ -60,13 +60,13 @@ def configure(conf):
     conf.get_env()['BUILD_MAGNUM'] = True
     conf.env['magnum_libs'] = magnum.get_magnum_dependency_libs(conf, conf.env['magnum_dep_libs'])
     conf.check_robox2d()
-    
     print('done')
+    conf.env.append_unique('LINKFLAGS', '-Wl,--no-as-needed')
 
 
 def build(bld):
     bld.env.LIBPATH_PYTORCH = '/workspace/lib/torch/'
-    bld.env.LIB_PYTORCH = 'torch_cpu torch_cuda torch_python torch_global_deps shm caffe2_observers torch c10 c10_cuda caffe2_detectron_ops_gpu caffe2_module_test_dynamic caffe2_nvrtc'.split(' ')
+    bld.env.LIB_PYTORCH = 'torch_cpu torch_cuda torch_global_deps shm torch c10 c10_cuda'.split(' ')
     bld.env.INCLUDES_PYTORCH = ['/workspace/include/torch', '/workspace/include/torch/torch/csrc/api/include']
 
     bld.env.LIBPATH_PYTHON = '/usr/lib/x86_64-linux-gnu/'
