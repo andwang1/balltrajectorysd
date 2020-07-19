@@ -35,68 +35,10 @@ public:
             added[i] = this->_add_to_container(pop_off[i], pop_parents[i]);
         container().update(pop_off, pop_parents);
         
-        // updating the parents is not needed as that is just curiosity, so dont need to do anything with pop_parents
+        // updating the parents is not needed as that is just for the curiosity score, so dont need to do anything with pop_parents
         std::vector<bool> bool_added = added;
-        std::vector<bool> remaining;
         pop_t copy_pop_off = pop_off;
-        
-        // loop through archives and add remaining phenotypes each time
-        for (int i{0}; i < train_archives.size(); ++i)
-        {
-            // extract the phens that were not added before
-            pop_t phen_to_be_added;
-            for (size_t j{0}; j < bool_added.size(); ++j)
-            {
-                if (!bool_added[j])
-                    {phen_to_be_added.push_back(copy_pop_off[j]);}
-            }
-            
-            remaining.resize(phen_to_be_added.size());
-
-            // add into current archive
-            for (size_t j{0}; j < remaining.size(); ++j)
-                {remaining[j] = train_archives[i].add(phen_to_be_added[j]);}
-
-            // if all added can break early
-            if (std::find(remaining.begin(), remaining.end(), false) == remaining.end())
-                {break;}
-
-            bool_added = remaining;
-            copy_pop_off = phen_to_be_added;
-        }
-
-        // if after the last iteration there are still phenotypes to be added
-        if (std::find(remaining.begin(), remaining.end(), false) != remaining.end())
-        {   
-            
-            // extract the phens that were not added before
-            pop_t phen_to_be_added;
-            for (size_t j{0}; j < bool_added.size(); ++j)
-            {
-                if (!bool_added[j])
-                    {phen_to_be_added.push_back(copy_pop_off[j]);}
-            }
-            std::cout << "To be added after looping through all containers: " << phen_to_be_added.size() << "\n";
-
-            for (size_t i{0}; i < phen_to_be_added.size(); ++i)
-            {
-                // pick random container
-                int container_idx = rand() % Params::qd::num_train_archives;
-                // std::cout << "Container index chosen for replacement: " << container_idx << "\n";
-
-                Eigen::VectorXd phen_desc(Params::qd::behav_dim);
-                for (int l{0}; l < phen_desc.size(); ++l)
-                    {phen_desc[l] = phen_to_be_added[i]->fit().desc()[l];}
-                
-                indiv_t to_be_removed = train_archives[container_idx].archive().nearest(phen_desc).second;
-                // assert((to_be_removed) != (phen_to_be_added[i]));
-                train_archives[container_idx].replace(to_be_removed, phen_to_be_added[i]);
-                
-                // std::cout << "Replaced \n" << phen_desc << "\nwith \n"; 
-                // for (float k : to_be_removed->fit().desc())
-                //     {std::cout << k << "\n";}
-            }
-        }
+        add_to_train_archives(bool_added, copy_pop_off);
     }
 
     // Same function, but without the need of parent.
@@ -109,9 +51,13 @@ public:
         container().update(pop_off, empty);
 
         std::vector<bool> bool_added = added;
-        std::vector<bool> remaining;
         pop_t copy_pop_off = pop_off;
-        
+        add_to_train_archives(bool_added, copy_pop_off);
+    }
+
+    void add_to_train_archives(std::vector<bool> &bool_added, pop_t &copy_pop_off)
+    {
+        std::vector<bool> remaining;
         // loop through archives and add remaining phenotypes each time
         for (int i{0}; i < train_archives.size(); ++i)
         {
@@ -140,7 +86,6 @@ public:
         // if after the last iteration there are still phenotypes to be added
         if (std::find(remaining.begin(), remaining.end(), false) != remaining.end())
         {   
-            
             // extract the phens that were not added before
             pop_t phen_to_be_added;
             for (size_t j{0}; j < bool_added.size(); ++j)
@@ -148,7 +93,7 @@ public:
                 if (!bool_added[j])
                     {phen_to_be_added.push_back(copy_pop_off[j]);}
             }
-            std::cout << "To be added after looping through all containers: " << phen_to_be_added.size() << "\n";
+            std::cout << "Still to be added after looping through all containers: " << phen_to_be_added.size() << "\n";
 
             for (size_t i{0}; i < phen_to_be_added.size(); ++i)
             {
@@ -216,20 +161,7 @@ public:
         for (size_t j{0}; j < train_archives.size(); ++j)
         {std::cout << "Training Container " << j << " holds " << train_archives[j].archive().size() << " individuals.\n";}
     }
-
-    //check added, if added false, then its too close should be added to next archive, keep rolling down the array
-    // create a new vector every time and keep rolling until its done
-
-    
-    // make the container get the nearest one, from kdtree_storage, nearest and remove
-    // remove takes the BD as eigen vector as input, so flow is
-    // take the current one that should go in, get its BD as eigenvector, then put that in the kdtree storage, call nearest
-    // this returns data_t, the first part of that is the eigenvector of that nearest point,
-    // this eigenvector put that into kdtree remove
-    // then direct add from container that pheno that should go in
-
     std::array<Container, Params::qd::num_train_archives> train_archives;
-
 };
 
 #endif
