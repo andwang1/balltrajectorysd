@@ -98,6 +98,9 @@ From: airl_lab/default/airl_env:pytorch_ci
      echo 'Launching the experiment from branch Master'
    fi
 
+   cd balltrajectorysd/
+   git checkout tsne
+
    cd /git/sferes2/
    ./setup.sh $SETUP_ARGS
 
