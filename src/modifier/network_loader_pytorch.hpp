@@ -275,9 +275,6 @@ public:
         // init variances at 1
         variances = torch::ones(dist_mat.size(0));
 
-        // to use as mask over the columns j
-        torch::Tensor index_tensor = torch::arange(dist_mat.size(1), torch::dtype(torch::kLong));
-        
         // loop through rows of matrix to find var
         for (int i{0}; i < dist_mat.size(0); ++i)
         {
@@ -292,10 +289,7 @@ public:
                 torch::Tensor cur_sim_mat_row = dist_mat.index({i}) / variances.index({i});
                 // nominator of p_j|i
                 torch::Tensor exp_cur_sim_mat_row = torch::exp(cur_sim_mat_row);
-                // denominator of p_j|i
-                torch::Tensor sum_exp_cur_sim_mat_row_excl_i = torch::sum(exp_cur_sim_mat_row.index(index_tensor.ne(i)));
-
-                torch::Tensor p_j_i = exp_cur_sim_mat_row / sum_exp_cur_sim_mat_row_excl_i;
+                torch::Tensor p_j_i = exp_cur_sim_mat_row / torch::sum(exp_cur_sim_mat_row);
                 
                 float cur_perplexity = torch::pow(torch::ones({1}) * 2, -torch::sum(p_j_i * torch::log2(p_j_i))).item<float>();
                 if (abs(TParams::ae::target_perplexity - cur_perplexity) < tolerance)
@@ -317,7 +311,7 @@ public:
                 }
                 ++iter;
             }
-            std::cout << "Iters needed: " << iter << ", Final Var. " << variances.index({i}) << "\n";
+            // std::cout << "Iters needed: " << iter << ", Final Var. " << variances.index({i}) << "\n";
         }
     }
 
@@ -353,7 +347,7 @@ public:
         int epoch(0);
 
         // initialise training variables
-        torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
+        torch::Tensor encoder_mu, encoder_logvar, decoder_logvar, descriptors_tensor;
 
         while (_continue && (epoch < TParams::ae::nb_epochs)) {
             std::vector<std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>>> batches;
@@ -370,10 +364,9 @@ public:
 		        torch::Tensor traj = std::get<1>(tup).to(this->m_device);
 
                 // tup[0] is the phenotype
-                torch::Tensor reconstruction_tensor = auto_encoder->forward_(std::get<0>(tup).to(this->m_device), encoder_mu, 
-                                                                            encoder_logvar, decoder_logvar);
+                torch::Tensor reconstruction_tensor = auto_encoder->forward_get_latent(std::get<0>(tup).to(this->m_device), encoder_mu, encoder_logvar, decoder_logvar, 
+                                                                                descriptors_tensor, TParams::qd::sample);
                 torch::Tensor loss_tensor = torch::zeros(1, torch::device(this->m_device));
-
 
                 // start at -1 because first loop will take it to 0
                 int index{-1};
@@ -404,17 +397,42 @@ public:
                     }
                 }
 
-                torch::Tensor dist_mat, variances;
-                get_sq_dist_matrix(reconstruction_tensor, dist_mat);
-                get_var_from_perplexity(dist_mat, variances);
-                
                 long num_trajectories {static_cast<long>(std::get<2>(tup).size())};
                 loss_tensor /= num_trajectories;
+
                 #ifdef VAE
+                // TSNE loss
+                // get the high dimensional similarities
+                torch::Tensor h_dist_mat, h_variances;
+                get_sq_dist_matrix(reconstruction_tensor.detach(), h_dist_mat);
+                get_var_from_perplexity(h_dist_mat, h_variances);
+
+                // similarity matrix, unsqueeze so division is along columns
+                torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
+                torch::Tensor exp_h_sim_mat = torch::exp(h_sim_mat);
+
+                torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
+                torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
+
+                // get the low dimensional similarities
+                torch::Tensor l_dist_mat;
+                get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
+
+                torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
+                torch::Tensor exp_l_sim_mat = torch::exp(l_sim_mat);
+
+                torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
+
+                // set coefficient to dimensionality of data as per VAE-SNE paper
+                torch::Tensor tsne = -torch::sum(p_ij * torch::log(p_ij / q_ij)) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
+
+                loss_tensor += tsne;
+                
+                // KL Loss
                 loss_tensor += -0.5 * TParams::ae::beta * torch::sum(1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar), {1}).mean();
+                
                 #endif
                 loss_tensor.backward();
-
                 this->m_adam_optimiser.step();
                 ++epoch;
             }
@@ -485,9 +503,35 @@ public:
                                                                                 descriptors_tensor, TParams::qd::sample);
         torch::Tensor reconstruction_loss = torch::zeros(phen.rows(), torch::device(this->m_device));
         
-        // KL divergence
+        
         #ifdef VAE
+        // KL divergence
         torch::Tensor KL = -0.5 * TParams::ae::beta * (1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar));
+
+        // TSNE loss
+        // get the high dimensional similarities
+        torch::Tensor h_dist_mat, h_variances;
+        get_sq_dist_matrix(reconstruction_tensor, h_dist_mat);
+        get_var_from_perplexity(h_dist_mat, h_variances);
+
+        // similarity matrix, unsqueeze so division is along columns
+        torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
+        torch::Tensor exp_h_sim_mat = torch::exp(h_sim_mat);
+
+        torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
+        torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
+
+        // get the low dimensional similarities
+        torch::Tensor l_dist_mat;
+        get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
+
+        torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
+        torch::Tensor exp_l_sim_mat = torch::exp(l_sim_mat);
+
+        torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
+
+        // set coefficient to dimensionality of data as per VAE-SNE paper
+        torch::Tensor tsne = -torch::sum(p_ij * torch::log(p_ij / q_ij), {1}) * reconstruction_tensor.size(1);
         #endif
 
         torch::Tensor L2 = torch::empty({filtered_traj.rows(), TParams::sim::num_trajectory_elements}, torch::device(this->m_device));
@@ -515,7 +559,7 @@ public:
                     {recon_loss_unreduced[i] = torch::abs(traj_tensor[i] - reconstruction_tensor[index]) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi);}
                 else if (TParams::ae::loss_function == TParams::ae::loss::SmoothL1)
                     {recon_loss_unreduced[i] = torch::smooth_l1_loss(reconstruction_tensor[index], traj_tensor[i], 0) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi);}
-                reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]) + torch::sum(KL[index]);
+                reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]) + torch::sum(KL[index]) + torch::sum(tsne[index]);
             }
             else
             {
@@ -525,7 +569,7 @@ public:
                     {recon_loss_unreduced[i] = torch::abs(traj_tensor[i] - reconstruction_tensor[index]);}
                 else if (TParams::ae::loss_function == TParams::ae::loss::SmoothL1)
                     {recon_loss_unreduced[i] = torch::smooth_l1_loss(reconstruction_tensor[index], traj_tensor[i], 0);}
-                reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]) + torch::sum(KL[index]);
+                reconstruction_loss[index] += torch::sum(recon_loss_unreduced[i]) + torch::sum(KL[index]) + torch::sum(tsne[index]);
             }
             L2[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2);
             
