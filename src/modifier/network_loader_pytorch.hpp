@@ -403,6 +403,11 @@ public:
                 torch::Tensor exp_h_sim_mat = torch::exp(h_sim_mat);
 
                 torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
+
+                // set diagonal to zero as only interested in pairwise similarities
+                p_j_i.index_put_({torch::arange(p_j_i.size(0), torch::dtype(torch::kLong)), torch::arange(p_j_i.size(0), torch::dtype(torch::kLong))},
+                                torch::zeros({1}), false);
+
                 torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
 
                 // get the low dimensional similarities
@@ -414,10 +419,16 @@ public:
 
                 torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
 
-                // set coefficient to dimensionality of data as per VAE-SNE paper
-                torch::Tensor tsne = -torch::sum(p_ij * torch::log(p_ij / q_ij)) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
+                q_ij.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
+                torch::zeros({1}), false);
 
-                loss_tensor += tsne;
+                
+                torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
+                tsne.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
+                torch::zeros({1}), false);
+
+                // set coefficient to dimensionality of data as per VAE-SNE paper
+                loss_tensor += torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
                 
                 // KL Loss
                 loss_tensor += -0.5 * TParams::ae::beta * torch::sum(1 + encoder_logvar - torch::pow(encoder_mu, 2) - torch::exp(encoder_logvar), {1}).mean();
@@ -510,6 +521,11 @@ public:
         torch::Tensor exp_h_sim_mat = torch::exp(h_sim_mat);
 
         torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
+
+        // set diagonal to zero as only interested in pairwise similarities
+        p_j_i.index_put_({torch::arange(p_j_i.size(0), torch::dtype(torch::kLong)), torch::arange(p_j_i.size(0), torch::dtype(torch::kLong))},
+                        torch::zeros({1}), false);
+
         torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
 
         // get the low dimensional similarities
@@ -520,9 +536,17 @@ public:
         torch::Tensor exp_l_sim_mat = torch::exp(l_sim_mat);
 
         torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
+        q_ij.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
+                torch::zeros({1}), false);
 
         // set coefficient to dimensionality of data as per VAE-SNE paper
-        torch::Tensor tsne = -torch::sum(p_ij * torch::log(p_ij / q_ij), {1}) * reconstruction_tensor.size(1);
+        torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
+
+        tsne.index_put_({torch::arange(p_ij.size(0), torch::dtype(torch::kLong)), torch::arange(p_ij.size(0), torch::dtype(torch::kLong))},
+        torch::zeros({1}), false);
+
+        tsne = torch::sum(tsne, {1}) * reconstruction_tensor.size(1);
+
         #endif
 
         torch::Tensor L2 = torch::empty({filtered_traj.rows(), TParams::sim::num_trajectory_elements}, torch::device(this->m_device));

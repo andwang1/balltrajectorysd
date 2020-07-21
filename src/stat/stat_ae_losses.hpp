@@ -75,15 +75,19 @@ namespace sferes {
 
                 torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
 
+                torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
+                tsne.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
+                torch::zeros({1}), false);
+
                 // set coefficient to dimensionality of data as per VAE-SNE paper
-                torch::Tensor tsne = -torch::sum(p_ij * torch::log(p_ij / q_ij)) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
+                
 
                 // these three are unreduced, need row wise sum and then mean
                 float L2 = L2_loss.rowwise().sum().mean();
                 float KL = KL_loss.rowwise().sum().mean();
                 float de_var = decoder_var.rowwise().sum().mean();
                 float en_var = encoder_var.rowwise().sum().mean();
-                float tsne_loss = tsne.item<float>();
+                float tsne_loss = (torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0)).item<float>();
 
                 // retrieve trajectories without any interference from random observations
                 matrix_t undisturbed_traj(ea.pop().size(), Params::sim::num_trajectory_elements);
