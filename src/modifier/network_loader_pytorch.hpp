@@ -142,26 +142,7 @@ public:
         return recon_loss.mean();
     }
 
-    torch::nn::AnyModule get_auto_encoder() {
-        return this->m_auto_encoder_module;
-    }
-
-    torch::nn::AnyModule& auto_encoder() {
-        return this->m_auto_encoder_module;
-    }
-
-    int32_t m_global_step;
-
-
-protected:
-    torch::nn::AnyModule m_auto_encoder_module;
-    torch::optim::Adam m_adam_optimiser;
-    torch::Device m_device;
-    double _log_2_pi;
-
-
     void get_torch_tensor_from_eigen_matrix(const MatrixXf_rm &M, torch::Tensor &T) const {
-
         T = torch::rand({M.rows(), M.cols()});
         float *data = T.data_ptr<float>();
         memcpy(data, M.data(), M.cols() * M.rows() * sizeof(float));
@@ -186,13 +167,28 @@ protected:
     void get_tuple_from_eigen_matrices(const MatrixXf_rm &M1, const MatrixXf_rm &M2, const std::vector<bool> &boundaries,
                                         torch::Tensor &T1, torch::Tensor &T2, 
                                         std::tuple<torch::Tensor, torch::Tensor, std::vector<bool>> &tuple) const {
-
         T1 = torch::rand({M1.rows(), M1.cols()});
         T2 = torch::rand({M2.rows(), M2.cols()});
         get_torch_tensor_from_eigen_matrix(M1, T1);
         get_torch_tensor_from_eigen_matrix(M2, T2);
         tuple = std::make_tuple(T1, T2, boundaries);
     }
+
+    torch::nn::AnyModule get_auto_encoder() {
+        return this->m_auto_encoder_module;
+    }
+
+    torch::nn::AnyModule& auto_encoder() {
+        return this->m_auto_encoder_module;
+    }
+
+    int32_t m_global_step;
+
+protected:
+    torch::nn::AnyModule m_auto_encoder_module;
+    torch::optim::Adam m_adam_optimiser;
+    torch::Device m_device;
+    double _log_2_pi;
 };
 
 template <typename TParams, typename Exact = stc::Itself>
@@ -238,19 +234,14 @@ public:
                 this->filter_trajectories(traj.middleRows(ind * TParams::ae::batch_size * (TParams::random::max_num_random + 1),
                                                     TParams::ae::batch_size * (TParams::random::max_num_random + 1)),
                                                     is_trajectory.segment(ind * TParams::ae::batch_size * (TParams::random::max_num_random + 1), TParams::ae::batch_size * (TParams::random::max_num_random + 1)),
-                                                    filtered_traj,
-                                                    boundaries);
+                                                    filtered_traj, boundaries);
 
                 torch::Tensor T1, T2;
                 this->get_tuple_from_eigen_matrices(phen.middleRows(ind * TParams::ae::batch_size, TParams::ae::batch_size),
-                                                    filtered_traj,
-                                                    boundaries,
-                                                    T1,
-                                                    T2,
-                                                    batches[ind]);
+                                                    filtered_traj, boundaries,
+                                                    T1, T2, batches[ind]);
             }
         }
-
     }
 
     void vector_to_eigen(std::vector<int> &is_trajectories, Eigen::VectorXi &is_traj) const
