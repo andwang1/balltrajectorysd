@@ -254,12 +254,72 @@ public:
     }
 
     void vector_to_eigen(std::vector<int> &is_trajectories, Eigen::VectorXi &is_traj) const
-    {
-        is_traj = Eigen::Map<Eigen::VectorXi> (is_trajectories.data(), is_trajectories.size());
-    }
+    {is_traj = Eigen::Map<Eigen::VectorXi> (is_trajectories.data(), is_trajectories.size());}
 
     int get_epochs_trained() const
     {return _epochs_trained;}
+
+    void get_sq_dist_matrix(const torch::Tensor &data, torch::Tensor &dist_mat) const
+    {
+        // detach here if boolean passed that it is the observations?
+        // batch size by batch size shape
+        dist_mat = torch::empty({data.size(0), data.size(0)}, torch::device(this->m_device));
+        for (int i{0}; i < data.size(0); ++i)
+        {dist_mat.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, torch::sum(torch::pow(data - data.index({i}), 2), {1}), false);}
+    }
+
+    // binary search to find variances
+    void get_var_from_perplexity(const torch::Tensor &dist_mat, torch::Tensor &variances) const
+    {
+        float tolerance = 1e-5;
+        // init variances at 1
+        variances = torch::ones(dist_mat.size(0));
+
+        // to use as mask over the columns j
+        torch::Tensor index_tensor = torch::arange(dist_mat.size(1), torch::dtype(torch::kLong));
+        
+        // loop through rows of matrix to find var
+        for (int i{0}; i < dist_mat.size(0); ++i)
+        {
+            int iter{0};
+            float min_var{0};
+		    float max_var = FLT_MAX;
+            while (iter < 200)
+            {
+                // std::cout << "Var Search Row " << i << " - Iter: " << iter << " Current Var.: " << variances.index({i}).item<float>() << "\r";
+
+                // similarities at current variance
+                torch::Tensor cur_sim_mat_row = dist_mat.index({i}) / variances.index({i});
+                // nominator of p_j|i
+                torch::Tensor exp_cur_sim_mat_row = torch::exp(cur_sim_mat_row);
+                // denominator of p_j|i
+                torch::Tensor sum_exp_cur_sim_mat_row_excl_i = torch::sum(exp_cur_sim_mat_row.index(index_tensor.ne(i)));
+
+                torch::Tensor p_j_i = exp_cur_sim_mat_row / sum_exp_cur_sim_mat_row_excl_i;
+                
+                float cur_perplexity = torch::pow(torch::ones({1}) * 2, -torch::sum(p_j_i * torch::log2(p_j_i))).item<float>();
+                if (abs(TParams::ae::target_perplexity - cur_perplexity) < tolerance)
+                    {break;}
+                
+                // if perplexity too high, then need to decrease variance
+                else if (cur_perplexity > TParams::ae::target_perplexity)
+                {
+                    max_var = variances.index({i}).item<float>();
+                    variances.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, (variances.index({i}) + min_var) / 2);
+                }
+                else
+                {
+                    min_var = variances.index({i}).item<float>();
+                    if (max_var == FLT_MAX)
+                    {variances.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, variances.index({i}) * 2);}
+                    else
+                    {variances.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, (variances.index({i}) + max_var) / 2);}
+                }
+                ++iter;
+            }
+            std::cout << "Iters needed: " << iter << ", Final Var. " << variances.index({i}) << "\n";
+        }
+    }
 
     float training(const MatrixXf_rm &phen_d, const MatrixXf_rm &traj_d, std::vector<int> &is_trajectories, bool full_train = false, int generation = 1000) 
     {
@@ -274,9 +334,7 @@ public:
 
         // if the dataset is too small -> see split_dataset
         if (train_traj.rows() == valid_traj.rows())
-        {
-            val_is_trajectories = train_is_trajectories;
-        }
+        {val_is_trajectories = train_is_trajectories;}
 
         // change vectors to eigen
         Eigen::VectorXi tr_is_traj, val_is_traj, is_traj;
@@ -345,6 +403,10 @@ public:
                             {loss_tensor += torch::sum(torch::smooth_l1_loss(reconstruction_tensor[index], traj[i], 0));}
                     }
                 }
+
+                torch::Tensor dist_mat, variances;
+                get_sq_dist_matrix(reconstruction_tensor, dist_mat);
+                get_var_from_perplexity(dist_mat, variances);
                 
                 long num_trajectories {static_cast<long>(std::get<2>(tup).size())};
                 loss_tensor /= num_trajectories;

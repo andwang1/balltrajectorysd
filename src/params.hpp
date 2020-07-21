@@ -46,6 +46,8 @@ struct Params {
     enum class loss : unsigned int {SmoothL1, L1, L2};
     static loss loss_function;
 
+    SFERES_CONST float target_perplexity = batch_size * 0.1;
+
     // network neurons        
     // input = qd::gen_dim
     SFERES_CONST size_t en_hid_dim1 = 10;
@@ -105,7 +107,7 @@ struct Params {
         SFERES_CONST size_t behav_dim = 2;
         // influences l = targeted size of pop
         SFERES_CONST int resolution = 8000; 
-        SFERES_CONST int num_train_archives = 10;
+        SFERES_CONST int num_train_archives = 0;
         static bool sample;
     };
 
