@@ -48,19 +48,50 @@ namespace sferes {
                 double L2_real_traj = L2_loss_real_trajectories.mean();
                 
                 #ifdef VAE
+
+                // TSNE loss
+                torch::Tensor reconstruction_tensor, descriptors_tensor;
+                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_torch_tensor_from_eigen_matrix(reconstruction, reconstruction_tensor);
+                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_torch_tensor_from_eigen_matrix(descriptors, descriptors_tensor);
+
+                // get the high dimensional similarities
+                torch::Tensor h_dist_mat, h_variances;
+                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(reconstruction_tensor, h_dist_mat);
+                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_var_from_perplexity(h_dist_mat, h_variances);
+
+                // similarity matrix, unsqueeze so division is along columns
+                torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
+                torch::Tensor exp_h_sim_mat = torch::exp(h_sim_mat);
+
+                torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
+                torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
+
+                // get the low dimensional similarities
+                torch::Tensor l_dist_mat;
+                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
+
+                torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
+                torch::Tensor exp_l_sim_mat = torch::exp(l_sim_mat);
+
+                torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
+
+                // set coefficient to dimensionality of data as per VAE-SNE paper
+                torch::Tensor tsne = -torch::sum(p_ij * torch::log(p_ij / q_ij)) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
+
                 // these three are unreduced, need row wise sum and then mean
-                double L2 = L2_loss.rowwise().sum().mean();
-                double KL = KL_loss.rowwise().sum().mean();
-                double de_var = decoder_var.rowwise().sum().mean();
-                double en_var = encoder_var.rowwise().sum().mean();
+                float L2 = L2_loss.rowwise().sum().mean();
+                float KL = KL_loss.rowwise().sum().mean();
+                float de_var = decoder_var.rowwise().sum().mean();
+                float en_var = encoder_var.rowwise().sum().mean();
+                float tsne_loss = tsne.item<float>();
 
                 // retrieve trajectories without any interference from random observations
                 matrix_t undisturbed_traj(ea.pop().size(), Params::sim::num_trajectory_elements);
                 for (size_t i{0}; i < ea.pop().size(); ++i)
                 {undisturbed_traj.row(i) = ea.pop()[i]->fit().get_undisturbed_trajectory();}
-                double L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
+                float L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
 
-                ofs << ea.gen() << ", " << recon << ", " << L2 << ", " << KL << ", " << en_var << ", " << de_var << ", " << L2_real_traj << ", " << L2_undisturbed_real_traj;
+                ofs << ea.gen() << ", " << recon << ", " << L2 << ", " << KL << ", " << en_var << ", " << de_var << ", " << tsne_loss << ", " << L2_real_traj << ", " << L2_undisturbed_real_traj;
                 #else
 
                 #ifdef AURORA
@@ -70,7 +101,7 @@ namespace sferes {
                 matrix_t undisturbed_traj(ea.pop().size(), Params::sim::num_trajectory_elements);
                 for (size_t i{0}; i < ea.pop().size(); ++i)
                 {undisturbed_traj.row(i) = ea.pop()[i]->fit().get_undisturbed_trajectory();}
-                double L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
+                float L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
 
                 ofs << ea.gen() << ", " << recon << ", " << L2_real_traj << ", " << L2_undisturbed_real_traj;
                 #endif 
