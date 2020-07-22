@@ -54,6 +54,12 @@ namespace sferes {
                 boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_torch_tensor_from_eigen_matrix(reconstruction, reconstruction_tensor);
                 boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_torch_tensor_from_eigen_matrix(descriptors, descriptors_tensor);
 
+                if (torch::cuda::is_available())
+                {
+                    reconstruction_tensor = reconstruction_tensor.to(torch::device(torch::kCUDA));
+                    descriptors_tensor = descriptors_tensor.to(torch::device(torch::kCUDA));
+                }
+
                 // get the high dimensional similarities
                 torch::Tensor h_dist_mat, h_variances;
                 boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(reconstruction_tensor, h_dist_mat);
