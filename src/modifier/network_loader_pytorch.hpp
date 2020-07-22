@@ -263,6 +263,9 @@ public:
     void get_var_from_perplexity(const torch::Tensor &dist_mat, torch::Tensor &variances) const
     {
         float tolerance = 1e-5;
+        torch::Tensor scalar_one = torch::ones(1, torch::dtype(torch::kLong));
+        torch::Tensor scalar_two = torch::ones({1}) * 2;
+        
         // init variances at 1
         variances = torch::ones(dist_mat.size(0), torch::device(this->m_device));
 
@@ -270,19 +273,20 @@ public:
         for (int i{0}; i < dist_mat.size(0); ++i)
         {
             int iter{0};
-            float min_var{0};
+            // float min_var{0};
+            torch::Tensor min_var = torch::zeros(1);
 		    float max_var = FLT_MAX;
             while (iter < 100)
             {
                 // std::cout << "Var Search Row " << i << " - Iter: " << iter << " Current Var.: " << variances.index({i}).item<float>() << "\r";
 
                 // similarities at current variance
-                torch::Tensor cur_sim_mat_row = dist_mat.index({i}) / variances.index({i});
+                // torch::Tensor cur_sim_mat_row = dist_mat.index({i}) / variances.index({i});
                 // nominator of p_j|i
-                torch::Tensor exp_cur_sim_mat_row = torch::exp(cur_sim_mat_row);
+                torch::Tensor exp_cur_sim_mat_row = torch::exp(dist_mat.index({i}) / variances.index({i}));
                 torch::Tensor p_j_i = exp_cur_sim_mat_row / torch::sum(exp_cur_sim_mat_row);
                 
-                float cur_perplexity = torch::pow(torch::ones({1}) * 2, -torch::sum(p_j_i * torch::log2(p_j_i))).item<float>();
+                float cur_perplexity = torch::pow(scalar_two, -torch::sum(p_j_i * torch::log2(p_j_i))).item<float>();
                 if (abs(TParams::ae::target_perplexity - cur_perplexity) < tolerance)
                     {break;}
                 
@@ -290,15 +294,15 @@ public:
                 else if (cur_perplexity > TParams::ae::target_perplexity)
                 {
                     max_var = variances.index({i}).item<float>();
-                    variances.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, (variances.index({i}) + min_var) / 2);
+                    variances.index_put_({scalar_one * i}, (variances.index({i}) + min_var) / 2);
                 }
                 else
                 {
-                    min_var = variances.index({i}).item<float>();
+                    min_var = variances.index({i});
                     if (max_var == FLT_MAX)
-                    {variances.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, variances.index({i}) * 2);}
+                    {variances.index_put_({scalar_one * i}, variances.index({i}) * 2);}
                     else
-                    {variances.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, (variances.index({i}) + max_var) / 2);}
+                    {variances.index_put_({scalar_one * i}, (variances.index({i}) + max_var) / 2);}
                 }
                 ++iter;
             }

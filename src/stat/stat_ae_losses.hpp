@@ -88,14 +88,12 @@ namespace sferes {
                 torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
                 tsne.fill_diagonal_(0);
 
-                // set coefficient to dimensionality of data as per VAE-SNE paper
-                
-
                 // these three are unreduced, need row wise sum and then mean
                 float L2 = L2_loss.rowwise().sum().mean();
                 float KL = KL_loss.rowwise().sum().mean();
                 float de_var = decoder_var.rowwise().sum().mean();
                 float en_var = encoder_var.rowwise().sum().mean();
+                // set coefficient to dimensionality of data as per VAE-SNE paper
                 float tsne_loss = (torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0)).item<float>();
 
                 // retrieve trajectories without any interference from random observations
