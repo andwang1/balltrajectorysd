@@ -403,8 +403,8 @@ public:
                 get_var_from_perplexity(h_dist_mat, h_variances);
 
                 // similarity matrix, unsqueeze so division is along columns
-                torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
-                torch::Tensor exp_h_sim_mat = torch::exp(h_sim_mat);
+                // torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
+                torch::Tensor exp_h_sim_mat = torch::exp(h_dist_mat / h_variances.unsqueeze(1));
 
                 torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
 
@@ -417,14 +417,11 @@ public:
                 torch::Tensor l_dist_mat;
                 get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
 
-                torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
-                torch::Tensor exp_l_sim_mat = torch::exp(l_sim_mat);
+                // torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
+                torch::Tensor exp_l_sim_mat = torch::exp(1 / (1 + l_dist_mat));
 
                 torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
 
-                q_ij.fill_diagonal_(0);
-
-                
                 torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
                 tsne.fill_diagonal_(0);
 
@@ -518,14 +515,12 @@ public:
         get_var_from_perplexity(h_dist_mat, h_variances);
 
         // similarity matrix, unsqueeze so division is along columns
-        torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
-        torch::Tensor exp_h_sim_mat = torch::exp(h_sim_mat);
+        torch::Tensor exp_h_sim_mat = torch::exp(h_dist_mat / h_variances.unsqueeze(1));
 
         torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
 
         // set diagonal to zero as only interested in pairwise similarities
-        p_j_i.index_put_({torch::arange(p_j_i.size(0), torch::dtype(torch::kLong)), torch::arange(p_j_i.size(0), torch::dtype(torch::kLong))},
-                        torch::zeros({1}, torch::device(this->m_device)), false);
+        p_j_i.fill_diagonal_(0);
 
         torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
 
@@ -533,18 +528,14 @@ public:
         torch::Tensor l_dist_mat;
         get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
 
-        torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
-        torch::Tensor exp_l_sim_mat = torch::exp(l_sim_mat);
+        // torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
+        torch::Tensor exp_l_sim_mat = torch::exp(1 / (1 + l_dist_mat));
 
         torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
-        q_ij.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
-                torch::zeros({1}, torch::device(this->m_device)), false);
 
         // set coefficient to dimensionality of data as per VAE-SNE paper
         torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
-
-        tsne.index_put_({torch::arange(p_ij.size(0), torch::dtype(torch::kLong)), torch::arange(p_ij.size(0), torch::dtype(torch::kLong))},
-        torch::zeros({1}, torch::device(this->m_device)), false);
+        tsne.fill_diagonal_(0);
 
         tsne = torch::sum(tsne, {1}) * reconstruction_tensor.size(1);
 

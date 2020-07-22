@@ -66,8 +66,8 @@ namespace sferes {
                 boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_var_from_perplexity(h_dist_mat, h_variances);
 
                 // similarity matrix, unsqueeze so division is along columns
-                torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
-                torch::Tensor exp_h_sim_mat = torch::exp(h_sim_mat);
+                // torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
+                torch::Tensor exp_h_sim_mat = torch::exp(h_dist_mat / h_variances.unsqueeze(1));
 
                 torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
 
@@ -79,11 +79,10 @@ namespace sferes {
                 torch::Tensor l_dist_mat;
                 boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
 
-                torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
-                torch::Tensor exp_l_sim_mat = torch::exp(l_sim_mat);
+                // torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
+                torch::Tensor exp_l_sim_mat = torch::exp(1 / (1 + l_dist_mat));
 
                 torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
-                q_ij.fill_diagonal_(0);
 
                 torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
                 tsne.fill_diagonal_(0);
