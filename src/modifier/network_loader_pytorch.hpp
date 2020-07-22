@@ -264,7 +264,7 @@ public:
     {
         float tolerance = 1e-5;
         // init variances at 1
-        variances = torch::ones(dist_mat.size(0));
+        variances = torch::ones(dist_mat.size(0), torch::device(this->m_device));
 
         // loop through rows of matrix to find var
         for (int i{0}; i < dist_mat.size(0); ++i)
@@ -406,7 +406,7 @@ public:
 
                 // set diagonal to zero as only interested in pairwise similarities
                 p_j_i.index_put_({torch::arange(p_j_i.size(0), torch::dtype(torch::kLong)), torch::arange(p_j_i.size(0), torch::dtype(torch::kLong))},
-                                torch::zeros({1}), false);
+                                torch::zeros({1}, torch::device(this->m_device)), false);
 
                 torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
 
@@ -420,12 +420,12 @@ public:
                 torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
 
                 q_ij.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
-                torch::zeros({1}), false);
+                torch::zeros({1}, torch::device(this->m_device)), false);
 
                 
                 torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
                 tsne.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
-                torch::zeros({1}), false);
+                torch::zeros({1}, torch::device(this->m_device)), false);
 
                 // set coefficient to dimensionality of data as per VAE-SNE paper
                 loss_tensor += torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
@@ -524,7 +524,7 @@ public:
 
         // set diagonal to zero as only interested in pairwise similarities
         p_j_i.index_put_({torch::arange(p_j_i.size(0), torch::dtype(torch::kLong)), torch::arange(p_j_i.size(0), torch::dtype(torch::kLong))},
-                        torch::zeros({1}), false);
+                        torch::zeros({1}, torch::device(this->m_device)), false);
 
         torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
 
@@ -537,13 +537,13 @@ public:
 
         torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
         q_ij.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
-                torch::zeros({1}), false);
+                torch::zeros({1}, torch::device(this->m_device)), false);
 
         // set coefficient to dimensionality of data as per VAE-SNE paper
         torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
 
         tsne.index_put_({torch::arange(p_ij.size(0), torch::dtype(torch::kLong)), torch::arange(p_ij.size(0), torch::dtype(torch::kLong))},
-        torch::zeros({1}), false);
+        torch::zeros({1}, torch::device(this->m_device)), false);
 
         tsne = torch::sum(tsne, {1}) * reconstruction_tensor.size(1);
 
