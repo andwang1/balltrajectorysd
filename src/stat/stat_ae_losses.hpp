@@ -83,6 +83,7 @@ namespace sferes {
                 torch::Tensor exp_l_sim_mat = torch::exp(1 / (1 + l_dist_mat));
 
                 torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
+                q_ij.fill_diagonal_(0);
 
                 torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
                 tsne.fill_diagonal_(0);
