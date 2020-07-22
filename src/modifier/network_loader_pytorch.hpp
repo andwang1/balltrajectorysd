@@ -272,7 +272,7 @@ public:
             int iter{0};
             float min_var{0};
 		    float max_var = FLT_MAX;
-            while (iter < 200)
+            while (iter < 100)
             {
                 // std::cout << "Var Search Row " << i << " - Iter: " << iter << " Current Var.: " << variances.index({i}).item<float>() << "\r";
 
@@ -405,8 +405,7 @@ public:
                 torch::Tensor p_j_i = exp_h_sim_mat / torch::sum(exp_h_sim_mat, {1}).unsqueeze(1);
 
                 // set diagonal to zero as only interested in pairwise similarities
-                p_j_i.index_put_({torch::arange(p_j_i.size(0), torch::dtype(torch::kLong)), torch::arange(p_j_i.size(0), torch::dtype(torch::kLong))},
-                                torch::zeros({1}, torch::device(this->m_device)), false);
+                p_j_i.fill_diagonal_(0);
 
                 torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
 
@@ -419,13 +418,11 @@ public:
 
                 torch::Tensor q_ij = exp_l_sim_mat / torch::sum(exp_l_sim_mat, {1}).unsqueeze(1);
 
-                q_ij.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
-                torch::zeros({1}, torch::device(this->m_device)), false);
+                q_ij.fill_diagonal_(0);
 
                 
                 torch::Tensor tsne = -p_ij * torch::log(p_ij / (q_ij + 1e-8));
-                tsne.index_put_({torch::arange(q_ij.size(0), torch::dtype(torch::kLong)), torch::arange(q_ij.size(0), torch::dtype(torch::kLong))},
-                torch::zeros({1}, torch::device(this->m_device)), false);
+                tsne.fill_diagonal_(0);
 
                 // set coefficient to dimensionality of data as per VAE-SNE paper
                 loss_tensor += torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
