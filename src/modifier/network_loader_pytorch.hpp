@@ -254,9 +254,10 @@ public:
     {
         // batch size by batch size shape
         dist_mat = torch::empty({data.size(0), data.size(0)}, torch::device(this->m_device));
+        torch::Tensor scalar_one = torch::ones(1, torch::dtype(torch::kLong));
         for (int i{0}; i < data.size(0); ++i)
             // subtraction broadcasts over columns
-            {dist_mat.index_put_({i}, torch::sum(torch::pow(data - data.index({i}), 2), {1}), false);}
+            {dist_mat.index_put_({scalar_one * i}, torch::sum(torch::pow(data - data.index({i}), 2), {1}), false);}
     }
 
     // binary search to find variances
