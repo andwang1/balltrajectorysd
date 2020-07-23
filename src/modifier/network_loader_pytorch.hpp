@@ -255,11 +255,8 @@ public:
         // batch size by batch size shape
         dist_mat = torch::empty({data.size(0), data.size(0)}, torch::device(this->m_device));
         for (int i{0}; i < data.size(0); ++i)
-        // subtraction broadcasts over columns
-        {
-            dist_mat.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, 
-                                torch::sum(torch::pow(data - data.index({i}), 2), {1}), false);
-        }
+            // subtraction broadcasts over columns
+            {dist_mat.index_put_({i}, torch::sum(torch::pow(data - data.index({i}), 2), {1}), false);}
     }
 
     // binary search to find variances
@@ -274,18 +271,19 @@ public:
         // loop through rows of matrix to find var
         for (int i{0}; i < dist_mat.size(0); ++i)
         {
-            int iter{0};
-            // float min_var{0};
             torch::Tensor min_var = torch::zeros(1);
 		    float max_var = FLT_MAX;
+
+            int iter{0};
             while (iter < 100)
             {
                 // std::cout << "Var Search Row " << i << " - Iter: " << iter << " Current Var.: " << variances.index({i}).item<float>() << "\r";
 
                 // similarities at current variance
                 // torch::Tensor cur_sim_mat_row = dist_mat.index({i}) / variances.index({i});
+                
                 // nominator of p_j|i
-                torch::Tensor exp_cur_sim_mat_row = torch::exp(dist_mat.index({i}) / variances.index({i}));
+                torch::Tensor exp_cur_sim_mat_row = torch::exp(-dist_mat.index({i}) / variances.index({i}));
                 // need to mask out the ith term in the summation, subtract 1 as the distance term will be 0, so in the exp matrix, e^0 = 1
                 torch::Tensor p_j_i = exp_cur_sim_mat_row / (torch::sum(exp_cur_sim_mat_row) - 1);
                 
