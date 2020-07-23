@@ -37,7 +37,7 @@ struct Params {
     SFERES_CONST float CV_fraction = 0.80;
 
     SFERES_CONST size_t running_mean_num_epochs = 5;
-    SFERES_CONST size_t min_num_epochs = 100;
+    SFERES_CONST size_t min_num_epochs = 5;
 
     static double pct_extension;
     static bool full_loss;
