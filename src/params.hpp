@@ -58,6 +58,8 @@ struct Params {
     // output_dim = sim::trajectory_length
 
     SFERES_CONST bool bias = true;
+
+    SFERES_CONST bool TSNE = false;
     };
 
     struct update {
