@@ -59,7 +59,7 @@ struct Params {
 
     SFERES_CONST bool bias = true;
 
-    SFERES_CONST bool TSNE = true;
+    SFERES_CONST bool TSNE = false;
     };
 
     struct update {
