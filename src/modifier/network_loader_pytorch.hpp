@@ -399,6 +399,7 @@ public:
                 loss_tensor /= num_trajectories;
 
                 #ifdef VAE
+                // SNE / TSNE
                 // get the high dimensional similarities
                 torch::Tensor h_dist_mat, h_variances;
                 get_neg_sq_dist_matrix(reconstruction_tensor.detach(), h_dist_mat);
