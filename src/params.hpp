@@ -58,14 +58,12 @@ struct Params {
     // output_dim = sim::trajectory_length
 
     SFERES_CONST bool bias = true;
-
-    
     };
 
     struct update {
     // used in deciding how often to apply dim reduction (and training)
-    SFERES_CONST size_t update_frequency = 5; // -1 means exponentially decaying update frequency, how often update BD etc
-    SFERES_CONST size_t update_period = 5;
+    SFERES_CONST size_t update_frequency = 10; // -1 means exponentially decaying update frequency, how often update BD etc
+    SFERES_CONST size_t update_period = 10;
     };
     
     struct nov {
