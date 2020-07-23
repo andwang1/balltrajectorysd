@@ -411,10 +411,10 @@ public:
                 // similarity matrix, unsqueeze so division is along columns
                 torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
 
-                // here need to mask out the index i as per TSNE paper (not proper KL factor 1: not summing to 1)
+                // here need to mask out the index i as per TSNE paper (not proper KL factor 1: p_j_i not summing to 1)
                 torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - 1).unsqueeze(1);
 
-                // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper (not proper KL factor 2, on top of factor 1, not summing to 1)
+                // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper (not proper KL factor 2, not summing to 1)
                 p_j_i.fill_diagonal_(0);
 
                 // get the low dimensional similarities
@@ -422,15 +422,13 @@ public:
                 get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
                 if (TParams::ae::TSNE)
                 {
-                    // not proper KL factor 3, dividing by 2n
+                    // not proper KL factor 3: dividing by 2n
                     torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
                     
-                    // torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
-                    
-                    torch::Tensor exp_l_sim_mat = torch::exp(1 / (1 + l_dist_mat));
+                    torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
 
-                    // here need to mask out the index i as per TSNE paper
-                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - torch::exp(torch::ones(1))).unsqueeze(1);
+                    // here need to mask out the index i as per TSNE paper, ith term will be = 1 as dist = 0, so = e^1
+                    torch::Tensor q_ij = l_sim_mat / (torch::sum(l_sim_mat, {1}) - torch::exp(torch::ones(1))).unsqueeze(1);
                     // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     q_ij.fill_diagonal_(0);
 
