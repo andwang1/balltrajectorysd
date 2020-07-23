@@ -250,7 +250,7 @@ public:
     int get_epochs_trained() const
     {return _epochs_trained;}
 
-    void get_neg_sq_dist_matrix(const torch::Tensor &data, torch::Tensor &dist_mat) const
+    void get_sq_dist_matrix(const torch::Tensor &data, torch::Tensor &dist_mat) const
     {
         // batch size by batch size shape
         dist_mat = torch::empty({data.size(0), data.size(0)}, torch::device(this->m_device));
@@ -258,7 +258,7 @@ public:
         // subtraction broadcasts over columns
         {
             dist_mat.index_put_({torch::ones(1, torch::dtype(torch::kLong)) * i}, 
-                                -torch::sum(torch::pow(data - data.index({i}), 2), {1}), false);
+                                torch::sum(torch::pow(data - data.index({i}), 2), {1}), false);
         }
     }
 
@@ -266,7 +266,6 @@ public:
     void get_var_from_perplexity(const torch::Tensor &dist_mat, torch::Tensor &variances) const
     {
         float tolerance = 1e-5;
-        torch::Tensor scalar_one = torch::ones(1, torch::dtype(torch::kLong));
         torch::Tensor scalar_two = torch::ones({1}) * 2;
         
         // init variances at 1
@@ -287,8 +286,12 @@ public:
                 // torch::Tensor cur_sim_mat_row = dist_mat.index({i}) / variances.index({i});
                 // nominator of p_j|i
                 torch::Tensor exp_cur_sim_mat_row = torch::exp(dist_mat.index({i}) / variances.index({i}));
-                torch::Tensor p_j_i = exp_cur_sim_mat_row / torch::sum(exp_cur_sim_mat_row);
+                // need to mask out the ith term in the summation, subtract 1 as the distance term will be 0, so in the exp matrix, e^0 = 1
+                torch::Tensor p_j_i = exp_cur_sim_mat_row / (torch::sum(exp_cur_sim_mat_row) - 1);
                 
+                // set p_i_i to 0
+                p_j_i.index_put_({i}, 0);
+
                 float cur_perplexity = torch::pow(scalar_two, -torch::sum(p_j_i * torch::log2(p_j_i))).item<float>();
                 if (abs(TParams::ae::target_perplexity - cur_perplexity) < tolerance)
                     {break;}
@@ -297,15 +300,15 @@ public:
                 else if (cur_perplexity > TParams::ae::target_perplexity)
                 {
                     max_var = variances.index({i}).item<float>();
-                    variances.index_put_({scalar_one * i}, (variances.index({i}) + min_var) / 2);
+                    variances.index_put_({i}, (variances.index({i}) + min_var) / 2);
                 }
                 else
                 {
                     min_var = variances.index({i});
                     if (max_var == FLT_MAX)
-                    {variances.index_put_({scalar_one * i}, variances.index({i}) * 2);}
+                    {variances.index_put_({i}, variances.index({i}) * 2);}
                     else
-                    {variances.index_put_({scalar_one * i}, (variances.index({i}) + max_var) / 2);}
+                    {variances.index_put_({i}, (variances.index({i}) + max_var) / 2);}
                 }
                 ++iter;
             }
@@ -402,32 +405,34 @@ public:
                 // SNE / TSNE
                 // get the high dimensional similarities
                 torch::Tensor h_dist_mat, h_variances;
-                get_neg_sq_dist_matrix(reconstruction_tensor.detach(), h_dist_mat);
+                get_sq_dist_matrix(reconstruction_tensor.detach(), h_dist_mat);
                 get_var_from_perplexity(h_dist_mat, h_variances);
 
+                // torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
+
                 // similarity matrix, unsqueeze so division is along columns
-                // torch::Tensor h_sim_mat = h_dist_mat / (2 * h_variances.unsqueeze(1));
-                torch::Tensor exp_h_sim_mat = torch::exp(h_dist_mat / (2 * h_variances.unsqueeze(1)));
+                torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
 
                 // here need to mask out the index i as per TSNE paper (not proper KL factor 1: not summing to 1)
-                torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - torch::diagonal(exp_h_sim_mat)).unsqueeze(1);
+                torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - 1).unsqueeze(1);
 
                 // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper (not proper KL factor 2, on top of factor 1, not summing to 1)
                 p_j_i.fill_diagonal_(0);
 
                 // get the low dimensional similarities
                 torch::Tensor l_dist_mat;
-                get_neg_sq_dist_matrix(descriptors_tensor, l_dist_mat);
+                get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
                 if (TParams::ae::TSNE)
                 {
                     // not proper KL factor 3, dividing by 2n
                     torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
                     
                     // torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
+                    
                     torch::Tensor exp_l_sim_mat = torch::exp(1 / (1 + l_dist_mat));
 
                     // here need to mask out the index i as per TSNE paper
-                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - torch::diagonal(exp_l_sim_mat)).unsqueeze(1);
+                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - torch::exp(torch::ones(1))).unsqueeze(1);
                     // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     q_ij.fill_diagonal_(0);
 
@@ -443,10 +448,10 @@ public:
                 }
                 else // SNE
                 {
-                    torch::Tensor exp_l_sim_mat = torch::exp(l_dist_mat);
+                    torch::Tensor exp_l_sim_mat = torch::exp(-l_dist_mat);
 
                     // here need to mask out the index i as per the paper
-                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - torch::diagonal(exp_l_sim_mat)).unsqueeze(1);
+                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - 1).unsqueeze(1);
                     // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     q_ij.fill_diagonal_(0);
 
@@ -456,7 +461,7 @@ public:
     
                     // set 0 * log(0) terms to 0
                     sne.fill_diagonal_(0);
-                    
+
                     // set coefficient to dimensionality of data as per VAE-SNE paper
                     loss_tensor += torch::sum(sne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
                 }

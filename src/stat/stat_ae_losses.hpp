@@ -62,22 +62,22 @@ namespace sferes {
 
                 // get the high dimensional similarities
                 torch::Tensor h_dist_mat, h_variances;
-                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_neg_sq_dist_matrix(reconstruction_tensor, h_dist_mat);
+                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(reconstruction_tensor, h_dist_mat);
                 boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_var_from_perplexity(h_dist_mat, h_variances);
 
                 // similarity matrix, unsqueeze so division is along columns
-                // torch::Tensor h_sim_mat = h_dist_mat / (2 * h_variances.unsqueeze(1));
-                torch::Tensor exp_h_sim_mat = torch::exp(h_dist_mat / (2 * h_variances.unsqueeze(1)));
+                // torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
+                torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
 
                 // here need to mask out the index i as per TSNE paper (not proper KL factor 1: not summing to 1)
-                torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - torch::diagonal(exp_h_sim_mat)).unsqueeze(1);
+                torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - 1).unsqueeze(1);
 
                 // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper (not proper KL factor 2, on top of factor 1, not summing to 1)
                 p_j_i.fill_diagonal_(0);
 
                 // get the low dimensional similarities
                 torch::Tensor l_dist_mat;
-                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_neg_sq_dist_matrix(descriptors_tensor, l_dist_mat);
+                boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
 
                 float sne_loss;
                 if (Params::ae::TSNE)
@@ -88,7 +88,7 @@ namespace sferes {
                     torch::Tensor exp_l_sim_mat = torch::exp(1 / (1 + l_dist_mat));
 
                     // here need to mask out the index i as per TSNE paper
-                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - torch::diagonal(exp_l_sim_mat)).unsqueeze(1);
+                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - torch::exp(torch::ones(1))).unsqueeze(1);
                     // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     q_ij.fill_diagonal_(0);
 
@@ -101,10 +101,10 @@ namespace sferes {
                 }
                 else // SNE
                 {
-                    torch::Tensor exp_l_sim_mat = torch::exp(l_dist_mat);
+                    torch::Tensor exp_l_sim_mat = torch::exp(-l_dist_mat);
 
                     // here need to mask out the index i as per the paper
-                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - torch::diagonal(exp_l_sim_mat)).unsqueeze(1);
+                    torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - 1).unsqueeze(1);
                     // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     q_ij.fill_diagonal_(0);
 
