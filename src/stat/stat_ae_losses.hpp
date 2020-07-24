@@ -48,6 +48,7 @@ namespace sferes {
                 double L2_real_traj = L2_loss_real_trajectories.mean();
                 
                 #ifdef VAE
+                float sne_loss;
                 if (boost::fusion::at_c<0>(ea.fit_modifier()).is_train_gen())
                 {
                     // TSNE loss
@@ -80,7 +81,6 @@ namespace sferes {
                     torch::Tensor l_dist_mat;
                     boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
 
-                    float sne_loss;
                     if (Params::ae::TSNE)
                     {
                         torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
@@ -151,6 +151,7 @@ namespace sferes {
                     #ifdef VAE
                     ofs << ", " << sne_loss;
                     #endif
+
                     #ifndef AURORA
                     ofs << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_random_extension_ratio() << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_epochs_trained() << "/" << Params::ae::nb_epochs << ", IS_TRAIN";
                     #else
