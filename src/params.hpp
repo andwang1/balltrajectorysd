@@ -59,7 +59,7 @@ struct Params {
 
     SFERES_CONST bool bias = true;
 
-    SFERES_CONST bool TSNE = true;
+    static bool TSNE;
     };
 
     struct update {
@@ -130,5 +130,6 @@ size_t Params::ae::beta;
 double Params::ae::pct_extension;
 Params::ae::loss Params::ae::loss_function;
 bool Params::qd::sample;
+bool Params::ae::TSNE;
 
 #endif //PARAMS_HPP
