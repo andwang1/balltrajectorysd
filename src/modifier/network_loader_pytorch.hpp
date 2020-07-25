@@ -450,7 +450,7 @@ public:
 
                     // torch::Tensor tsne = p_ij * torch::log(p_ij / q_ij);
                     // the above equation is proportional to the below, since the p values are constants wrt the derivative that we are taking
-                    torch::Tensor tsne = -p_ij * torch::log(q_ij);
+                    torch::Tensor tsne = -p_ij * torch::log(q_ij + 1e-6);
 
                     // set 0 * log(0) terms to 0
                     tsne.fill_diagonal_(0);
@@ -469,7 +469,7 @@ public:
 
                     // torch::Tensor sne = p_j_i * torch::log(p_j_i / q_ij);
                     // the above equation is proportional to the below, since the p values are constants wrt the derivative that we are taking
-                    torch::Tensor sne = -p_j_i * torch::log(q_ij);
+                    torch::Tensor sne = -p_j_i * torch::log(q_ij + 1e-6);
     
                     // set 0 * log(0) terms to 0
                     sne.fill_diagonal_(0);
