@@ -128,7 +128,7 @@ namespace sferes {
                 {undisturbed_traj.row(i) = ea.pop()[i]->fit().get_undisturbed_trajectory();}
                 float L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
 
-                ofs << ea.gen() << ", " << recon << ", " << L2 << ", " << KL << ", " << en_var << ", " << de_var << ", " << ", " << L2_real_traj << ", " << L2_undisturbed_real_traj;
+                ofs << ea.gen() << ", " << recon << ", " << L2 << ", " << KL << ", " << en_var << ", " << de_var << ", " << L2_real_traj << ", " << L2_undisturbed_real_traj;
                 #else
 
                 #ifdef AURORA
