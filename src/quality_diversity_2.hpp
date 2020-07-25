@@ -36,10 +36,12 @@ public:
         container().update(pop_off, pop_parents);
         
         // updating the parents is not needed as that is just for the curiosity score, so dont need to do anything with pop_parents
-        std::vector<bool> bool_added = added;
-        pop_t copy_pop_off = pop_off;
         if (Params::qd::num_train_archives > 0)
-            {add_to_train_archives(bool_added, copy_pop_off);}
+        {
+            std::vector<bool> bool_added = added;
+            pop_t copy_pop_off = pop_off;
+            add_to_train_archives(bool_added, copy_pop_off);
+        }
     }
 
     // Same function, but without the need of parent.
@@ -51,10 +53,12 @@ public:
         pop_t empty;
         container().update(pop_off, empty);
 
-        std::vector<bool> bool_added = added;
-        pop_t copy_pop_off = pop_off;
         if (Params::qd::num_train_archives > 0)
-            {add_to_train_archives(bool_added, copy_pop_off);}
+        {
+            std::vector<bool> bool_added = added;
+            pop_t copy_pop_off = pop_off;
+            add_to_train_archives(bool_added, copy_pop_off);
+        }
     }
 
     void add_to_train_archives(std::vector<bool> &bool_added, pop_t &copy_pop_off)
