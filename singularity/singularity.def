@@ -108,7 +108,7 @@ From: airl_lab/default/airl_env:pytorch_ci
     bash -c 'sleep $[ ( $RANDOM % 90 )  + 1 ]s'
 
     CURPATH=$(pwd)
-    DIRNAME=results_tsne$1/$2_$4_$5_$6_$7_$8_$9_$10
+    DIRNAME=results_$1/$2_$4_$5_$6_$7_$8_$9_$10
     PATHNAME=$(date +%Y-%m-%d_%H_%M_%S)_$$
 
     mkdir -p $CURPATH/$DIRNAME/$PATHNAME/
