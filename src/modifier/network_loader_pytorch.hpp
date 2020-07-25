@@ -443,8 +443,8 @@ public:
                     
                     torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
 
-                    // here need to mask out the index i as per TSNE paper, ith term will be = 1 as dist = 0, so = e^1
-                    torch::Tensor q_ij = l_sim_mat / (torch::sum(l_sim_mat, {1}) - torch::exp(torch::ones(1))).unsqueeze(1);
+                    // here need to mask out the index i as per TSNE paper, ith term will be = 1 as dist = 0
+                    torch::Tensor q_ij = l_sim_mat / (torch::sum(l_sim_mat, {1}) - 1).unsqueeze(1);
                     // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     q_ij.fill_diagonal_(0);
 
