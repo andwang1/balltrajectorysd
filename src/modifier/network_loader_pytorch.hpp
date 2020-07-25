@@ -323,14 +323,13 @@ public:
 
     void get_var_from_perplexity(const torch::Tensor &dist_mat, torch::Tensor &variances) const
     {
-        Eigen::VectorXf e_variances(dist_mat.size(0));
-        tbb::parallel_for(tbb::blocked_range<long>(0, e_variances.size()),
+        variances = torch::empty(dist_mat.size(0), torch::device(this->m_device));
+        tbb::parallel_for(tbb::blocked_range<long>(0, dist_mat.size(0)),
             [&](tbb::blocked_range<long> r)
         {
             for (long i=r.begin(); i<r.end(); ++i)
-            {e_variances[i] = get_ith_var_from_perplexity(dist_mat.index({i}), i);}
+                {variances.index_put_({i}, get_ith_var_from_perplexity(dist_mat.index({i}), i));}
         });
-        this->get_torch_tensor_from_eigen_matrix(e_variances, variances);
     }
 
     float training(const MatrixXf_rm &phen_d, const MatrixXf_rm &traj_d, std::vector<int> &is_trajectories, bool full_train = false, int generation = 1000) 
@@ -426,9 +425,7 @@ public:
                 get_var_from_perplexity(h_dist_mat, h_variances);
 
                 // similarity matrix, unsqueeze so division is along columns
-                // torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
-                // h variances comes out of the eigen to torch method as 2D tensor, so already unsqueezed
-                torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances);
+                torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
 
                 // here need to mask out the index i as per TSNE paper (not proper KL factor 1: p_j_i not summing to 1)
                 torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - 1).unsqueeze(1);
