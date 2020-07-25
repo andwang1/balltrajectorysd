@@ -68,8 +68,9 @@ namespace sferes {
                     boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_var_from_perplexity(h_dist_mat, h_variances);
 
                     // similarity matrix, unsqueeze so division is along columns
-                    // torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
-                    torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
+                    // torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
+                    // h variances comes out of the eigen to torch method as 2D tensor, so already unsqueezed
+                    torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances);
 
                     // here need to mask out the index i as per TSNE paper (not proper KL factor 1: not summing to 1)
                     torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - 1).unsqueeze(1);

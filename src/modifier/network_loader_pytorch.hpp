@@ -261,58 +261,76 @@ public:
     }
 
     // binary search to find variances
-    void get_var_from_perplexity(const torch::Tensor &dist_mat, torch::Tensor &variances) const
+    float get_ith_var_from_perplexity(const torch::Tensor &dist_mat_row, long num_row) const
     {
         float tolerance = 1e-5;
-        torch::Tensor scalar_two = torch::ones({1}) * 2;
+
+        // batch size * 0.1 as per VAE-SNE
+        float target_perplexity = dist_mat_row.size(0) * 0.1;
+
+        torch::Tensor scalar_two = torch::ones({1}, torch::device(this->m_device)) * 2;
         
-        // init variances at 1
-        variances = torch::ones(dist_mat.size(0), torch::device(this->m_device));
+        // for masking out the log(0) term
+        torch::Tensor mask = torch::arange(dist_mat_row.size(0), torch::dtype(torch::kLong));
+        
+        // init var at 1
+        torch::Tensor var = torch::ones(1, torch::device(this->m_device));
 
-        // loop through rows of matrix to find var
-        for (int i{0}; i < dist_mat.size(0); ++i)
+        float min_var{0};
+        float max_var = FLT_MAX;
+
+        int iter{0};
+        while (iter < 100)
         {
-            torch::Tensor min_var = torch::zeros(1);
-		    float max_var = FLT_MAX;
+            // std::cout << "Var Search Iter: " << iter << " Current Var.: " << var.item<float>() << std::endl;
 
-            int iter{0};
-            while (iter < 100)
+            // nominator of p_j|i
+            torch::Tensor exp_cur_sim_mat_row = torch::exp(-dist_mat_row / var);
+            // need to mask out the ith term in the summation, subtract 1 as the distance term will be 0, so in the exp matrix, e^0 = 1
+            torch::Tensor p_j_i = exp_cur_sim_mat_row / (torch::sum(exp_cur_sim_mat_row) - 1);
+            
+            // set p_i_i to 0
+            p_j_i.index_put_({num_row}, 0);
+            // std::cout << "CE: " << torch::sum((p_j_i * torch::log2(p_j_i + 1e-14)).index(mask.ne(num_row))) << std::endl;
+            float cur_perplexity = torch::pow(scalar_two, -torch::sum((p_j_i * torch::log2(p_j_i + 1e-14)).index(mask.ne(num_row)))).item<float>();
+
+            // std::cout << "Current Perplexity" << cur_perplexity << std::endl;
+            // std::cout << "Current difference " << cur_perplexity - target_perplexity << std::endl;
+
+            if (abs(target_perplexity - cur_perplexity) < tolerance)
+                {break;}
+            
+            // if perplexity too high, then need to decrease variance
+            else if (cur_perplexity > target_perplexity)
             {
-                // std::cout << "Var Search Row " << i << " - Iter: " << iter << " Current Var.: " << variances.index({i}).item<float>() << "\r";
-
-                // similarities at current variance
-                // torch::Tensor cur_sim_mat_row = dist_mat.index({i}) / variances.index({i});
-                
-                // nominator of p_j|i
-                torch::Tensor exp_cur_sim_mat_row = torch::exp(-dist_mat.index({i}) / variances.index({i}));
-                // need to mask out the ith term in the summation, subtract 1 as the distance term will be 0, so in the exp matrix, e^0 = 1
-                torch::Tensor p_j_i = exp_cur_sim_mat_row / (torch::sum(exp_cur_sim_mat_row) - 1);
-                
-                // set p_i_i to 0
-                p_j_i.index_put_({i}, 0);
-
-                float cur_perplexity = torch::pow(scalar_two, -torch::sum(p_j_i * torch::log2(p_j_i))).item<float>();
-                if (abs(TParams::ae::target_perplexity - cur_perplexity) < tolerance)
-                    {break;}
-                
-                // if perplexity too high, then need to decrease variance
-                else if (cur_perplexity > TParams::ae::target_perplexity)
-                {
-                    max_var = variances.index({i}).item<float>();
-                    variances.index_put_({i}, (variances.index({i}) + min_var) / 2);
-                }
-                else
-                {
-                    min_var = variances.index({i});
-                    if (max_var == FLT_MAX)
-                    {variances.index_put_({i}, variances.index({i}) * 2);}
-                    else
-                    {variances.index_put_({i}, (variances.index({i}) + max_var) / 2);}
-                }
-                ++iter;
+                max_var = var.item<float>();
+                var = (var + min_var) / 2;
             }
-            // std::cout << "Iters needed: " << iter << ", Final Var. " << variances.index({i}) << "\n";
+            else
+            {
+                min_var = var.item<float>();
+                if (max_var == FLT_MAX)
+                {var = 2 * var;}
+                else
+                {var = (var + max_var) / 2;}
+            }
+            // std::cout << "MAX: " << max_var << " MIN: " << min_var << std::endl;
+            ++iter;
         }
+        // std::cout << "Iters needed: " << iter << ", Final Var. " << var.item<float>() << "\n";
+        return var.item<float>();
+    }
+
+    void get_var_from_perplexity(const torch::Tensor &dist_mat, torch::Tensor &variances) const
+    {
+        Eigen::VectorXf e_variances(dist_mat.size(0));
+        tbb::parallel_for(tbb::blocked_range<long>(0, e_variances.size()),
+            [&](tbb::blocked_range<long> r)
+        {
+            for (long i=r.begin(); i<r.end(); ++i)
+            {e_variances[i] = get_ith_var_from_perplexity(dist_mat.index({i}), i);}
+        });
+        this->get_torch_tensor_from_eigen_matrix(e_variances, variances);
     }
 
     float training(const MatrixXf_rm &phen_d, const MatrixXf_rm &traj_d, std::vector<int> &is_trajectories, bool full_train = false, int generation = 1000) 
@@ -407,10 +425,10 @@ public:
                 get_sq_dist_matrix(reconstruction_tensor.detach(), h_dist_mat);
                 get_var_from_perplexity(h_dist_mat, h_variances);
 
-                // torch::Tensor h_sim_mat = h_dist_mat / h_variances.unsqueeze(1);
-
                 // similarity matrix, unsqueeze so division is along columns
-                torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
+                // torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
+                // h variances comes out of the eigen to torch method as 2D tensor, so already unsqueezed
+                torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances);
 
                 // here need to mask out the index i as per TSNE paper (not proper KL factor 1: p_j_i not summing to 1)
                 torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - 1).unsqueeze(1);
