@@ -448,13 +448,8 @@ public:
                     // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     q_ij.fill_diagonal_(0);
 
-                    // torch::Tensor tsne = p_ij * torch::log(p_ij / q_ij);
-                    // the above equation is proportional to the below, since the p values are constants wrt the derivative that we are taking
-                    torch::Tensor tsne = -p_ij * torch::log(q_ij + 1e-6);
+                    torch::Tensor tsne = p_ij * torch::log((p_ij + 1e-9) / (q_ij  + 1e-9));
 
-                    // set 0 * log(0) terms to 0
-                    tsne.fill_diagonal_(0);
-                    
                     // set coefficient to dimensionality of data as per VAE-SNE paper
                     loss_tensor += torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
                 }
@@ -467,12 +462,7 @@ public:
                     // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     q_ij.fill_diagonal_(0);
 
-                    // torch::Tensor sne = p_j_i * torch::log(p_j_i / q_ij);
-                    // the above equation is proportional to the below, since the p values are constants wrt the derivative that we are taking
-                    torch::Tensor sne = -p_j_i * torch::log(q_ij + 1e-6);
-    
-                    // set 0 * log(0) terms to 0
-                    sne.fill_diagonal_(0);
+                    torch::Tensor sne = p_j_i * torch::log((p_j_i + 1e-9) / (q_ij + 1e-9));
 
                     // set coefficient to dimensionality of data as per VAE-SNE paper
                     loss_tensor += torch::sum(sne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
