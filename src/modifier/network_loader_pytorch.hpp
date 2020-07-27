@@ -451,7 +451,7 @@ public:
                     torch::Tensor tsne = p_ij * torch::log((p_ij + 1e-9) / (q_ij  + 1e-9));
 
                     // set coefficient to dimensionality of data as per VAE-SNE paper
-                    loss_tensor += torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
+                    loss_tensor += (torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0));
                 }
                 else // SNE
                 {
@@ -465,7 +465,7 @@ public:
                     torch::Tensor sne = p_j_i * torch::log((p_j_i + 1e-9) / (q_ij + 1e-9));
 
                     // set coefficient to dimensionality of data as per VAE-SNE paper
-                    loss_tensor += torch::sum(sne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0);
+                    loss_tensor += (torch::sum(sne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0));
                 }
 
                 // KL Loss
