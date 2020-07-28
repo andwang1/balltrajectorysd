@@ -59,6 +59,8 @@ struct Params {
 
     SFERES_CONST bool bias = true;
 
+    enum class sne : unsigned int {NoSNE, SNE, TSNE};
+    static sne add_sne_criterion;
     static bool TSNE;
     };
 
@@ -131,5 +133,6 @@ double Params::ae::pct_extension;
 Params::ae::loss Params::ae::loss_function;
 bool Params::qd::sample;
 bool Params::ae::TSNE;
+Params::ae::sne Params::ae::add_sne_criterion;
 
 #endif //PARAMS_HPP

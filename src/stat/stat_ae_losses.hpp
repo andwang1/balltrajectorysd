@@ -21,7 +21,6 @@ namespace sferes {
                 std::string prefix = "ae_loss";
                 _write_losses(prefix, ea);
             }
-            
 
             template<typename EA>
             void _write_losses(const std::string &prefix, const EA &ea) {
@@ -48,11 +47,10 @@ namespace sferes {
                 double L2_real_traj = L2_loss_real_trajectories.mean();
                 
                 #ifdef VAE
-                torch::NoGradGuard no_grad;
                 float sne_loss;
-                if (boost::fusion::at_c<0>(ea.fit_modifier()).is_train_gen())
+                if ((boost::fusion::at_c<0>(ea.fit_modifier()).is_train_gen()) && (Params::ae::add_sne_criterion != Params::ae::sne::NoSNE))
                 {
-                    // TSNE loss
+                    torch::NoGradGuard no_grad;
                     torch::Tensor reconstruction_tensor, descriptors_tensor;
                     boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_torch_tensor_from_eigen_matrix(reconstruction, reconstruction_tensor);
                     boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_torch_tensor_from_eigen_matrix(descriptors, descriptors_tensor);
@@ -71,17 +69,17 @@ namespace sferes {
                     // similarity matrix, unsqueeze so division is along columns
                     torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
 
-                    // here need to mask out the index i as per TSNE paper (not proper KL factor 1: not summing to 1)
+                    // here need to mask out the index i as per TSNE paper
                     torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - 1 + 1e-16).unsqueeze(1);
 
-                    // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper (not proper KL factor 2, on top of factor 1, not summing to 1)
+                    // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                     p_j_i.fill_diagonal_(0);
 
                     // get the low dimensional similarities
                     torch::Tensor l_dist_mat;
                     boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
 
-                    if (Params::ae::TSNE)
+                    if (Params::ae::add_sne_criterion == Params::ae::sne::TSNE)
                     {
                         torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
                         
@@ -93,14 +91,12 @@ namespace sferes {
                         // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
                         q_ij.fill_diagonal_(0);
 
-                    torch::Tensor tsne = p_ij * torch::log((p_ij + 1e-16) / (q_ij  + 1e-16));
-                    // the above equation is proportional to the below, since the p values are constants wrt the derivative that we are taking
-                    // torch::Tensor tsne = -p_ij * torch::log(q_ij + 1e-16);
+                        torch::Tensor tsne = p_ij * torch::log((p_ij + 1e-16) / (q_ij  + 1e-16));
 
                         // set coefficient to dimensionality of data as per VAE-SNE paper
                         sne_loss = (torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0)).item<float>();
                     }
-                    else // SNE
+                    else if (Params::ae::add_sne_criterion == Params::ae::sne::SNE)
                     {
                         torch::Tensor exp_l_sim_mat = torch::exp(-l_dist_mat);
 
@@ -110,8 +106,6 @@ namespace sferes {
                         q_ij.fill_diagonal_(0);
 
                         torch::Tensor sne = p_j_i * torch::log((p_j_i + 1e-16) / (q_ij + 1e-16));
-                        // the above equation is proportional to the below, since the p values are constants wrt the derivative that we are taking
-                        // torch::Tensor sne = -p_j_i * torch::log(q_ij + 1e-16);
         
                         // set coefficient to dimensionality of data as per VAE-SNE paper
                         sne_loss = (torch::sum(sne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0)).item<float>();
