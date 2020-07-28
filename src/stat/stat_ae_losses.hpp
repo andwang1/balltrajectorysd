@@ -21,7 +21,6 @@ namespace sferes {
                 std::string prefix = "ae_loss";
                 _write_losses(prefix, ea);
             }
-            
 
             template<typename EA>
             void _write_losses(const std::string &prefix, const EA &ea) {
@@ -48,17 +47,81 @@ namespace sferes {
                 double L2_real_traj = L2_loss_real_trajectories.mean();
                 
                 #ifdef VAE
-                // these three are unreduced, need row wise sum and then mean
-                double L2 = L2_loss.rowwise().sum().mean();
-                double KL = KL_loss.rowwise().sum().mean();
-                double de_var = decoder_var.rowwise().sum().mean();
-                double en_var = encoder_var.rowwise().sum().mean();
+                float sne_loss;
+                if ((boost::fusion::at_c<0>(ea.fit_modifier()).is_train_gen()) && (Params::ae::add_sne_criterion != Params::ae::sne::NoSNE))
+                {
+                    torch::NoGradGuard no_grad;
+                    torch::Tensor reconstruction_tensor, descriptors_tensor;
+                    boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_torch_tensor_from_eigen_matrix(reconstruction, reconstruction_tensor);
+                    boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_torch_tensor_from_eigen_matrix(descriptors, descriptors_tensor);
 
+                    if (torch::cuda::is_available())
+                    {
+                        reconstruction_tensor = reconstruction_tensor.to(torch::device(torch::kCUDA));
+                        descriptors_tensor = descriptors_tensor.to(torch::device(torch::kCUDA));
+                    }
+
+                    // get the high dimensional similarities
+                    torch::Tensor h_dist_mat, h_variances;
+                    boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(reconstruction_tensor, h_dist_mat);
+                    boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_var_from_perplexity(h_dist_mat, h_variances);
+
+                    // similarity matrix, unsqueeze so division is along columns
+                    torch::Tensor exp_h_sim_mat = torch::exp(-h_dist_mat / h_variances.unsqueeze(1));
+
+                    // here need to mask out the index i as per TSNE paper
+                    torch::Tensor p_j_i = exp_h_sim_mat / (torch::sum(exp_h_sim_mat, {1}) - 1 + 1e-16).unsqueeze(1);
+
+                    // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
+                    p_j_i.fill_diagonal_(0);
+
+                    // get the low dimensional similarities
+                    torch::Tensor l_dist_mat;
+                    boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_sq_dist_matrix(descriptors_tensor, l_dist_mat);
+
+                    if (Params::ae::add_sne_criterion == Params::ae::sne::TSNE)
+                    {
+                        torch::Tensor p_ij = (p_j_i + p_j_i.transpose(0, 1)) / (2 * p_j_i.size(0));
+                        
+                        torch::Tensor l_sim_mat = 1 / (1 + l_dist_mat);
+
+                        // here need to mask out the index i as per TSNE paper, ith term will be = 1 as dist = 0
+                        torch::Tensor q_ij = l_sim_mat / (torch::sum(l_sim_mat, {1}) - 1 + 1e-16).unsqueeze(1);
+                        
+                        // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
+                        q_ij.fill_diagonal_(0);
+
+                        torch::Tensor tsne = p_ij * torch::log((p_ij + 1e-16) / (q_ij  + 1e-16));
+
+                        // set coefficient to dimensionality of data as per VAE-SNE paper
+                        sne_loss = (torch::sum(tsne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0)).item<float>();
+                    }
+                    else if (Params::ae::add_sne_criterion == Params::ae::sne::SNE)
+                    {
+                        torch::Tensor exp_l_sim_mat = torch::exp(-l_dist_mat);
+
+                        // here need to mask out the index i as per the paper
+                        torch::Tensor q_ij = exp_l_sim_mat / (torch::sum(exp_l_sim_mat, {1}) - 1 + 1e-16).unsqueeze(1);
+                        // set diagonal to zero as only interested in pairwise similarities, as per TSNE paper
+                        q_ij.fill_diagonal_(0);
+
+                        torch::Tensor sne = p_j_i * torch::log((p_j_i + 1e-16) / (q_ij + 1e-16));
+        
+                        // set coefficient to dimensionality of data as per VAE-SNE paper
+                        sne_loss = (torch::sum(sne) * reconstruction_tensor.size(1) / reconstruction_tensor.size(0)).item<float>();
+                    }
+                }
+                // these three are unreduced, need row wise sum and then mean
+                float L2 = L2_loss.rowwise().sum().mean();
+                float KL = KL_loss.rowwise().sum().mean();
+                float de_var = decoder_var.rowwise().sum().mean();
+                float en_var = encoder_var.rowwise().sum().mean();
+                
                 // retrieve trajectories without any interference from random observations
                 matrix_t undisturbed_traj(ea.pop().size(), Params::sim::num_trajectory_elements);
                 for (size_t i{0}; i < ea.pop().size(); ++i)
                 {undisturbed_traj.row(i) = ea.pop()[i]->fit().get_undisturbed_trajectory();}
-                double L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
+                float L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
 
                 ofs << ea.gen() << ", " << recon << ", " << L2 << ", " << KL << ", " << en_var << ", " << de_var << ", " << L2_real_traj << ", " << L2_undisturbed_real_traj;
                 #else
@@ -70,7 +133,7 @@ namespace sferes {
                 matrix_t undisturbed_traj(ea.pop().size(), Params::sim::num_trajectory_elements);
                 for (size_t i{0}; i < ea.pop().size(); ++i)
                 {undisturbed_traj.row(i) = ea.pop()[i]->fit().get_undisturbed_trajectory();}
-                double L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
+                float L2_undisturbed_real_traj = (undisturbed_traj - reconstruction).array().square().rowwise().sum().mean();
 
                 ofs << ea.gen() << ", " << recon << ", " << L2_real_traj << ", " << L2_undisturbed_real_traj;
                 #endif 
@@ -79,6 +142,10 @@ namespace sferes {
 
                 if (boost::fusion::at_c<0>(ea.fit_modifier()).is_train_gen())
                 {
+                    #ifdef VAE
+                    ofs << ", " << sne_loss;
+                    #endif
+
                     #ifndef AURORA
                     ofs << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_random_extension_ratio() << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_epochs_trained() << "/" << Params::ae::nb_epochs << ", IS_TRAIN";
                     #else

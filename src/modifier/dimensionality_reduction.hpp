@@ -18,7 +18,7 @@ namespace sferes {
             typedef typename std::vector<indiv_t> pop_t;
             typedef std::vector<std::pair<std::vector<double>, float>> stat_t;
 
-            DimensionalityReduction() : _last_update(0), _update_id(0) {
+            DimensionalityReduction() : _last_update(0), _update_id(0), _is_train_gen(false) {
                 _network = std::make_unique<NetworkLoader>();
             }
 

@@ -46,6 +46,8 @@ struct Params {
     enum class loss : unsigned int {SmoothL1, L1, L2};
     static loss loss_function;
 
+    SFERES_CONST float target_perplexity = batch_size * 0.1;
+
     // network neurons        
     // input = qd::gen_dim
     SFERES_CONST size_t en_hid_dim1 = 10;
@@ -57,7 +59,9 @@ struct Params {
 
     SFERES_CONST bool bias = true;
 
-    
+    enum class sne : unsigned int {NoSNE, SNE, TSNE};
+    static sne add_sne_criterion;
+    static bool TSNE;
     };
 
     struct update {
@@ -105,7 +109,7 @@ struct Params {
         SFERES_CONST size_t behav_dim = 2;
         // influences l = targeted size of pop
         SFERES_CONST int resolution = 8000; 
-        SFERES_CONST int num_train_archives = 5;
+        SFERES_CONST int num_train_archives = 0;
         static bool sample;
     };
 
@@ -128,5 +132,7 @@ size_t Params::ae::beta;
 double Params::ae::pct_extension;
 Params::ae::loss Params::ae::loss_function;
 bool Params::qd::sample;
+bool Params::ae::TSNE;
+Params::ae::sne Params::ae::add_sne_criterion;
 
 #endif //PARAMS_HPP
