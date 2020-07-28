@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
     tbb::task_scheduler_init init(arg.number_cpus);
 
     typedef Params params_t;
-    Params::nov::l = 0;
+    std::fill(Params::nov::l.begin(), Params::nov::l.end(), 0);
 
     // cmd line arguments
     // number of generations
@@ -192,7 +192,7 @@ int main(int argc, char **argv) {
                     sferes::qd::container::SortBasedStorage< boost::shared_ptr<phen_t>>
                 >::type storage_t;
 
-    typedef Archive_2<phen_t, storage_t, params_t> container_t;
+    typedef sferes::qd::container::Archive_2<phen_t, storage_t, params_t> container_t;
     // typedef sferes::qd::container::Archive<phen_t, storage_t, params_t> container_t;
 
     // if GRAPHICS

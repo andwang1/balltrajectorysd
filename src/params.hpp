@@ -69,9 +69,19 @@ struct Params {
     SFERES_CONST size_t update_frequency = 10; // -1 means exponentially decaying update frequency, how often update BD etc
     SFERES_CONST size_t update_period = 10;
     };
+
+    struct qd {
+    SFERES_CONST size_t gen_dim = 4;
+    SFERES_CONST size_t phen_dim = 2;
+    SFERES_CONST size_t behav_dim = 2;
+    // influences l = targeted size of pop
+    SFERES_CONST int resolution = 8000; 
+    SFERES_CONST int num_train_archives = 5;
+    static bool sample;
+    };
     
     struct nov {
-        static double l;
+        static std::array<double, qd::num_train_archives + 1> l;
         SFERES_CONST double k = 15;
         SFERES_CONST double eps = 0.1;
         // the discretisation used to create the diversity bin data
@@ -103,15 +113,7 @@ struct Params {
         SFERES_CONST double max_angle = M_PI;
     };
 
-    struct qd {
-        SFERES_CONST size_t gen_dim = 4;
-        SFERES_CONST size_t phen_dim = 2;
-        SFERES_CONST size_t behav_dim = 2;
-        // influences l = targeted size of pop
-        SFERES_CONST int resolution = 8000; 
-        SFERES_CONST int num_train_archives = 5;
-        static bool sample;
-    };
+
 
     struct stat {
         SFERES_CONST size_t save_trajectories = 6000;
@@ -124,7 +126,7 @@ struct Params {
 };
 
 // cmd line args
-double Params::nov::l;
+std::array<double, Params::qd::num_train_archives + 1> Params::nov::l;
 double Params::random::pct_random;
 bool Params::ae::full_loss;
 size_t Params::pop::nb_gen;

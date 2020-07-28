@@ -60,6 +60,9 @@ namespace sferes {
                 if (!ea.offspring().size())
                     {return;}
                 assign_descriptor_to_population(ea, ea.offspring());
+                
+                if (Params::qd::num_train_archives > 0)
+                    {refresh_l_train_archives(ea);}
             }
 
             template<typename EA>
@@ -278,7 +281,7 @@ namespace sferes {
             }
 
             template<typename EA>
-            void assign_descriptor_to_population(EA &ea, pop_t &pop) const {
+            void assign_descriptor_to_population(EA &ea, pop_t &pop, int container_idx = 0) const {
                 pop_t filtered_pop;
                 for (auto ind:pop) {
                     if (!ind->fit().dead()) 
@@ -312,16 +315,29 @@ namespace sferes {
                     filtered_pop[i]->fit().entropy() = (float) latent_and_entropy(i, Params::qd::behav_dim);
                 }
 
-                pop_t tmp_pop;
-                ea.container().get_full_content(tmp_pop);
+                if ((ea.gen() > 1) && (!filtered_pop.empty())) 
+                    {this->update_l(filtered_pop, container_idx);} 
+                else if (!filtered_pop.empty())
+                    {this->initialise_l(filtered_pop, container_idx);}
 
-                if ((ea.gen() > 1) && (!tmp_pop.empty())) 
-                    {this->update_l(tmp_pop);} 
-                else if (!tmp_pop.empty())
-                    {this->initialise_l(tmp_pop);}
+                std::cout << "l = " << Params::nov::l[container_idx] << "; size_pop = " << filtered_pop.size() << std::endl;
 
-                std::cout << "l = " << Params::nov::l << "; size_pop = " << tmp_pop.size() << std::endl;
+            }
 
+            template<typename EA>
+            void refresh_l_train_archives(EA &ea) const 
+            {
+                for (int i{0}; i < Params::qd::num_train_archives; ++i)
+                {
+                    if ((ea.gen() > 1) && (ea.train_container(i).archive().size() != 0) && (Params::nov::l[i + 1] != 0)) 
+                        {this->update_l(ea.train_container(i).archive().size(), i + 1);} 
+                    else if (ea.train_container(i).archive().size() != 0)
+                    {   
+                        pop_t tmp_pop;
+                        ea.train_container(i).get_full_content(tmp_pop);
+                        this->initialise_l(tmp_pop, i + 1);
+                    }
+                }
             }
 
             void get_descriptor_autoencoder(const Mat &geno_d, const Mat &traj_d, const Eigen::VectorXi &is_trajectory, 
@@ -353,7 +369,7 @@ namespace sferes {
                 this->assign_descriptor_to_population(ea, tmp_pop);
 
                 // update l to maintain a number of indiv lower than Params::resolution
-                std::cout << "NEW L= " << Params::nov::l << std::endl;
+                std::cout << "NEW L= " << Params::nov::l[0] << std::endl;
 
                 // Addition of the offspring to the container
                 std::vector<bool> added;
@@ -379,15 +395,15 @@ namespace sferes {
                     ea.train_container(i).erase_content();
                     std::cout << "Container " << i << " size pop: " << tmp_pop.size() << std::endl;
 
-                    this->assign_descriptor_to_population(ea, tmp_pop);
+                    this->assign_descriptor_to_population(ea, tmp_pop, i + 1);
 
                     // update l to maintain a number of indiv lower than Params::resolution
-                    std::cout << "NEW L= " << Params::nov::l << std::endl;
+                    std::cout << "NEW L= " << Params::nov::l[i + 1] << std::endl;
                     
                     // Put data back into the container
                     std::vector<bool> added(tmp_pop.size());
                     for (size_t j{0}; j < tmp_pop.size(); ++j)
-                    {added[j] = ea.train_container(i).add(tmp_pop[j]);}
+                    {added[j] = ea.train_container(i).add(tmp_pop[j], i + 1);}
 
                     pop_t empty;
                     ea.train_container(i).update(tmp_pop, empty);
@@ -396,9 +412,14 @@ namespace sferes {
                 }
             }
 
-            void update_l(const pop_t &pop) const {
+            void update_l(const pop_t &pop, size_t container_idx) const {
                 constexpr float alpha = 5e-6f;
-                Params::nov::l *= (1 - alpha * (static_cast<float>(Params::qd::resolution) - static_cast<float>(pop.size())));
+                Params::nov::l[container_idx] *= (1 - alpha * (static_cast<float>(Params::qd::resolution) - static_cast<float>(pop.size())));
+            }
+
+            void update_l(size_t pop_size, size_t container_idx) const {
+                constexpr float alpha = 5e-6f;
+                Params::nov::l[container_idx] *= (1 - alpha * (static_cast<float>(Params::qd::resolution) - static_cast<float>(pop_size)));
             }
 
             void get_matrix_behavioural_descriptors(const pop_t &pop, Mat &matrix_behavioural_descriptors) const 
@@ -415,7 +436,7 @@ namespace sferes {
                 }
             }
 
-            void initialise_l(const pop_t &pop) const {
+            void initialise_l(const pop_t &pop, int container_idx) const {
                 Mat matrix_behavioural_descriptors;
                 get_matrix_behavioural_descriptors(pop, matrix_behavioural_descriptors);
                 Mat_dist abs_matrix{matrix_behavioural_descriptors.cast<double>()};
@@ -430,7 +451,7 @@ namespace sferes {
                 abs_matrix = (eigensolver.eigenvectors().transpose() * abs_matrix.transpose()).transpose();
                 double volume = (abs_matrix.colwise().maxCoeff() - abs_matrix.colwise().minCoeff()).prod();
 
-                Params::nov::l = static_cast<float>(0.5 * std::pow(volume / Params::qd::resolution, 1. / matrix_behavioural_descriptors.cols()));
+                Params::nov::l[container_idx] = static_cast<float>(0.5 * std::pow(volume / Params::qd::resolution, 1. / matrix_behavioural_descriptors.cols()));
             }
 
             void distance(const Mat &X, Mat_dist &dist) const {

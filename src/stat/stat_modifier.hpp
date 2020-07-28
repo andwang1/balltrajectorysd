@@ -21,7 +21,7 @@ namespace sferes {
 
             if (ea.dump_enabled()) {
                 this->_create_log_file(ea, "stat_modifier.dat");
-                (*this->_log_file) << ea.gen() << " " << Params::nov::l << std::endl;
+                (*this->_log_file) << ea.gen() << " " << Params::nov::l[0] << std::endl;
             }
         }
     };

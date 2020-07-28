@@ -24,7 +24,7 @@ public:
 
     // Same function, but without the need of parent.
     void add(pop_t &pop_off, std::vector<bool> &added) {
-        std::cout << "adding with l: " << Params::nov::l << std::endl;
+        std::cout << "adding with l: " << Params::nov::l[0] << std::endl;
         _add(pop_off, added);
     }
 
@@ -79,7 +79,7 @@ public:
 
             // add into current archive
             for (size_t j{0}; j < remaining.size(); ++j)
-                {remaining[j] = train_archives[i].add(phen_to_be_added[j]);}
+                {remaining[j] = train_archives[i].add(phen_to_be_added[j], i + 1);}
 
             // if all added can break early
             if (std::find(remaining.begin(), remaining.end(), false) == remaining.end())
@@ -174,8 +174,9 @@ public:
         container().get_full_content(this->_pop);
 
         for (size_t j{0}; j < train_archives.size(); ++j)
-        {std::cout << "Training Container " << j << " holds " << train_archives[j].archive().size() << " individuals.\n";}
+        {std::cout << "Training Container " << j << " holds " << train_archives[j].archive().size() << " individuals. L: "<< Params::nov::l[j + 1] << "\n";}
     }
+
     std::array<Container, Params::qd::num_train_archives> train_archives;
 };
 
