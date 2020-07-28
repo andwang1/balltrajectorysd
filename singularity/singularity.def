@@ -99,7 +99,6 @@ From: airl_lab/default/airl_env:pytorch_ci
    fi
 
    cd balltrajectorysd/
-   git checkout tsne
 
    cd /git/sferes2/
    ./setup.sh $SETUP_ARGS
