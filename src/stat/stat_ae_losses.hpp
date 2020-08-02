@@ -47,7 +47,7 @@ namespace sferes {
                 double L2_real_traj = L2_loss_real_trajectories.mean();
                 
                 #ifdef VAE
-                float sne_loss;
+                float sne_loss{-99};
                 if ((boost::fusion::at_c<0>(ea.fit_modifier()).is_train_gen()) && (Params::ae::add_sne_criterion != Params::ae::sne::NoSNE))
                 {
                     torch::NoGradGuard no_grad;
