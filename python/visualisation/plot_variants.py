@@ -4,27 +4,39 @@ import os
 import pickle as pk
 
 path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
+path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l2encodervarreruns"
 os.chdir(path)
 
 plotting_groups = [
-    ["l2"],
-    ["l1", "smoothl1_longtrain"],
-    ["l1", "l2"],
-    ["extension03", "l2"],
-    ["l1extension03", "l1"],
-    ["l1beta0extension03", "l1beta0"],
-    ["l2beta0", "l2"],
-    ["l1beta0", "l1"],
-    ["smoothl1_longtrain", "smoothl1_shorttrain"],
-    ["l2nosample", "l2"],
-    ["l1nosampletrain", "l1nosample", "l1"],
-    ["l1beta0nosampletrain", "l1nosample", "l1"],
-["l1beta0nosampletrain", "l1"],
-    ["randomsolutions", "l1"],
-    ["randomsolutions", "l1nosample"],
+["beta0", "beta1"],
+# ["l1beta0nosample","l1nosample", "l1beta0"],
+# ["l2beta0nosample","l2nosample", "l2beta0"],
+# ["sne_nosampletrain_beta1", "tsne_nosampletrain_beta1", "l2beta1nosampletrain"],
+# ["l2beta0nosampletrain", "l2beta1nosampletrain"],
+# ["l2beta1nosampletrain", "l2"], #compare against ae
+# ["l2nosample", "l2beta0nosample"]
+# ["l1nosampletrain", "l2beta1nosampletrain"],
+# ["l2beta1nosampletrain", "l2beta1nosample", "l2nosample", "l2beta0nosample"]
+#     ["l2"],
+#     ["l1", "smoothl1_longtrain"],
+#     ["l1", "l2"],
+#     ["extension03", "l2"],
+#     ["l1extension03", "l1"],
+#     ["l1beta0extension03", "l1beta0"],
+#     ["l2beta0", "l2"],
+#     ["l1beta0", "l1"],
+#     ["smoothl1_longtrain", "smoothl1_shorttrain"],
+#     ["l2nosample", "l2"],
+#     ["l1nosampletrain", "l1nosample", "l1"],
+#     ["l1beta0nosampletrain", "l1nosample", "l1"],
+# ["l1beta0nosampletrain", "l1"],
+#     ["randomsolutions", "l1"],
+#     ["randomsolutions", "l1nosample"],
+#     ["l2beta1nosampletrain", "l2"],
+# ["l2beta1nosampletrain", "l2nosample"],
 ]
 
-colours = ["blue", "brown", "grey", "red", "purple", "green", "pink"]
+colours = ["blue", "brown", "grey", "red", "purple", "green", "pink", "orange"]
 
 # make legend bigger
 plt.rc('legend', fontsize=35)
@@ -224,32 +236,32 @@ for group in plotting_groups:
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
             colour_count += 1
-    ax1.set_ylabel("Mean Mean Variance")
+    ax1.set_ylabel("Mean Variance")
     ax1.set_xlabel("Stochasticity")
     ax1.set_title(f"Variance of Latent Descriptors of No-Move Solutions")
     plt.savefig(f"{save_dir}/pdf/latent_var_{'_'.join(group)}.pdf")
     plt.savefig(f"{save_dir}/latent_var_{'_'.join(group)}.png")
     plt.close()
 
-    # f = plt.figure(figsize=(20, 20))
-    # spec = f.add_gridspec(1, 2)
-    # ax1 = f.add_subplot(spec[0, :])
-    # colour_count = 0
-    # for i, member in enumerate(group):
-    #     with open(f"{member}/loss_data.pk", "rb") as f:
-    #         log_data = pk.load(f)
-    #
-    #     for variant, data in log_data.items():
-    #         if "vae" not in variant:
-    #             continue
-    #         sns.lineplot(data["stoch"], data["ENVAR"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
-    #                      color=colours[colour_count])
-    #         if i == 0 and len(group) > 1:
-    #             ax1.lines[-1].set_linestyle("--")
-    #         colour_count += 1
-    # ax1.set_ylabel("Mean Mean Variance")
-    # ax1.set_xlabel("Stochasticity")
-    # ax1.set_title(f"Encoder Variance")
-    # plt.savefig(f"{save_dir}/pdf/encoder_var_{'_'.join(group)}.pdf")
-    # plt.savefig(f"{save_dir}/encoder_var_{'_'.join(group)}.png")
-    # plt.close()
+    f = plt.figure(figsize=(20, 20))
+    spec = f.add_gridspec(1, 2)
+    ax1 = f.add_subplot(spec[0, :])
+    colour_count = 0
+    for i, member in enumerate(group):
+        with open(f"{member}/loss_data.pk", "rb") as f:
+            log_data = pk.load(f)
+
+        for variant, data in log_data.items():
+            if "vae" not in variant:
+                continue
+            sns.lineplot(data["stoch"], data["ENVAR"] / 2, estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+                         color=colours[colour_count])
+            if i == 0 and len(group) > 1:
+                ax1.lines[-1].set_linestyle("--")
+            colour_count += 1
+    ax1.set_ylabel("Mean Variance")
+    ax1.set_xlabel("Stochasticity")
+    ax1.set_title(f"Encoder Variance")
+    plt.savefig(f"{save_dir}/pdf/encoder_var_{'_'.join(group)}.pdf")
+    plt.savefig(f"{save_dir}/encoder_var_{'_'.join(group)}.png")
+    plt.close()
