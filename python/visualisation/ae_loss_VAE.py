@@ -25,11 +25,11 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
             KL.append(float(data[3]))
             encoder_var.append(float(data[4]))
             decoder_var.append(float(data[5]))
-            tsne.append(float(data[6]))
-            actual_trajectories_L2.append(float(data[7]))
-            undisturbed_actual_trajectories_L2.append(float(data[8]))
+            actual_trajectories_L2.append(float(data[6]))
+            undisturbed_actual_trajectories_L2.append(float(data[7]))
             if "IS_TRAIN" in data[-1]:
                 # gen number, epochstrained / total
+                tsne.append(float(data[8]))
                 train_epochs.append((int(data[0]), data[-2].strip()))
 
     if generate_images:
