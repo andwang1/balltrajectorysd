@@ -494,8 +494,8 @@ public:
                 previous_avg[previous_avg.size() - 1] = current_avg;
 
                 // if the running average on the val set is increasing and train loss is higher than at the beginning
-                if ((previous_avg.array() - previous_avg[0]).mean() > 0 && epoch > TParams::ae::min_num_epochs &&
-                    this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj) < init_tr_recon_loss)
+                if ((previous_avg.array() - previous_avg[0]).mean() > -1e-4 && epoch > TParams::ae::min_num_epochs &&
+                    this->get_avg_recon_loss(train_phen, train_traj, tr_is_traj) < init_tr_recon_loss + 1e-4)
                         {_continue = false;}
             }
 
