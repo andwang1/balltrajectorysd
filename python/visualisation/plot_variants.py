@@ -4,11 +4,10 @@ import os
 import pickle as pk
 
 path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
-path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l2encodervarreruns"
 os.chdir(path)
 
 plotting_groups = [
-["beta0", "beta1"],
+["l2beta0", "l2beta1"],
 # ["l1beta0nosample","l1nosample", "l1beta0"],
 # ["l2beta0nosample","l2nosample", "l2beta0"],
 # ["sne_nosampletrain_beta1", "tsne_nosampletrain_beta1", "l2beta1nosampletrain"],
@@ -61,7 +60,8 @@ for group in plotting_groups:
         for variant, data in log_data.items():
             if "aurora" in variant:
                 continue
-            sns.lineplot(data["stoch"], data["AL"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1, color=colours[colour_count])
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["AL"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1, color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
             colour_count += 1
@@ -81,7 +81,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            sns.lineplot(data["stoch"], data["DIV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1, color=colours[colour_count])
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["DIV"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1, color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
             colour_count += 1
@@ -101,7 +102,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            sns.lineplot(data["stoch"], data["PCT"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["PCT"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
@@ -122,7 +124,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            sns.lineplot(data["stoch"], data["MDE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["MDE"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
@@ -143,7 +146,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            sns.lineplot(data["stoch"], data["VDE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["VDE"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
@@ -164,7 +168,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            sns.lineplot(data["stoch"], data["EVE"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["EVE"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
@@ -185,7 +190,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            sns.lineplot(data["stoch"], data["PV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["PV"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
@@ -208,7 +214,8 @@ for group in plotting_groups:
         for variant, data in log_data.items():
             if "aurora" in variant:
                 continue
-            sns.lineplot(data["stoch"], data["NMV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["NMV"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
@@ -231,7 +238,8 @@ for group in plotting_groups:
         for variant, data in log_data.items():
             if "aurora" in variant:
                 continue
-            sns.lineplot(data["stoch"], data["LV"], estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
+            variant_name = variant if not variant.startswith("ae") else "ae"
+            sns.lineplot(data["stoch"], data["LV"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
