@@ -316,11 +316,21 @@ namespace sferes {
                 }
 
                 if ((ea.gen() > 1) && (!filtered_pop.empty())) 
-                    {this->update_l(filtered_pop, container_idx);} 
+                {
+                    if (container_idx == 0)
+                        {this->update_l(ea.pop(), container_idx);}
+                    else 
+                        {this->update_l(filtered_pop, container_idx);}
+                }
                 else if (!filtered_pop.empty())
                     {this->initialise_l(filtered_pop, container_idx);}
 
-                std::cout << "l = " << Params::nov::l[container_idx] << "; size_pop = " << filtered_pop.size() << std::endl;
+                
+                std::cout << "l = " << Params::nov::l[container_idx] << "; size_pop = ";
+                if (container_idx == 0)
+                    std::cout << ea.pop().size() << std::endl;
+                else
+                    {std::cout << filtered_pop.size() << std::endl;}
 
             }
 
