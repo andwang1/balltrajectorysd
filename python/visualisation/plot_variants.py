@@ -7,7 +7,7 @@ path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
 os.chdir(path)
 
 plotting_groups = [
-["l2beta0", "l2beta1"],
+["l2beta0nosample", "l2beta0nosampletrain"],
 # ["l1beta0nosample","l1nosample", "l1beta0"],
 # ["l2beta0nosample","l2nosample", "l2beta0"],
 # ["sne_nosampletrain_beta1", "tsne_nosampletrain_beta1", "l2beta1nosampletrain"],
@@ -58,7 +58,7 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "aurora" in variant:
+            if "aurora" in variant or variant.startswith("ae"):
                 continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["AL"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1, color=colours[colour_count])
@@ -81,6 +81,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
+            if "aurora" in variant or variant.startswith("ae"):
+                continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["DIV"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1, color=colours[colour_count])
             if i == 0 and len(group) > 1:
@@ -102,6 +104,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
+            if "aurora" in variant or variant.startswith("ae"):
+                continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["PCT"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
@@ -124,6 +128,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
+            if "aurora" in variant or variant.startswith("ae"):
+                continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["MDE"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
@@ -146,6 +152,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
+            if "aurora" in variant or variant.startswith("ae"):
+                continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["VDE"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
@@ -168,6 +176,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
+            if "aurora" in variant or variant.startswith("ae"):
+                continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["EVE"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
@@ -175,7 +185,7 @@ for group in plotting_groups:
                 ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Entropy of Trajectory Positions Excl. No-Move")
-    ax1.set_ylabel("Mean Mean Entropy")
+    ax1.set_ylabel("Mean Entropy")
     ax1.set_xlabel("Stochasticity")
     plt.savefig(f"{save_dir}/pdf/entropy_{'_'.join(group)}.pdf")
     plt.savefig(f"{save_dir}/entropy_{'_'.join(group)}.png")
@@ -190,6 +200,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
+            if "aurora" in variant or variant.startswith("ae"):
+                continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["PV"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
@@ -197,7 +209,7 @@ for group in plotting_groups:
                 ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Variance of Trajectory Positions")
-    ax1.set_ylabel("Mean Mean Variance")
+    ax1.set_ylabel("Mean Variance")
     ax1.set_xlabel("Stochasticity")
     plt.savefig(f"{save_dir}/pdf/posvar_{'_'.join(group)}.pdf")
     plt.savefig(f"{save_dir}/posvar_{'_'.join(group)}.png")
@@ -212,7 +224,7 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "aurora" in variant:
+            if "aurora" in variant or variant.startswith("ae"):
                 continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["NMV"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
@@ -221,7 +233,7 @@ for group in plotting_groups:
                 ax1.lines[-1].set_linestyle("--")
             colour_count += 1
     ax1.set_title("Reconstruction Var. of No-Move solutions")
-    ax1.set_ylabel("Mean Mean Reconstruction Variance")
+    ax1.set_ylabel("Mean Reconstruction Variance")
     ax1.set_xlabel("Stochasticity")
     plt.savefig(f"{save_dir}/pdf/recon_var_{'_'.join(group)}.pdf")
     plt.savefig(f"{save_dir}/recon_var_{'_'.join(group)}.png")
@@ -236,7 +248,7 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "aurora" in variant:
+            if "aurora" in variant or variant.startswith("ae"):
                 continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["LV"], estimator="mean", ci="sd", label=f"{member}-{variant_name}", ax=ax1,
@@ -260,7 +272,7 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "vae" not in variant:
+            if "aurora" in variant or variant.startswith("ae"):
                 continue
             sns.lineplot(data["stoch"], data["ENVAR"] / 2, estimator="mean", ci="sd", label=f"{member}-{variant}", ax=ax1,
                          color=colours[colour_count])
