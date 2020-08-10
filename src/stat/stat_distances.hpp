@@ -105,7 +105,7 @@ namespace sferes {
                 std::ofstream ofs(fname.c_str());
                 ofs.precision(17);
                 Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "");
-                ofs << "Mean Distance, Var Distance, Mean Distance NonZero, Var Distance NonZero, Moved/Total\nVar Grid, MinMax Grid, Indices of moved, Indices per bucket\n";
+                ofs << "Mean Distance, Var Distance, Mean Distance NonZero, Var Distance NonZero, Moved/Total\nVar Grid, MinMax Grid, Indices of moved, Indices per bucket, Distances per solution\n";
                 ofs << mean_distance << ", " << var_distance << ", " << mean_distance_moved << ", " << var_distance_moved << ", " << moved_counter << "/" << ea.pop().size() << "\n";
                 ofs << var_grid.format(CommaInitFmt) << "\n";
                 ofs << min_max_grid.format(CommaInitFmt) << "\n";
@@ -119,6 +119,9 @@ namespace sferes {
                     for (int index : indices_per_bucket[i])
                         {ofs << ", " << index;}
                 }
+                ofs << "\n";
+                for (int i{0}; i < distances.size(); ++i)
+                    {ofs << distances[i] << ", ";}
             }
         };
     }
