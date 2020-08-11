@@ -11,6 +11,7 @@ from latent_space import plot_latent_space_in_dir
 from recon_notmoved_var import plot_recon_not_moved_var_in_dir
 from latent_and_distance import plot_latent_dist_space_in_dir
 from latent_density import plot_latent_density_in_dir
+from latent_dist_gradient import plot_latent_dist_gradient_in_dir
 
 current_path = os.getcwd()
 sys.path.append("/git/sferes2/exp/balltrajectorysd/python/visualisation")
@@ -31,6 +32,7 @@ plot_entropy_grid_in_dir(path, GENERATE_EACH_IMAGE)
 plot_recon_not_moved_var_in_dir(path, GENERATE_EACH_IMAGE)
 plot_latent_dist_space_in_dir(path, GENERATE_EACH_IMAGE)
 plot_latent_density_in_dir(path, GENERATE_EACH_IMAGE)
+plot_latent_dist_gradient_in_dir(path, GENERATE_EACH_IMAGE)
 
 # PID level plotting
 if variant == "vae":
