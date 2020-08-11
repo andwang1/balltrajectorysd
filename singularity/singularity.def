@@ -23,6 +23,7 @@ From: airl_lab/default/airl_env:pytorch_ci
     apt-get install -y  gdb
 
    pip3 install seaborn
+   pip3 install sklearn
 
    cd /git
    git clone https://github.com/erincatto/box2d.git ./box2d
@@ -102,6 +103,7 @@ From: airl_lab/default/airl_env:pytorch_ci
 
    cd /git/sferes2/
    ./setup.sh $SETUP_ARGS
+
 
 %runscript
     bash -c 'sleep $[ ( $RANDOM % 90 )  + 1 ]s'
