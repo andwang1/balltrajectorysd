@@ -72,6 +72,7 @@
 #include "stat/stat_model_autoencoder.hpp"
 #include "stat/stat_modifier.hpp"
 #include "stat/stat_traj.hpp"
+#include "stat/stat_undisturbed_traj.hpp"
 #include "stat/stat_ae_losses.hpp"
 #include "stat/stat_diversity.hpp"
 #include "stat/stat_distances.hpp"
@@ -204,6 +205,7 @@ int main(int argc, char **argv) {
                     sferes::stat::QdProgress<phen_t, params_t>,
                     sferes::stat::Losses<phen_t, params_t>,
                     sferes::stat::Trajectories<phen_t, params_t>,
+                    sferes::stat::UndisturbedTrajectories<phen_t, params_t>,
                     sferes::stat::Diversity<phen_t, params_t>,
                     sferes::stat::Distances<phen_t, params_t>,
                     // similarity needs to run after distances as it gets info on whether the ball moved from distances
