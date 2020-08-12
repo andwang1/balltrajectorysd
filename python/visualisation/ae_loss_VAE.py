@@ -17,6 +17,9 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
     tsne = []
     train_epochs = []
 
+    exp_spec = path.split("/")[-2]
+    tsne_option = exp_spec.split("_")[-1][-1]
+
     with open(FILE, "r") as f:
         for line in f.readlines():
             data = line.strip().split(",")
@@ -29,7 +32,8 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
             undisturbed_actual_trajectories_L2.append(float(data[7]))
             if "IS_TRAIN" in data[-1]:
                 # gen number, epochstrained / total
-                tsne.append(float(data[8]))
+                if tsne_option:
+                    tsne.append(float(data[8]))
                 train_epochs.append((int(data[0]), data[-2].strip()))
 
     if generate_images:
@@ -62,11 +66,11 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
             var_ax.set_ylim([0, max(decoder_var)])
             ln4 = var_ax.plot(range(len(total_recon)), decoder_var, c="green", label="Decoder Variance")
             var_ax.annotate(f"{round(decoder_var[-1], 2)}", (len(decoder_var) - 1, decoder_var[-1]))
-
-            ln5 = ax4.plot(range(len(total_recon)), tsne, c="red", label="TSNE")
+        if tsne_option:
+            ln5 = ax4.plot(range(len(tsne)), tsne, c="red", label="SNE / T-SNE")
             ax4.annotate(f"{round(tsne[-1], 2)}",
                      (len(tsne) - 1, tsne[-1]))
-            ax4.set_ylabel("T-SNE")
+            ax4.set_ylabel("SNE/T-SNE")
 
         # train marker
         if (show_train_lines):
@@ -121,4 +125,4 @@ def plot_loss_in_dir_VAE(path, full_loss=True, generate_images=True, plot_total_
 
 if __name__ == "__main__":
     plot_loss_in_dir_VAE(
-        "/home/andwang1/airl/balltrajectorysd/singularity/balltrajectorysd.sif/git/sferes2/build/exp/balltrajectorysd/balltrajectorysd_vae_2020-07-03_10_21_08_23332")
+        "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/tsne_nosampletrain/results_balltrajectorysd_vae/gen6001_random1_fulllosstrue_beta1_extension0_lossfunc2_samplefalse_tsne2/2020-07-30_00_15_55_1071536")
