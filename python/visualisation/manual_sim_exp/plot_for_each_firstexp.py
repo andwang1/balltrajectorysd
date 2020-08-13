@@ -21,9 +21,9 @@ groups = {group_name for group_name in os.listdir(results_dir) if
 # exclude_dirs = {"smoothl1", "l2beta0", "l2", "l1beta0", "l1"}
 # groups -= exclude_dirs
 
-# only_dirs = {
-# "l1nosample"}
-# groups &= only_dirs
+only_dirs = {
+"L2"}
+groups &= only_dirs
 
 print(groups)
 for group in groups:
@@ -675,20 +675,20 @@ for group in groups:
                     is_data_recorded = False
                     continue
                 for repetition in variant_loss_dict["_".join(components)]:
-                    L2_values.append(repetition["L2"][START_GEN_LOSS_PLOT:])
+                    L2_values.append(repetition["L2"][-1])
                     if variant != "aurora":
-                        AL_values.append(repetition["AL"][START_GEN_LOSS_PLOT:])
+                        AL_values.append(repetition["AL"][-1])
 
                     # if variant != "aurora":
                     #     UL_values.append(repetition["UL"][START_GEN_LOSS_PLOT:])
                     # if variant == "vae":
                     #     ENVAR_values.append(repetition["ENVAR"][START_GEN_LOSS_PLOT:])
-                    stochasticity_values.append([stochasticity] * len(repetition["L2"][START_GEN_LOSS_PLOT:]))
+                    stochasticity_values.append(stochasticity)
 
                     if loss_type == "fulllosstrue":
-                        VAR_values.append(repetition["VAR"][START_GEN_LOSS_PLOT:])
-                        KL_values.append(repetition["KL"][START_GEN_LOSS_PLOT:])
-                        TL_values.append(repetition["TL"][START_GEN_LOSS_PLOT:])
+                        VAR_values.append(repetition["VAR"][-1])
+                        KL_values.append(repetition["KL"][-1])
+                        TL_values.append(repetition["TL"][-1])
 
             if not is_data_recorded:
                 continue

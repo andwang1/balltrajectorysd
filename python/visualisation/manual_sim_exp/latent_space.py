@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from exp_config import *
 import os
-
+# make font bigger
+plt.rc('font', size=20)
 
 def plot_latent_space_in_dir(path, save_path=None):
     os.chdir(path)
@@ -60,10 +61,11 @@ def plot_latent_space_in_dir(path, save_path=None):
         if save_path:
             os.chdir(save_path)
 
-        plt.savefig(f"latent_space_{GEN_NUMBER}.png")
+        plt.savefig(f"latent_space_{GEN_NUMBER}.pdf")
         plt.close()
 
 
 if __name__ == "__main__":
     plot_latent_space_in_dir(
-        "/home/andwang1/airl/balltrajectorysd/singularity/balltrajectorysd.sif/git/sferes2/build/exp/balltrajectorysd/balltrajectorysd_vae_2020-06-19_11_36_09_23459")
+        "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l2nosample/results_balltrajectorysd_vae/gen6001_random1_fulllosstrue_beta1_extension0_lossfunc2_samplefalse/2020-07-10_10_54_42_3109092")
+
