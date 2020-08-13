@@ -397,7 +397,7 @@ public:
                     if (TParams::ae::full_loss)
                     {
                         if (TParams::ae::loss_function == TParams::ae::loss::L2)
-                            {loss_tensor += torch::sum(torch::pow(traj[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi));}
+                            {loss_tensor += torch::sum(torch::abs(torch::pow(traj[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi)));}
                         else if (TParams::ae::loss_function == TParams::ae::loss::L1)
                             {loss_tensor += torch::sum(torch::abs(traj[i] - reconstruction_tensor[index]) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi));}
                         else if (TParams::ae::loss_function == TParams::ae::loss::SmoothL1)
@@ -575,7 +575,7 @@ public:
             if (TParams::ae::full_loss)
             {
                 if (TParams::ae::loss_function == TParams::ae::loss::L2)
-                    {recon_loss_unreduced[i] = torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi);}
+                    {recon_loss_unreduced[i] = torch::abs(torch::pow(traj_tensor[i] - reconstruction_tensor[index], 2) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi));}
                 else if (TParams::ae::loss_function == TParams::ae::loss::L1)
                     {recon_loss_unreduced[i] = torch::abs(traj_tensor[i] - reconstruction_tensor[index]) / (2 * torch::exp(decoder_logvar[index])) + 0.5 * (decoder_logvar[index] + _log_2_pi);}
                 else if (TParams::ae::loss_function == TParams::ae::loss::SmoothL1)
