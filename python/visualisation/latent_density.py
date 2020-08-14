@@ -57,7 +57,7 @@ def plot_latent_density_in_dir(path, generate_images=True, save_path=None):
 
         scatterplot = ax1.scatter(x, y, c=avg_density)
         cbar = plt.colorbar(scatterplot)
-        cbar.set_label('Latent Density', rotation=270, labelpad=30)
+        cbar.set_label(f'Average Distance to {NUM_NEIGHBOURS} nearest solutions', rotation=270, labelpad=30)
 
         circ = plt.Circle((0, 0), radius=1, facecolor="None", edgecolor="black", linestyle="--", linewidth=2)
         ax1.add_patch(circ)
@@ -75,5 +75,5 @@ def plot_latent_density_in_dir(path, generate_images=True, save_path=None):
 
 if __name__ == "__main__":
     plot_latent_density_in_dir(
-        "/home/andwang1/airl/results_balltrajectorysd_vae/gen3001_random1_fulllosstrue_beta1_extension0_lossfunc2_samplefalse_tsne1/2020-08-10_12_05_33_7736")
+        "/home/andwang1/airl/DISTPLOTS/sne/results_balltrajectorysd_vae/gen3001_random1_fulllosstrue_beta1_extension0_lossfunc2_samplefalse_tsne1/2020-08-10_12_05_33_7736")
 # "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1/l2beta0nosample/results_balltrajectorysd_vae/gen6001_random1_fulllosstrue_beta0_extension0_lossfunc2_samplefalse/2020-07-21_01_26_48_639513")
