@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pickle as pk
 import seaborn as sns
+import pandas as pd
 from collections import defaultdict
 from visualisation.diversity import plot_diversity_in_dir
 from visualisation.dist_grid import plot_dist_grid_in_dir
@@ -16,7 +17,16 @@ from visualisation.recon_notmoved_var import plot_recon_not_moved_var_in_dir
 GENERATE_PID_IMAGES = False
 GENERATE_EXP_IMAGES = True
 PLOT_TOTAL_L2 = True
-START_GEN_LOSS_PLOT = 500
+START_GEN_LOSS_PLOT = 10
+
+# make legend bigger
+plt.rc('legend', fontsize=20)
+# make lines thicker
+plt.rc('lines', linewidth=4, linestyle='-.')
+# make font bigger
+plt.rc('font', size=16)
+sns.set_style("dark")
+
 
 results_dir = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
 groups = {group_name for group_name in os.listdir(results_dir) if
@@ -26,9 +36,9 @@ groups = {group_name for group_name in os.listdir(results_dir) if
 # groups -= exclude_dirs
 
 only_dirs = {
-"smoothl1_longtrain",
-"l1nosample",
-"random_solutions"}
+"l2nosampletrain",
+# "sne_nosampletrain_beta0",
+}
 groups &= only_dirs
 
 print(groups)
@@ -91,20 +101,30 @@ for group in groups:
 
             if not GENERATE_EXP_IMAGES:
                 continue
+            if variant != "vae":
+                continue
 
             # experiment level plotting
             os.chdir(f"{EXP_FOLDER}/{BASE_NAME}{variant}/{exp}")
-
+            #
             # at experiment level, plot mean and stddev curves for diversity over generations
-            x = list(variant_diversity_dict[exp][0].keys()) * len(variant_diversity_dict[exp])
+            generations = list(variant_diversity_dict[exp][0].keys()) * len(variant_diversity_dict[exp])
             y = np.array([list(repetition.values()) for repetition in variant_diversity_dict[exp]])
             y = y.flatten()
 
-            sns.lineplot(x, y, estimator="mean", ci="sd", label="Diversity")
-            plt.title("Diversity Mean and Std.Dev.")
+            f = plt.figure(figsize=(10, 5))
+            spec = f.add_gridspec(1, 1)
+            ax1 = f.add_subplot(spec[0, 0])
+            sns.lineplot(generations, y, estimator=np.median, ci=None, label="Diversity", ax=ax1)
+            data_stats = pd.DataFrame({"x": generations, "y": y}).groupby("x").describe()
+            quart25 = data_stats[("y", '25%')]
+            quart75 = data_stats[("y", '75%')]
+            ax1.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+                             quart25, quart75, alpha=0.3)
+            plt.title("Diversity")
             plt.xlabel("Generation")
             plt.ylabel("Diversity")
-            plt.hlines(max_diversity, 0, x[-1], linestyles="--", label="Max Diversity")
+            plt.hlines(max_diversity, 0, generations[-1], linestyles="--", label="Max Diversity")
             plt.legend()
             plt.savefig("diversity.png")
             plt.close()
@@ -116,12 +136,16 @@ for group in groups:
             f = plt.figure(figsize=(5, 5))
             spec = f.add_gridspec(1, 1)
             ax1 = f.add_subplot(spec[0, 0])
-            ln1 = sns.lineplot(generations, NMV_values.flatten(), estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
+            ln1 = sns.lineplot(generations, NMV_values.flatten(), estimator=np.median, ci=None, ax=ax1,
                                color="red")
-            ax1.set_ylabel("Mean Reconstruction Variance")
-            ax1.set_xlabel("Generations")
-            ax1.legend()
-            plt.title("Reconstruction Var. of No-Move solutions")
+            data_stats = pd.DataFrame({"x": generations, "y": NMV_values.flatten()}).groupby("x").describe()
+            quart25 = data_stats[("y", '25%')]
+            quart75 = data_stats[("y", '75%')]
+            ax1.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+                             quart25, quart75, alpha=0.3)
+            ax1.set_ylabel("Variance")
+            ax1.set_xlabel("Generation")
+            plt.title("Var. of Constructions of No-Move solutions")
             plt.savefig("recon_not_moved_var.png")
             plt.close()
 
@@ -136,16 +160,16 @@ for group in groups:
             f = plt.figure(figsize=(10, 5))
             spec = f.add_gridspec(3, 1)
             ax1 = f.add_subplot(spec[:2, 0])
-            ln1 = sns.lineplot(generations, MD_values.flatten(), estimator="mean", ci="sd", label="Mean Distance", ax=ax1,
+            ln1 = sns.lineplot(generations, MD_values.flatten(), estimator=np.median, ci=None, label="Mean Distance", ax=ax1,
                                color="red", linestyle="--")
-            ln2 = sns.lineplot(generations, MDE_values, estimator="mean", ci="sd", label="Mean Distance excl. 0s", ax=ax1,
+            ln2 = sns.lineplot(generations, MDE_values, estimator=np.median, ci=None, label="Mean Distance excl. 0s", ax=ax1,
                                color="red")
             ax1.set_ylabel("Mean Distance")
 
             ax2 = ax1.twinx()
-            ln3 = sns.lineplot(generations, VD_values, estimator="mean", ci="sd", label="Variance", ax=ax2, color="blue",
+            ln3 = sns.lineplot(generations, VD_values, estimator=np.median, ci=None, label="Variance", ax=ax2, color="blue",
                                linestyle="--")
-            ln4 = sns.lineplot(generations, VDE_values, estimator="mean", ci="sd", label="Variance excl. 0s", ax=ax2,
+            ln4 = sns.lineplot(generations, VDE_values, estimator=np.median, ci=None, label="Variance excl. 0s", ax=ax2,
                                color="blue")
             ax2.set_ylabel("Variance")
             ax2.set_title("Distance Stats over Generations")
@@ -162,9 +186,9 @@ for group in groups:
             ax3.set_ylim([0, 100])
             ax3.set_yticks([0, 25, 50, 75, 100])
             ax3.yaxis.grid(True)
-            sns.lineplot(generations, PCT_values, estimator="mean", ci="sd", ax=ax3)
+            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3)
             ax3.set_ylabel("%")
-            ax3.set_xlabel("Generations")
+            ax3.set_xlabel("Generation")
 
             # make space between subplots
             plt.subplots_adjust(hspace=0.6)
@@ -179,26 +203,37 @@ for group in groups:
             f = plt.figure(figsize=(10, 5))
             spec = f.add_gridspec(3, 1)
             ax1 = f.add_subplot(spec[:2, 0])
-            ln1 = sns.lineplot(generations, PV_values, estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
-                               color="red", linestyle="--")
-            ln2 = sns.lineplot(generations, PVE_values, estimator="mean", ci="sd", label="Mean Variance excl. 0s", ax=ax1,
-                               color="blue")
-            ax1.set_ylabel("Mean Variance")
-            ax1.set_title("Variance of Trajectory Positions")
+            # ln1 = sns.lineplot(generations, PV_values, estimator=np.median, ci=None, label="Mean Variance", ax=ax1,
+            #                    color="red")
 
-            ax1.get_legend().remove()
-            lns = ln2.get_lines()
-            labs = [l.get_label() for l in lns]
-            ax1.legend(lns, labs, loc='best')
+            ln2 = sns.lineplot(generations, PVE_values, estimator=np.median, ci=None, ax=ax1,
+                               color="blue")
+            data_stats = pd.DataFrame({"x": generations, "y": PVE_values}).groupby("x").describe()
+            quart25 = data_stats[("y", '25%')]
+            quart75 = data_stats[("y", '75%')]
+            ax1.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+                             quart25, quart75, alpha=0.3, color="blue")
+            ax1.set_ylabel("Variance")
+            ax1.set_title("Variance of Trajectory Positions Excl. No-Move Solutions")
+
+            # ax1.get_legend().remove()
+            # lns = ln2.get_lines()
+            # labs = [l.get_label() for l in lns]
+            # ax1.legend(lns, labs, loc='best')
 
             ax3 = f.add_subplot(spec[2, 0])
             ax3.set_title("% Solutions Moving The Ball")
             ax3.set_ylim([0, 100])
             ax3.set_yticks([0, 25, 50, 75, 100])
             ax3.yaxis.grid(True)
-            sns.lineplot(generations, PCT_values, estimator="mean", ci="sd", ax=ax3)
+            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3)
+            data_stats = pd.DataFrame({"x": generations, "y": PCT_values}).groupby("x").describe()
+            quart25 = data_stats[("y", '25%')]
+            quart75 = data_stats[("y", '75%')]
+            ax3.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+                             quart25, quart75, alpha=0.3)
             ax3.set_ylabel("%")
-            ax3.set_xlabel("Generations")
+            ax3.set_xlabel("Generation")
 
             # make space between subplots
             plt.subplots_adjust(hspace=0.6)
@@ -213,29 +248,39 @@ for group in groups:
             f = plt.figure(figsize=(10, 5))
             spec = f.add_gridspec(3, 1)
             ax1 = f.add_subplot(spec[:2, 0])
-            ln1 = sns.lineplot(generations, EV_values, estimator="mean", ci="sd", label="Mean Entropy", ax=ax1,
-                               color="red", linestyle="--")
-            ln2 = sns.lineplot(generations, EVE_values, estimator="mean", ci="sd", label="Mean Entropy excl. 0s", ax=ax1,
+            # ln1 = sns.lineplot(generations, EV_values, estimator=np.median, ci=None, label="Mean Entropy", ax=ax1,
+            #                    color="red", linestyle="--")
+            ln2 = sns.lineplot(generations, EVE_values, estimator=np.median, ci=None, ax=ax1,
                                color="blue")
-            ax1.set_ylabel("Mean Entropy")
-            ax1.set_title("Entropy of Trajectory Positions")
+            data_stats = pd.DataFrame({"x": generations, "y": EVE_values}).groupby("x").describe()
+            quart25 = data_stats[("y", '25%')]
+            quart75 = data_stats[("y", '75%')]
+            ax1.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+                             quart25, quart75, alpha=0.3, color="blue")
+            ax1.set_ylabel("Entropy")
+            ax1.set_title("Entropy of Trajectory Positions Excl. No-Move")
 
-            ax1.get_legend().remove()
-            lns = ln2.get_lines()
-            labs = [l.get_label() for l in lns]
-            ax1.legend(lns, labs, loc='best')
+            # ax1.get_legend().remove()
+            # lns = ln2.get_lines()
+            # labs = [l.get_label() for l in lns]
+            # ax1.legend(lns, labs, loc='best')
 
             ax3 = f.add_subplot(spec[2, 0])
             ax3.set_title("% Solutions Moving The Ball")
             ax3.set_ylim([0, 100])
             ax3.set_yticks([0, 25, 50, 75, 100])
             ax3.yaxis.grid(True)
-            sns.lineplot(generations, PCT_values, estimator="mean", ci="sd", ax=ax3)
+            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3)
+            data_stats = pd.DataFrame({"x": generations, "y": PCT_values}).groupby("x").describe()
+            quart25 = data_stats[("y", '25%')]
+            quart75 = data_stats[("y", '75%')]
+            ax3.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+                             quart25, quart75, alpha=0.3)
             ax3.set_ylabel("%")
-            ax3.set_xlabel("Generations")
+            ax3.set_xlabel("Generation")
 
             # make space between subplots
-            plt.subplots_adjust(hspace=0.6)
+            plt.subplots_adjust(hspace=1.2)
 
             plt.savefig("entropy.png")
             plt.close()
@@ -243,13 +288,18 @@ for group in groups:
             # plot latent var at experiment level
             LV_values = np.array([repetition["LV"] for repetition in variant_latent_var_dict[exp]]).flatten()
 
-            f = plt.figure(figsize=(5, 5))
+            f = plt.figure(figsize=(10, 5))
             spec = f.add_gridspec(1, 1)
             ax1 = f.add_subplot(spec[0, 0])
-            ln1 = sns.lineplot(generations, LV_values, estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
+            ln1 = sns.lineplot(generations, LV_values, estimator=np.median, ci=None, ax=ax1,
                                color="red", linestyle="--")
-            ax1.set_ylabel("Mean Variance")
-            ax1.set_xlabel("Generations")
+            data_stats = pd.DataFrame({"x": generations, "y": LV_values}).groupby("x").describe()
+            quart25 = data_stats[("y", '25%')]
+            quart75 = data_stats[("y", '75%')]
+            ax1.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+                             quart25, quart75, alpha=0.3, color="red")
+            ax1.set_ylabel("Variance")
+            ax1.set_xlabel("Generation")
             ax1.set_title("Variance of Latent Descriptors of No-Move Solutions")
 
             plt.savefig("latent_var.png")
@@ -267,6 +317,7 @@ for group in groups:
             if "fulllosstrue" in exp:
                 f = plt.figure(figsize=(15, 10))
                 spec = f.add_gridspec(3, 2)
+                ax1 = f.add_subplot(spec[0, :])
                 ax2 = f.add_subplot(spec[1, :])
                 ax3 = f.add_subplot(spec[2, :])
                 VAR_values = np.array([repetition["VAR"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
@@ -274,14 +325,30 @@ for group in groups:
                 KL_values = np.array([repetition["KL"][START_GEN_LOSS_PLOT:] for repetition in variant_loss_dict[exp]]).flatten()
 
                 var_ax = ax1.twinx()
-                ln4 = sns.lineplot(x, VAR_values, estimator="mean", ci="sd", label="Decoder Var.", ax=var_ax, color="green")
+                ln4 = sns.lineplot(x, VAR_values, estimator=np.median, ci=None, label="Decoder Var.", ax=var_ax, color="green")
+                data_stats = pd.DataFrame({"x": x, "y": VAR_values}).groupby("x").describe()
+                quart25 = data_stats[("y", '25%')]
+                quart75 = data_stats[("y", '75%')]
+                var_ax.fill_between(list(range(START_GEN_LOSS_PLOT, 6001)),
+                                 quart25, quart75, alpha=0.3, color="green")
+
                 var_ax.set_ylabel("Variance")
 
-                ln5 = sns.lineplot(x, TL_values, estimator="mean", ci="sd", label="Total Loss", ax=ax2, color="red")
+                ln5 = sns.lineplot(x, TL_values, estimator=np.median, ci=None, label="Total Loss", ax=ax2, color="red")
+                data_stats = pd.DataFrame({"x": x, "y": TL_values}).groupby("x").describe()
+                quart25 = data_stats[("y", '25%')]
+                quart75 = data_stats[("y", '75%')]
+                ax2.fill_between(list(range(START_GEN_LOSS_PLOT, 6001)),
+                                 quart25, quart75, alpha=0.3, color="red")
                 ax2.set_ylabel("Total Loss")
 
                 KL_ax = ax2.twinx()
-                ln6 = sns.lineplot(x, KL_values, estimator="mean", ci="sd", label="KL", ax=KL_ax, color="blue")
+                ln6 = sns.lineplot(x, KL_values, estimator=np.median, ci=None, label="KL", ax=KL_ax, color="blue")
+                data_stats = pd.DataFrame({"x": x, "y": KL_values}).groupby("x").describe()
+                quart25 = data_stats[("y", '25%')]
+                quart75 = data_stats[("y", '75%')]
+                KL_ax.fill_between(list(range(START_GEN_LOSS_PLOT, 6001)),
+                                 quart25, quart75, alpha=0.3, color="blue")
                 KL_ax.set_ylabel("KL")
 
                 # first remove default legends automatically added then add combined set
@@ -294,19 +361,31 @@ for group in groups:
             elif variant == "vae":
                 f = plt.figure(figsize=(10, 5))
                 spec = f.add_gridspec(2, 2)
+                ax1 = f.add_subplot(spec[0, :])
                 ax3 = f.add_subplot(spec[1, :])
             else:
                 f = plt.figure(figsize=(5, 5))
                 spec = f.add_gridspec(1, 2)
-
-            ax1 = f.add_subplot(spec[0, :])
+                ax1 = f.add_subplot(spec[0, :])
 
             # plot overall L2 and actual L2
-            if PLOT_TOTAL_L2 or variant != "vae":
-                ln1 = sns.lineplot(x, L2_values.flatten(), estimator="mean", ci="sd", label="Total L2", ax=ax1, color="red")
-                ln2 = sns.lineplot(x, AL_values, estimator="mean", ci="sd", label="Actual L2", ax=ax1, color="blue")
-            if variant != "aurora":
-                ln3 = sns.lineplot(x, UL_values, estimator="mean", ci="sd", label="Undist. L2", ax=ax1, color="brown")
+            # if PLOT_TOTAL_L2 or variant != "vae":
+            #     ln1 = sns.lineplot(x, L2_values.flatten(), estimator=np.median, ci=None, label="Total L2", ax=ax1, color="red")
+
+            ln2 = sns.lineplot(x, AL_values, estimator=np.median, ci=None, label="Actual L2", ax=ax1, color="blue")
+            data_stats = pd.DataFrame({"x": x, "y": AL_values}).groupby("x").describe()
+            quart25 = data_stats[("y", '25%')]
+            quart75 = data_stats[("y", '75%')]
+            ax1.fill_between(list(range(START_GEN_LOSS_PLOT, 6001)),
+                               quart25, quart75, alpha=0.3, color="blue")
+
+            if variant != "aurora" and len(UL_values) > 0:
+                ln3 = sns.lineplot(x, UL_values, estimator=np.median, ci=None, label="Undist. L2", ax=ax1, color="brown")
+                data_stats = pd.DataFrame({"x": x, "y": UL_values}).groupby("x").describe()
+                quart25 = data_stats[("y", '25%')]
+                quart75 = data_stats[("y", '75%')]
+                ax1.fill_between(list(range(START_GEN_LOSS_PLOT, 6001)),
+                                 quart25, quart75, alpha=0.3, color="brown")
             ax1.set_ylabel("L2")
 
             # add in legends, one return value of lineplot will have all lines on the axis
@@ -314,17 +393,25 @@ for group in groups:
             if "fulllosstrue" in exp:
                 var_ax.get_legend().remove()
 
-            if variant != "aurora":
-                lns = ln3.get_lines() + ln4.get_lines() if "fulllosstrue" in exp else ln3.get_lines()
-            else:
-                lns = ln2.get_lines()
+            # if variant != "aurora":
+            #     lns = ln3.get_lines() + ln4.get_lines() if "fulllosstrue" in exp and len(UL_values) > 0 else ln2.get_lines()
+            # else:
+            #     lns = ln2.get_lines()
+            lns = ln2.get_lines() if "fulllosstrue" not in exp else ln2.get_lines() + ln4.get_lines()
+            if variant != "aurora" and len(UL_values) > 0:
+                lns += ln3.get_lines()
             labs = [l.get_label() for l in lns]
             ax1.legend(lns, labs, loc='best')
 
-            if variant == "vae":
-                ln7 = sns.lineplot(x, ENVAR_values, estimator="mean", ci="sd", label="Encoder Var.", ax=ax3, color="red")
-                labs = [l.get_label() for l in ln7.get_lines()]
-                ax3.legend(ln7.get_lines(), labs, loc='best')
+            # if variant == "vae" and len(ENVAR_values) > 0:
+            #     ln7 = sns.lineplot(x, ENVAR_values, estimator=np.median, ci=None, label="Encoder Var.", ax=ax3, color="red")
+            #     data_stats = pd.DataFrame({"x": x, "y": ENVAR_values}).groupby("x").describe()
+            #     quart25 = data_stats[("y", '25%')]
+            #     quart75 = data_stats[("y", '75%')]
+            #     ax3.fill_between(list(range(START_GEN_LOSS_PLOT, 6001)),
+            #                        quart25, quart75, alpha=0.3, color="red")
+            #     labs = [l.get_label() for l in ln7.get_lines()]
+            #     ax3.legend(ln7.get_lines(), labs, loc='best')
 
             ax1.set_title(f"Losses")
             if variant == "vae":
@@ -366,7 +453,7 @@ for group in groups:
                         diversity_values.append(repetition[generation])
                         stochasticity_values.append(stochasticity)
 
-                sns.lineplot(stochasticity_values, diversity_values, estimator="mean", ci="sd", label="Diversity")
+                sns.lineplot(stochasticity_values, diversity_values, estimator=np.median, ci=None, label="Diversity")
                 plt.title(f"Diversity Mean and Std.Dev. - Gen {generation}")
                 plt.xlabel("Stochasticity")
                 plt.ylabel("Diversity")
@@ -401,7 +488,7 @@ for group in groups:
                 f = plt.figure(figsize=(5, 5))
                 spec = f.add_gridspec(1, 1)
                 ax1 = f.add_subplot(spec[0, 0])
-                ln1 = sns.lineplot(stochasticity_values, NMV_values, estimator="mean", ci="sd", label="Mean Variance",
+                ln1 = sns.lineplot(stochasticity_values, NMV_values, estimator=np.median, ci=None, label="Mean Variance",
                                    ax=ax1,
                                    color="red", linestyle="--")
                 ax1.set_ylabel("Mean Reconstruction Variance")
@@ -446,9 +533,9 @@ for group in groups:
                 f = plt.figure(figsize=(15, 5))
                 spec = f.add_gridspec(5, 1)
                 ax1 = f.add_subplot(spec[:2, 0])
-                ln1 = sns.lineplot(stochasticity_values, MD_values, estimator="mean", ci="sd", label="Mean Distance",
+                ln1 = sns.lineplot(stochasticity_values, MD_values, estimator=np.median, ci=None, label="Mean Distance",
                                    ax=ax1, color="red")
-                ln2 = sns.lineplot(stochasticity_values, MDE_values, estimator="mean", ci="sd",
+                ln2 = sns.lineplot(stochasticity_values, MDE_values, estimator=np.median, ci=None,
                                    label="Mean Distance excl. 0s",
                                    ax=ax1, color="blue")
                 ax1.set_title(f"Distance Stats over Stochasticity - Gen {generation}")
@@ -461,9 +548,9 @@ for group in groups:
                 ax1.legend(lns, labs, loc='best')
 
                 ax2 = f.add_subplot(spec[2:4, 0])
-                ln3 = sns.lineplot(stochasticity_values, VD_values, estimator="mean", ci="sd", label="Variance", ax=ax2,
+                ln3 = sns.lineplot(stochasticity_values, VD_values, estimator=np.median, ci=None, label="Variance", ax=ax2,
                                    color="red")
-                ln4 = sns.lineplot(stochasticity_values, VDE_values, estimator="mean", ci="sd",
+                ln4 = sns.lineplot(stochasticity_values, VDE_values, estimator=np.median, ci=None,
                                    label="Variance excl. 0s", ax=ax2,
                                    color="blue")
                 ax2.set_ylabel("Variance")
@@ -478,7 +565,12 @@ for group in groups:
                 ax3.set_ylim([0, 100])
                 ax3.set_yticks([0, 25, 50, 75, 100])
                 ax3.yaxis.grid(True)
-                sns.lineplot(stochasticity_values, PCT_values, estimator="mean", ci="sd", ax=ax3)
+                sns.lineplot(stochasticity_values, PCT_values, estimator=np.median, ci=None, ax=ax3)
+                data_stats = pd.DataFrame({"x": generations, "y": PCT_values}).groupby("x").describe()
+                quart25 = data_stats[("y", '25%')]
+                quart75 = data_stats[("y", '75%')]
+                ax3.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+                                 quart25, quart75, alpha=0.3)
                 ax3.set_ylabel("%")
                 ax3.set_xlabel("Stochasticity")
 
@@ -521,10 +613,10 @@ for group in groups:
                 f = plt.figure(figsize=(10, 5))
                 spec = f.add_gridspec(3, 1)
                 ax1 = f.add_subplot(spec[:2, 0])
-                ln1 = sns.lineplot(stochasticity_values, PV_values, estimator="mean", ci="sd", label="Mean Variance",
+                ln1 = sns.lineplot(stochasticity_values, PV_values, estimator=np.median, ci=None, label="Mean Variance",
                                    ax=ax1,
                                    color="red")
-                ln2 = sns.lineplot(stochasticity_values, PVE_values, estimator="mean", ci="sd",
+                ln2 = sns.lineplot(stochasticity_values, PVE_values, estimator=np.median, ci=None,
                                    label="Mean Variance excl. 0s",
                                    ax=ax1,
                                    color="blue")
@@ -542,12 +634,12 @@ for group in groups:
                 ax3.set_ylim([0, 100])
                 ax3.set_yticks([0, 25, 50, 75, 100])
                 ax3.yaxis.grid(True)
-                sns.lineplot(stochasticity_values, PCT_values, estimator="mean", ci="sd", ax=ax3)
+                sns.lineplot(stochasticity_values, PCT_values, estimator=np.median, ci=None, ax=ax3)
                 ax3.set_ylabel("%")
                 ax3.set_xlabel("Stochasticity")
 
                 # make space between subplots
-                plt.subplots_adjust(hspace=0.6)
+                plt.subplots_adjust(hspace=1.2)
 
                 if loss_type == "fulllosstrue":
                     plt.savefig(f"pos_var{generation}_fullloss.png")
@@ -582,10 +674,10 @@ for group in groups:
                 f = plt.figure(figsize=(10, 5))
                 spec = f.add_gridspec(3, 1)
                 ax1 = f.add_subplot(spec[:2, 0])
-                ln1 = sns.lineplot(stochasticity_values, EV_values, estimator="mean", ci="sd", label="Mean Entropy",
+                ln1 = sns.lineplot(stochasticity_values, EV_values, estimator=np.median, ci=None, label="Mean Entropy",
                                    ax=ax1,
                                    color="red")
-                ln2 = sns.lineplot(stochasticity_values, EVE_values, estimator="mean", ci="sd",
+                ln2 = sns.lineplot(stochasticity_values, EVE_values, estimator=np.median, ci=None,
                                    label="Mean Entropy excl. 0s",
                                    ax=ax1,
                                    color="blue")
@@ -602,7 +694,7 @@ for group in groups:
                 ax3.set_ylim([0, 100])
                 ax3.set_yticks([0, 25, 50, 75, 100])
                 ax3.yaxis.grid(True)
-                sns.lineplot(stochasticity_values, PCT_values, estimator="mean", ci="sd", ax=ax3)
+                sns.lineplot(stochasticity_values, PCT_values, estimator=np.median, ci=None, ax=ax3)
                 ax3.set_ylabel("%")
                 ax3.set_xlabel("Stochasticity")
 
@@ -637,7 +729,7 @@ for group in groups:
                 f = plt.figure(figsize=(5, 5))
                 spec = f.add_gridspec(1, 1)
                 ax1 = f.add_subplot(spec[0, 0])
-                ln1 = sns.lineplot(stochasticity_values, LV_values, estimator="mean", ci="sd", label="Mean Variance", ax=ax1,
+                ln1 = sns.lineplot(stochasticity_values, LV_values, estimator=np.median, ci=None, label="Mean Variance", ax=ax1,
                                    color="red", linestyle="--")
                 ax1.set_ylabel("Mean Variance")
                 ax1.set_xlabel("Stochasticity")
@@ -663,6 +755,7 @@ for group in groups:
             VAR_values = []
             TL_values = []
             KL_values = []
+            TSNE_values = []
 
             stochasticity_values = []
 
@@ -677,19 +770,24 @@ for group in groups:
                     is_data_recorded = False
                     continue
                 for repetition in variant_loss_dict["_".join(components)]:
-                    L2_values.append(repetition["L2"][START_GEN_LOSS_PLOT:])
-                    AL_values.append(repetition["AL"][START_GEN_LOSS_PLOT:])
+                    L2_values.append(repetition["L2"][-1])
+                    AL_values.append(repetition["AL"][-1])
+                    if "KL" in repetition:
+                        KL_values.append(repetition["KL"][-1])
 
-                    if variant != "aurora":
-                        UL_values.append(repetition["UL"][START_GEN_LOSS_PLOT:])
-                    if variant == "vae":
-                        ENVAR_values.append(repetition["ENVAR"][START_GEN_LOSS_PLOT:])
-                    stochasticity_values.append([stochasticity] * len(repetition["L2"][START_GEN_LOSS_PLOT:]))
+                    if variant != "aurora" and "UL" in repetition and repetition["UL"]:
+                        UL_values.append(repetition["UL"][-1])
+                    if variant == "vae" and "ENVAR" in repetition and repetition["ENVAR"]:
+                        ENVAR_values.append(repetition["ENVAR"][-1])
+                    stochasticity_values.append(stochasticity)
 
                     if loss_type == "fulllosstrue":
-                        VAR_values.append(repetition["VAR"][START_GEN_LOSS_PLOT:])
-                        KL_values.append(repetition["KL"][START_GEN_LOSS_PLOT:])
-                        TL_values.append(repetition["TL"][START_GEN_LOSS_PLOT:])
+                        VAR_values.append(repetition["VAR"][-1])
+
+                        TL_values.append(repetition["TL"][-1])
+
+                    if "TSNE" in repetition and repetition["TSNE"]:
+                        TSNE_values.append(repetition["TSNE"][-1])
 
             if not is_data_recorded:
                 continue
@@ -703,6 +801,8 @@ for group in groups:
                 ENVAR_values = np.array(ENVAR_values).flatten()
             if variant != "aurora":
                 UL_values = np.array(UL_values).flatten()
+            if TSNE_values:
+                TSNE_values = np.array(TSNE_values).flatten()
 
             if loss_type == "fulllosstrue":
                 VAR_values = np.array(VAR_values).flatten()
@@ -711,19 +811,20 @@ for group in groups:
 
                 f = plt.figure(figsize=(15, 10))
                 spec = f.add_gridspec(3, 2)
+                ax1 = f.add_subplot(spec[0, :])
                 ax2 = f.add_subplot(spec[1, :])
                 ax3 = f.add_subplot(spec[2, :])
 
                 var_ax = ax1.twinx()
-                ln4 = sns.lineplot(stochasticity_values, VAR_values, estimator="mean", ci="sd", label="Decoder Var.", ax=var_ax,
+                ln4 = sns.lineplot(stochasticity_values, VAR_values, estimator=np.median, ci=None, label="Decoder Var.", ax=var_ax,
                                    color="green")
                 var_ax.set_ylabel("Variance")
 
-                ln5 = sns.lineplot(stochasticity_values, TL_values, estimator="mean", ci="sd", label="Total Loss", ax=ax2, color="red")
+                ln5 = sns.lineplot(stochasticity_values, TL_values, estimator=np.median, ci=None, label="Total Loss", ax=ax2, color="red")
                 ax2.set_ylabel("Total Loss")
 
                 KL_ax = ax2.twinx()
-                ln6 = sns.lineplot(stochasticity_values, KL_values, estimator="mean", ci="sd", label="KL", ax=KL_ax, color="blue")
+                ln6 = sns.lineplot(stochasticity_values, KL_values, estimator=np.median, ci=None, label="KL", ax=KL_ax, color="blue")
                 KL_ax.set_ylabel("KL")
 
                 # first remove default legends automatically added then add combined set
@@ -736,19 +837,21 @@ for group in groups:
             elif variant == "vae":
                 f = plt.figure(figsize=(10, 5))
                 spec = f.add_gridspec(2, 2)
+                ax1 = f.add_subplot(spec[0, :])
                 ax3 = f.add_subplot(spec[1, :])
             else:
                 f = plt.figure(figsize=(5, 5))
                 spec = f.add_gridspec(1, 2)
+                ax1 = f.add_subplot(spec[0, :])
 
-            ax1 = f.add_subplot(spec[0, :])
+
 
             # plot overall L2 and actual L2
             if PLOT_TOTAL_L2 or variant != "vae":
-                ln1 = sns.lineplot(stochasticity_values, L2_values, estimator="mean", ci="sd", label="Total L2", ax=ax1, color="red")
-                ln2 = sns.lineplot(stochasticity_values, AL_values, estimator="mean", ci="sd", label="Actual L2", ax=ax1, color="blue")
-            if variant != "aurora":
-                ln3 = sns.lineplot(stochasticity_values, UL_values, estimator="mean", ci="sd", label="Undist. L2", ax=ax1, color="brown")
+                ln1 = sns.lineplot(stochasticity_values, L2_values, estimator=np.median, ci=None, label="Total L2", ax=ax1, color="red")
+                ln2 = sns.lineplot(stochasticity_values, AL_values, estimator=np.median, ci=None, label="Actual L2", ax=ax1, color="blue")
+            if variant != "aurora" and len(UL_values) > 0:
+                ln3 = sns.lineplot(stochasticity_values, UL_values, estimator=np.median, ci=None, label="Undist. L2", ax=ax1, color="brown")
             ax1.set_ylabel("L2")
 
             # add in legends, one return value of lineplot will have all lines on the axis
@@ -765,7 +868,7 @@ for group in groups:
             ax1.legend(lns, labs, loc='best')
 
             if variant == "vae":
-                ln7 = sns.lineplot(stochasticity_values, ENVAR_values, estimator="mean", ci="sd", label="Encoder Var.", ax=ax3, color="red")
+                ln7 = sns.lineplot(stochasticity_values, ENVAR_values, estimator=np.median, ci=None, label="Encoder Var.", ax=ax3, color="red")
                 labs = [l.get_label() for l in ln7.get_lines()]
                 ax3.legend(ln7.get_lines(), labs, loc='best')
 
@@ -783,7 +886,7 @@ for group in groups:
             plt.close()
 
             loss_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "L2": L2_values, "ENVAR": ENVAR_values,
-                                                           "AL": AL_values}
+                                                           "AL": AL_values, "TSNE": TSNE_values, "KL": KL_values}
 
     os.chdir(f"{EXP_FOLDER}")
 
