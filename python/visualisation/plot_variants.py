@@ -9,45 +9,10 @@ path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
 os.chdir(path)
 
 plotting_groups = [
-    ["tsne_nosampletrain", "tsne_nosampletrain_beta0"]
-    # ["l2withsampling", "l2withsampling_beta0"],
-    # ["l2", "l2withsampling"],
-    # ["l2", "l2beta0"],
-    # ["l2_nosampletrain", "l2"],
-    # ["l2_nosampletrain", "l2beta0_nosampletrain"],
-# ["tsne_nosampletrain_beta0", "sne_sampletrain", "sne_nosampletrain", "tsne_nosampletrain"],
-# ["l1beta0nosample","l1nosample", "l1beta0"],
-# ["l2beta0nosample","l2nosample", "l2beta0"],
-#     ["sne_nosampletrain_beta0", "sne_nosampletrain"]
-#     ["l2nosampletrain_add5", "l2nosampletrain"],
-#     ["tsne_nosampletrain", "l2nosampletrain"],
-# ["tsne_nosampletrain","tsne_nosampletrain_beta0"],
-# ["sne_nosampletrain","sne_nosampletrain_beta0"],
-    # ["tsne_nosampletrain", "sne_nosampletrain", "tsne_nosampletrain_beta0", "sne_nosampletrain_beta0"]
-# ["l2nosampletrain", "sne_nosampletrain_beta0", "tsne_nosampletrain_beta0"]
-# ["sne_nosampletrain_beta1", "tsne_nosampletrain_beta1", "l2beta1nosampletrain"],
-# ["l2beta0nosampletrain", "l2beta1nosampletrain"],
-# ["l2beta1nosampletrain", "l2"], #compare against ae
-# ["l2nosample", "l2beta0nosample"]
-# ["l1nosampletrain", "l2beta1nosampletrain"],
-# ["l2beta1nosampletrain", "l2beta1nosample", "l2nosample", "l2beta0nosample"]
-#     ["l2"],
-#     ["l1", "smoothl1_longtrain"],
-#     ["l1", "l2"],
-#     ["extension03", "l2"],
-#     ["l1extension03", "l1"],
-#     ["l1beta0extension03", "l1beta0"],
-#     ["l2beta0", "l2"],
-#     ["l1beta0", "l1"],
-#     ["smoothl1_longtrain", "smoothl1_shorttrain"],
-#     ["l2nosample", "l2"],
-#     ["l1nosampletrain", "l1nosample", "l1"],
-#     ["l1beta0nosampletrain", "l1nosample", "l1"],
-# ["l1beta0nosampletrain", "l1"],
-#     ["randomsolutions", "l1"],
-#     ["randomsolutions", "l1nosample"],
-#     ["l2beta1nosampletrain", "l2"],
-# ["l2beta1nosampletrain", "l2nosample"],
+    ["aurora"],
+    # ["l2", "l2beta0nosampletrain"],
+# ["l2beta0nosampletrain", "l2beta0nosample"],
+
 ]
 
 # f"{member}-{variant_name}" if not (member == "l2beta0nosampletrain" and variant_name == "vaefulllossfalse") else f"{member}-{variant_name} / l2-ae"
@@ -85,8 +50,8 @@ for group in plotting_groups:
             for k in empty_keys:
                 del data[k]
             data_stats = pd.DataFrame(data)[["stoch", "AL"]].groupby("stoch").describe()
-            quart25 = data_stats[('AL', '25%')]
-            quart75 = data_stats[('AL', '75%')]
+            quart25 = data_stats[("AL", '25%')]
+            quart75 = data_stats[("AL", '75%')]
             ax1.fill_between([0, 1, 2, 3, 4, 5], quart25, quart75, alpha=0.3, color=colours[colour_count])
             colour_count += 1
     ax1.set_title("Losses - Actual L2")
@@ -105,8 +70,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "aurora" in variant :#or variant.startswith("ae"):
-                continue
+            # if "aurora" in variant :#or variant.startswith("ae"):
+            #     continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["DIV"], estimator=np.median, ci=None, label=f"{member}-{variant_name}", ax=ax1, color=colours[colour_count])
             data_stats = pd.DataFrame(data)[["stoch", "DIV"]].groupby("stoch").describe()
@@ -216,8 +181,8 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "aurora" in variant :#or variant.startswith("ae"):
-                continue
+            # if "aurora" in variant :#or variant.startswith("ae"):
+            #     continue
             variant_name = variant if not variant.startswith("ae") else "ae"
             sns.lineplot(data["stoch"], data["EVE"], estimator=np.median, ci=None, label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
@@ -247,17 +212,17 @@ for group in plotting_groups:
             if "aurora" in variant :#or variant.startswith("ae"):
                 continue
             variant_name = variant if not variant.startswith("ae") else "ae"
-            sns.lineplot(data["stoch"], data["PV"], estimator=np.median, ci=None, label=f"{member}-{variant_name}", ax=ax1,
+            sns.lineplot(data["stoch"], data["PVE"], estimator=np.median, ci=None, label=f"{member}-{variant_name}", ax=ax1,
                          color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
-            data_stats = pd.DataFrame(data)[["stoch", "PV"]].groupby("stoch").describe()
-            quart25 = data_stats[('PV', '25%')]
-            quart75 = data_stats[('PV', '75%')]
+            data_stats = pd.DataFrame(data)[["stoch", "PVE"]].groupby("stoch").describe()
+            quart25 = data_stats[('PVE', '25%')]
+            quart75 = data_stats[('PVE', '75%')]
             ax1.fill_between([0, 1, 2, 3, 4, 5], quart25, quart75, alpha=0.3, color=colours[colour_count])
 
             colour_count += 1
-    ax1.set_title("Variance of Trajectory Positions")
+    ax1.set_title("Variance of Trajectory Positions Excl. No-Move Solutions")
     ax1.set_ylabel("Variance")
     ax1.set_xlabel("Stochasticity")
     plt.savefig(f"{save_dir}/pdf/posvar_{'_'.join(group)}.pdf")
@@ -331,11 +296,14 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "aurora" in variant or variant.startswith("ae") or "fulllossfalse" in variant:
+            if "aurora" in variant or variant.startswith("ae") or "TSNE" not in data or len(data["TSNE"]) == 0:
                 continue
             sns.lineplot(data["stoch"], data["TSNE"], estimator=np.median, ci=None, label=f"{member}-{variant}",
                          ax=ax1,
                          color=colours[colour_count])
+            empty_keys = [k for k in data if not len(data[k])]
+            for k in empty_keys:
+                del data[k]
             data = pd.DataFrame(data)[["stoch", "TSNE"]]
             data_stats = data.groupby("stoch").describe()
             quart25 = data_stats[('TSNE', '25%')]
@@ -360,11 +328,14 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "aurora" in variant or variant.startswith("ae") or "fulllossfalse" in variant:
+            if "aurora" in variant or variant.startswith("ae") or "beta0" in member:
                 continue
             sns.lineplot(data["stoch"], data["KL"], estimator=np.median, ci=None, label=f"{member}-{variant}",
                          ax=ax1,
                          color=colours[colour_count])
+            empty_keys = [k for k in data if not len(data[k])]
+            for k in empty_keys:
+                del data[k]
             data = pd.DataFrame(data)[["stoch", "KL"]]
             data_stats = data.groupby("stoch").describe()
             quart25 = data_stats[('KL', '25%')]
@@ -389,11 +360,14 @@ for group in plotting_groups:
             log_data = pk.load(f)
 
         for variant, data in log_data.items():
-            if "aurora" in variant or variant.startswith("ae"):
+            if "aurora" in variant or variant.startswith("ae") or "nosampletrain" in member or "ENVAR" not in data:
                 continue
             sns.lineplot(data["stoch"], data["ENVAR"] / 2, estimator=np.median, ci=None, label=f"{member}-{variant}",
                          ax=ax1,
                          color=colours[colour_count])
+            empty_keys = [k for k in data if not len(data[k])]
+            for k in empty_keys:
+                del data[k]
             data = pd.DataFrame(data)[["stoch", "ENVAR"]]
             data["ENVAR"] /= 2
             data_stats = data.groupby("stoch").describe()
