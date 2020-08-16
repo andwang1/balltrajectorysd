@@ -44,7 +44,7 @@ quart25 = data_stats[('size', '25%')]
 quart75 = data_stats[('size', '75%')]
 ax1.fill_between([0, 1, 2, 3, 4, 5], quart25, quart75, alpha=0.3)
 ax1.set_title("Archive Size")
-ax1.set_ylabel("Size")
+ax1.set_ylabel("Number of Solutions")
 ax1.set_xlabel("Stochasticity")
 os.chdir(path)
 plt.savefig("excl_algo_archive_size.pdf")
