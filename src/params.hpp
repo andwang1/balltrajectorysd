@@ -31,7 +31,7 @@ struct Params {
     };
 
     struct ae {
-    SFERES_CONST size_t batch_size = 256;
+    SFERES_CONST size_t batch_size = 1024;
     SFERES_CONST size_t nb_epochs = 6000;
     SFERES_CONST float learning_rate = 1e-4;
     SFERES_CONST float CV_fraction = 0.80;
@@ -75,7 +75,7 @@ struct Params {
     SFERES_CONST size_t behav_dim = 2;
     // influences l = targeted size of pop
     SFERES_CONST int resolution = 8000; 
-    SFERES_CONST int num_train_archives = 0;
+    SFERES_CONST int num_train_archives = 5;
     static bool sample;
     };
     
