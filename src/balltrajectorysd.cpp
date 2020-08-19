@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
                 > stat_t;
 
 
-    typedef sferes::qd::selector::NoSelection<phen_t, params_t> selector_t;
+    typedef sferes::qd::selector::Uniform<phen_t, params_t> selector_t;
 
     typedef QualityDiversity_2 <phen_t, eval_t, stat_t, modifier_t, selector_t, container_t, params_t> ea_t;
 
