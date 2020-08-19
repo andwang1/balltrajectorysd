@@ -75,7 +75,7 @@ struct Params {
     SFERES_CONST size_t behav_dim = 2;
     // influences l = targeted size of pop
     SFERES_CONST int resolution = 8000; 
-    SFERES_CONST int num_train_archives = 5;
+    SFERES_CONST int num_train_archives = 0;
     static bool sample;
     };
     
