@@ -166,6 +166,29 @@ namespace sferes {
                     ofs << ", " << boost::fusion::at_c<0>(ea.fit_modifier()).get_network_loader()->get_epochs_trained() << "/" << Params::ae::nb_epochs << ", IS_TRAIN";
                     #endif
                 }
+                
+                {
+                Eigen::Map<const Eigen::VectorXf> v1(L2_loss.data(), L2_loss.size());
+                std::vector<size_t> idx(v1.size());
+                std::iota(idx.begin(), idx.end(), 0);
+                stable_sort(idx.begin(), idx.end(),
+                    [&v1](size_t i1, size_t i2) {return v1(i1) > v1(i2);});
+                size_t middle_index = idx.size() / 2;
+                float median_L2 = v1(idx[middle_index]);
+                ofs << ", " << median_L2;
+                }
+                {
+                Eigen::Map<const Eigen::VectorXf> v1(decoder_var.data(), decoder_var.size());
+                std::vector<size_t> idx(v1.size());
+                std::iota(idx.begin(), idx.end(), 0);
+                stable_sort(idx.begin(), idx.end(),
+                    [&v1](size_t i1, size_t i2) {return v1(i1) > v1(i2);});
+                size_t middle_index = idx.size() / 2;
+                float median_decodervar = v1(idx[middle_index]);
+                ofs << ", " << median_decodervar;
+                }
+
+                
                 ofs << "\n";
             }
         };

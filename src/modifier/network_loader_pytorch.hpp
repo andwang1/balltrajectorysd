@@ -388,6 +388,9 @@ public:
                 // start at -1 because first loop will take it to 0
                 int index{-1};
 
+                // std::ofstream ofs("losses_epoch.dat", std::ofstream::app);
+                // ofs.precision(17);
+
                 // tup[2] is the boundaries vector
                 for (int i{0}; i < std::get<2>(tup).size(); ++i)
                 {
@@ -412,7 +415,10 @@ public:
                         else if (TParams::ae::loss_function == TParams::ae::loss::SmoothL1)
                             {loss_tensor += torch::sum(torch::smooth_l1_loss(reconstruction_tensor[index], traj[i], 0));}
                     }
+                    // ofs << torch::mean(torch::pow(traj[i] - reconstruction_tensor[index], 2)).item<float>() << ", " <<
+                            // torch::mean(decoder_logvar[index]).item<float>() << ", ";
                 }
+                // ofs << "\n";
 
                 long num_trajectories {static_cast<long>(std::get<2>(tup).size())};
                 loss_tensor /= num_trajectories;
