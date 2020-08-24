@@ -191,10 +191,15 @@ namespace sferes {
                 
                 int count_has_random{0};
                 // copy and generate new trajectories
+                double total_dist_travelled{0};
                 for (size_t i{0}; i < num_copies; ++i)
                 {
                     *(copied_phen[i]) = *(content[sorted_indices[i]]);
                     copied_phen[i]->fit().eval(*copied_phen[i]);
+                    float dist;
+                    bool moved;
+                    copied_phen[i]->fit().calculate_distance(dist, moved);
+                    total_dist_travelled += dist;
 
                     // record the number of individuals that have a random trajectory attached
                     if (content[sorted_indices[i]]->fit().num_trajectories() > 0)
@@ -202,6 +207,7 @@ namespace sferes {
                 }
                 std::cout << "Additional Phen (hasrandom / total): " << count_has_random << "/" << num_copies << "\n";
                 _random_extension_ratio = double(count_has_random) / num_copies;
+                _avg_dist_travelled_random = total_dist_travelled / num_copies;
             }
 
             template<typename EA>
@@ -479,6 +485,9 @@ namespace sferes {
             double get_random_extension_ratio() const
             {return _random_extension_ratio;}
 
+            double get_extension_avg_dist_travelled() const
+            {return _avg_dist_travelled_random;}
+
             bool is_train_gen() const
             {return _is_train_gen;}
 
@@ -491,6 +500,7 @@ namespace sferes {
             size_t _last_update;
             size_t _update_id;
             double _random_extension_ratio{-1};
+            double _avg_dist_travelled_random{-1};
             bool _is_train_gen;
         };
     }
