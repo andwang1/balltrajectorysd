@@ -15,16 +15,16 @@ from visualisation.latent_space import plot_latent_space_in_dir
 from visualisation.recon_notmoved_var import plot_recon_not_moved_var_in_dir
 
 GENERATE_PID_IMAGES = False
-GENERATE_EXP_IMAGES = True
+GENERATE_EXP_IMAGES = False
 PLOT_TOTAL_L2 = True
 START_GEN_LOSS_PLOT = 10
 
 # make legend bigger
-plt.rc('legend', fontsize=20)
+plt.rc('legend', fontsize=14)
 # make lines thicker
-plt.rc('lines', linewidth=4, linestyle='-.')
+plt.rc('lines', linewidth=2, linestyle='-.')
 # make font bigger
-plt.rc('font', size=16)
+plt.rc('font', size=12)
 sns.set_style("dark")
 
 
@@ -36,8 +36,10 @@ groups = {group_name for group_name in os.listdir(results_dir) if
 # groups -= exclude_dirs
 
 only_dirs = {
-"l2nosampletrain",
-# "sne_nosampletrain_beta0",
+"l2","l2beta0"
+    # "l2beta0",
+    # "l2nosampletrain",
+    # "l0nosampletrain",
 }
 groups &= only_dirs
 
@@ -126,7 +128,7 @@ for group in groups:
             plt.ylabel("Diversity")
             plt.hlines(max_diversity, 0, generations[-1], linestyles="--", label="Max Diversity")
             plt.legend()
-            plt.savefig("diversity.png")
+            plt.savefig("diversity.pdf")
             plt.close()
 
             # plot recon var at experiment level
@@ -146,7 +148,7 @@ for group in groups:
             ax1.set_ylabel("Variance")
             ax1.set_xlabel("Generation")
             plt.title("Var. of Constructions of No-Move solutions")
-            plt.savefig("recon_not_moved_var.png")
+            plt.savefig("recon_not_moved_var.pdf")
             plt.close()
 
             # at experiment level plot distance metrices
@@ -183,17 +185,17 @@ for group in groups:
 
             ax3 = f.add_subplot(spec[2, 0])
             ax3.set_title("% Solutions Moving The Ball")
-            ax3.set_ylim([0, 100])
-            ax3.set_yticks([0, 25, 50, 75, 100])
+            ax3.set_ylim([25, 100])
+            ax3.set_yticks([25, 50, 75, 100])
             ax3.yaxis.grid(True)
-            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3)
+            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3, color="red")
             ax3.set_ylabel("%")
             ax3.set_xlabel("Generation")
 
             # make space between subplots
             plt.subplots_adjust(hspace=0.6)
 
-            plt.savefig("distance.png")
+            plt.savefig("distance.pdf")
             plt.close()
 
             # plot pos_var at experiment level
@@ -206,15 +208,15 @@ for group in groups:
             # ln1 = sns.lineplot(generations, PV_values, estimator=np.median, ci=None, label="Mean Variance", ax=ax1,
             #                    color="red")
 
-            ln2 = sns.lineplot(generations, PVE_values, estimator=np.median, ci=None, ax=ax1,
+            ln2 = sns.lineplot(generations, PV_values, estimator=np.median, ci=None, ax=ax1,
                                color="blue")
-            data_stats = pd.DataFrame({"x": generations, "y": PVE_values}).groupby("x").describe()
+            data_stats = pd.DataFrame({"x": generations, "y": PV_values}).groupby("x").describe()
             quart25 = data_stats[("y", '25%')]
             quart75 = data_stats[("y", '75%')]
             ax1.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
                              quart25, quart75, alpha=0.3, color="blue")
             ax1.set_ylabel("Variance")
-            ax1.set_title("Variance of Trajectory Positions Excl. No-Move Solutions")
+            ax1.set_title("Variance of Trajectory Positions")
 
             # ax1.get_legend().remove()
             # lns = ln2.get_lines()
@@ -223,22 +225,22 @@ for group in groups:
 
             ax3 = f.add_subplot(spec[2, 0])
             ax3.set_title("% Solutions Moving The Ball")
-            ax3.set_ylim([0, 100])
-            ax3.set_yticks([0, 25, 50, 75, 100])
+            ax3.set_ylim([25, 100])
+            ax3.set_yticks([25, 50, 75, 100])
             ax3.yaxis.grid(True)
-            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3)
+            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3, color="red")
             data_stats = pd.DataFrame({"x": generations, "y": PCT_values}).groupby("x").describe()
             quart25 = data_stats[("y", '25%')]
             quart75 = data_stats[("y", '75%')]
             ax3.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
-                             quart25, quart75, alpha=0.3)
+                             quart25, quart75, alpha=0.3, color="red")
             ax3.set_ylabel("%")
             ax3.set_xlabel("Generation")
 
             # make space between subplots
-            plt.subplots_adjust(hspace=0.6)
+            plt.subplots_adjust(hspace=1.2)
 
-            plt.savefig("pos_var.png")
+            plt.savefig("pos_var.pdf")
             plt.close()
 
             # plot entropy at experiment level
@@ -267,22 +269,22 @@ for group in groups:
 
             ax3 = f.add_subplot(spec[2, 0])
             ax3.set_title("% Solutions Moving The Ball")
-            ax3.set_ylim([0, 100])
-            ax3.set_yticks([0, 25, 50, 75, 100])
+            ax3.set_ylim([25, 100])
+            ax3.set_yticks([25, 50, 75, 100])
             ax3.yaxis.grid(True)
-            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3)
+            sns.lineplot(generations, PCT_values, estimator=np.median, ci=None, ax=ax3, color="red")
             data_stats = pd.DataFrame({"x": generations, "y": PCT_values}).groupby("x").describe()
             quart25 = data_stats[("y", '25%')]
             quart75 = data_stats[("y", '75%')]
             ax3.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
-                             quart25, quart75, alpha=0.3)
+                             quart25, quart75, alpha=0.3, color="red")
             ax3.set_ylabel("%")
             ax3.set_xlabel("Generation")
 
             # make space between subplots
             plt.subplots_adjust(hspace=1.2)
 
-            plt.savefig("entropy.png")
+            plt.savefig("entropy.pdf")
             plt.close()
 
             # plot latent var at experiment level
@@ -302,7 +304,7 @@ for group in groups:
             ax1.set_xlabel("Generation")
             ax1.set_title("Variance of Latent Descriptors of No-Move Solutions")
 
-            plt.savefig("latent_var.png")
+            plt.savefig("latent_var.pdf")
             plt.close()
 
             # at experiment level, plot losses
@@ -360,9 +362,11 @@ for group in groups:
 
             elif variant == "vae":
                 f = plt.figure(figsize=(10, 5))
-                spec = f.add_gridspec(2, 2)
-                ax1 = f.add_subplot(spec[0, :])
-                ax3 = f.add_subplot(spec[1, :])
+                spec = f.add_gridspec(1, 1)
+                ax1 = f.add_subplot(spec[:, :])
+                # spec = f.add_gridspec(2, 2)
+                # ax1 = f.add_subplot(spec[0, :])
+                # ax3 = f.add_subplot(spec[1, :])
             else:
                 f = plt.figure(figsize=(5, 5))
                 spec = f.add_gridspec(1, 2)
@@ -378,9 +382,8 @@ for group in groups:
             quart75 = data_stats[("y", '75%')]
             ax1.fill_between(list(range(START_GEN_LOSS_PLOT, 6001)),
                                quart25, quart75, alpha=0.3, color="blue")
-
             if variant != "aurora" and len(UL_values) > 0:
-                ln3 = sns.lineplot(x, UL_values, estimator=np.median, ci=None, label="Undist. L2", ax=ax1, color="brown")
+                ln3 = sns.lineplot(x, UL_values, estimator=np.median, ci=None, label="Undisturbed L2", ax=ax1, color="brown")
                 data_stats = pd.DataFrame({"x": x, "y": UL_values}).groupby("x").describe()
                 quart25 = data_stats[("y", '25%')]
                 quart75 = data_stats[("y", '75%')]
@@ -400,7 +403,7 @@ for group in groups:
             lns = ln2.get_lines() if "fulllosstrue" not in exp else ln2.get_lines() + ln4.get_lines()
             if variant != "aurora" and len(UL_values) > 0:
                 lns += ln3.get_lines()
-            labs = [l.get_label() for l in lns]
+            labs = {l.get_label() for l in lns}
             ax1.legend(lns, labs, loc='best')
 
             # if variant == "vae" and len(ENVAR_values) > 0:
@@ -419,7 +422,7 @@ for group in groups:
             else:
                 ax1.set_xlabel("Generation")
 
-            plt.savefig("losses.png")
+            plt.savefig("losses.pdf")
             plt.close()
 
         # variant plotting
@@ -460,9 +463,9 @@ for group in groups:
                 plt.hlines(max_diversity, 0, 1, linestyles="--", label="Max Diversity")
                 plt.legend()
                 if loss_type == "fulllosstrue":
-                    plt.savefig(f"diversity_gen{generation}_fullloss.png")
+                    plt.savefig(f"diversity_gen{generation}_fullloss.pdf")
                 else:
-                    plt.savefig(f"diversity_gen{generation}_notfullloss.png")
+                    plt.savefig(f"diversity_gen{generation}_notfullloss.pdf")
                 plt.close()
 
             # record last generation
@@ -497,9 +500,9 @@ for group in groups:
                 plt.title(f"Reconstruction Var. of No-Move solutions - Gen {generation}")
 
                 if loss_type == "fulllosstrue":
-                    plt.savefig(f"recon_not_moved_var{generation}_fullloss.png")
+                    plt.savefig(f"recon_not_moved_var{generation}_fullloss.pdf")
                 else:
-                    plt.savefig(f"recon_not_moved_var{generation}_notfullloss.png")
+                    plt.savefig(f"recon_not_moved_var{generation}_notfullloss.pdf")
                 plt.close()
 
             # record last generation
@@ -562,15 +565,10 @@ for group in groups:
 
                 ax3 = f.add_subplot(spec[4, 0])
                 ax3.set_title("% Solutions Moving The Ball")
-                ax3.set_ylim([0, 100])
-                ax3.set_yticks([0, 25, 50, 75, 100])
+                ax3.set_ylim([25, 100])
+                ax3.set_yticks([25, 50, 75, 100])
                 ax3.yaxis.grid(True)
                 sns.lineplot(stochasticity_values, PCT_values, estimator=np.median, ci=None, ax=ax3)
-                data_stats = pd.DataFrame({"x": generations, "y": PCT_values}).groupby("x").describe()
-                quart25 = data_stats[("y", '25%')]
-                quart75 = data_stats[("y", '75%')]
-                ax3.fill_between([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
-                                 quart25, quart75, alpha=0.3)
                 ax3.set_ylabel("%")
                 ax3.set_xlabel("Stochasticity")
 
@@ -578,9 +576,9 @@ for group in groups:
                 plt.subplots_adjust(hspace=1)
 
                 if loss_type == "fulllosstrue":
-                    plt.savefig(f"distance_gen{generation}_fullloss.png")
+                    plt.savefig(f"distance_gen{generation}_fullloss.pdf")
                 else:
-                    plt.savefig(f"distance_gen{generation}_notfullloss.png")
+                    plt.savefig(f"distance_gen{generation}_notfullloss.pdf")
                 plt.close()
 
             # record last generation
@@ -631,8 +629,8 @@ for group in groups:
 
                 ax3 = f.add_subplot(spec[2, 0])
                 ax3.set_title("% Solutions Moving The Ball")
-                ax3.set_ylim([0, 100])
-                ax3.set_yticks([0, 25, 50, 75, 100])
+                ax3.set_ylim([25, 100])
+                ax3.set_yticks([25, 50, 75, 100])
                 ax3.yaxis.grid(True)
                 sns.lineplot(stochasticity_values, PCT_values, estimator=np.median, ci=None, ax=ax3)
                 ax3.set_ylabel("%")
@@ -642,9 +640,9 @@ for group in groups:
                 plt.subplots_adjust(hspace=1.2)
 
                 if loss_type == "fulllosstrue":
-                    plt.savefig(f"pos_var{generation}_fullloss.png")
+                    plt.savefig(f"pos_var{generation}_fullloss.pdf")
                 else:
-                    plt.savefig(f"pos_var{generation}_notfullloss.png")
+                    plt.savefig(f"pos_var{generation}_notfullloss.pdf")
                 plt.close()
 
             pos_var_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "PV": PV_values,
@@ -691,8 +689,8 @@ for group in groups:
 
                 ax3 = f.add_subplot(spec[2, 0])
                 ax3.set_title("% Solutions Moving The Ball")
-                ax3.set_ylim([0, 100])
-                ax3.set_yticks([0, 25, 50, 75, 100])
+                ax3.set_ylim([25, 100])
+                ax3.set_yticks([25, 50, 75, 100])
                 ax3.yaxis.grid(True)
                 sns.lineplot(stochasticity_values, PCT_values, estimator=np.median, ci=None, ax=ax3)
                 ax3.set_ylabel("%")
@@ -702,9 +700,9 @@ for group in groups:
                 plt.subplots_adjust(hspace=0.6)
 
                 if loss_type == "fulllosstrue":
-                    plt.savefig(f"entropy{generation}_fullloss.png")
+                    plt.savefig(f"entropy{generation}_fullloss.pdf")
                 else:
-                    plt.savefig(f"entropy{generation}_notfullloss.png")
+                    plt.savefig(f"entropy{generation}_notfullloss.pdf")
                 plt.close()
 
             entropy_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "EV": EV_values,
@@ -736,9 +734,9 @@ for group in groups:
                 ax1.set_title(f"Variance of Latent Descriptors of No-Move Solutions - Gen {generation}")
 
                 if loss_type == "fulllosstrue":
-                    plt.savefig(f"latent_var{generation}_fullloss.png")
+                    plt.savefig(f"latent_var{generation}_fullloss.pdf")
                 else:
-                    plt.savefig(f"latent_var{generation}_notfullloss.png")
+                    plt.savefig(f"latent_var{generation}_notfullloss.pdf")
                 plt.close()
 
             latent_var_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "LV": LV_values}
@@ -758,6 +756,7 @@ for group in groups:
             TSNE_values = []
 
             stochasticity_values = []
+            TSNE_stochasticity_values = []
 
             is_data_recorded = True
             for stochasticity in stochasticities:
@@ -770,24 +769,26 @@ for group in groups:
                     is_data_recorded = False
                     continue
                 for repetition in variant_loss_dict["_".join(components)]:
-                    L2_values.append(repetition["L2"][-1])
-                    AL_values.append(repetition["AL"][-1])
+                    L2_values.append(repetition["L2"][START_GEN_LOSS_PLOT:])
+                    AL_values.append(repetition["AL"][START_GEN_LOSS_PLOT:])
                     if "KL" in repetition:
-                        KL_values.append(repetition["KL"][-1])
+                        KL_values.append(repetition["KL"][START_GEN_LOSS_PLOT:])
 
                     if variant != "aurora" and "UL" in repetition and repetition["UL"]:
-                        UL_values.append(repetition["UL"][-1])
+                        UL_values.append(repetition["UL"][START_GEN_LOSS_PLOT:])
                     if variant == "vae" and "ENVAR" in repetition and repetition["ENVAR"]:
-                        ENVAR_values.append(repetition["ENVAR"][-1])
-                    stochasticity_values.append(stochasticity)
+                        ENVAR_values.append(repetition["ENVAR"][START_GEN_LOSS_PLOT:])
+                    stochasticity_values.extend([stochasticity] * (len(repetition["L2"]) - START_GEN_LOSS_PLOT))
 
                     if loss_type == "fulllosstrue":
-                        VAR_values.append(repetition["VAR"][-1])
+                        VAR_values.append(repetition["VAR"][START_GEN_LOSS_PLOT:])
 
-                        TL_values.append(repetition["TL"][-1])
+                        TL_values.append(repetition["TL"][START_GEN_LOSS_PLOT:])
 
                     if "TSNE" in repetition and repetition["TSNE"]:
-                        TSNE_values.append(repetition["TSNE"][-1])
+                        TSNE_values.append(repetition["TSNE"][int(START_GEN_LOSS_PLOT / 10 - 1):])
+                        TSNE_stochasticity_values.append(
+                            [stochasticity] * (len(repetition["TSNE"]) - int(START_GEN_LOSS_PLOT / 10 - 1)))
 
             if not is_data_recorded:
                 continue
@@ -799,6 +800,7 @@ for group in groups:
             AL_values = np.array(AL_values).flatten()
             if variant == "vae":
                 ENVAR_values = np.array(ENVAR_values).flatten()
+                KL_values = np.array(KL_values).flatten()
             if variant != "aurora":
                 UL_values = np.array(UL_values).flatten()
             if TSNE_values:
@@ -806,7 +808,6 @@ for group in groups:
 
             if loss_type == "fulllosstrue":
                 VAR_values = np.array(VAR_values).flatten()
-                KL_values = np.array(KL_values).flatten()
                 TL_values = np.array(TL_values).flatten()
 
                 f = plt.figure(figsize=(15, 10))
@@ -879,14 +880,15 @@ for group in groups:
                 ax1.set_xlabel("Stochasticity")
 
             if loss_type == "fulllosstrue":
-                plt.savefig(f"losses_fullloss.png")
+                plt.savefig(f"losses_fullloss.pdf")
             else:
-                plt.savefig(f"losses_notfullloss.png")
+                plt.savefig(f"losses_notfullloss.pdf")
 
             plt.close()
 
             loss_stoch_dict[f"{variant}{loss_type}"] = {"stoch": stochasticity_values, "L2": L2_values, "ENVAR": ENVAR_values,
-                                                           "AL": AL_values, "TSNE": TSNE_values, "KL": KL_values}
+                                                           "AL": AL_values, "TSNE": TSNE_values, "KL": KL_values,
+                                                        "VAR": VAR_values, "TSNEstoch": np.array(TSNE_stochasticity_values).flatten()}
 
     os.chdir(f"{EXP_FOLDER}")
 
