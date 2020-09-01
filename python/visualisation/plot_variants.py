@@ -10,9 +10,9 @@ path = "/media/andwang1/SAMSUNG/MSC_INDIV/results_box2d_bsd_exp1"
 os.chdir(path)
 
 plotting_groups = [
-    # ["l1", "l2"],
-    [ "l2beta0nosample" , "l2beta0"]#, "l2ae", "l2"],
-# ["l2beta0nosampletrain"],
+    ["l2beta0nosample", "l2"],
+    # [ "sne_nosampletrain", "tsne_nosampletrain"],
+# ["l0nosampletrain", "l2nosampletrain"],
 ]
 
 skip_loss_type = {
@@ -288,7 +288,7 @@ for group in plotting_groups:
             ax1.fill_between([0, 1, 2, 3, 4, 5], quart25, quart75, alpha=0.3, color=colours[colour_count])
 
             colour_count += 1
-    ax1.set_title("Variance in Trajectory Positions")
+    ax1.set_title("Variance in Trajectories")
     ax1.set_ylabel("Variance")
     ax1.set_xlabel("Stochasticity")
     plt.savefig(f"{save_dir}/pdf/posvar_{'_'.join(group)}.pdf")
@@ -321,7 +321,7 @@ for group in plotting_groups:
             ax1.fill_between([0, 1, 2, 3, 4, 5], quart25, quart75, alpha=0.3, color=colours[colour_count])
 
             colour_count += 1
-    ax1.set_title("Variance in Trajectory Positions Excl. No-Move Solutions")
+    ax1.set_title("Variance in Trajectories Excl. No-Move Solutions")
     ax1.set_ylabel("Variance")
     ax1.set_xlabel("Stochasticity")
     plt.savefig(f"{save_dir}/pdf/posvar_excl_zero{'_'.join(group)}.pdf")
@@ -448,7 +448,7 @@ for group in plotting_groups:
                 continue
             data.pop("TSNE", None)
             data.pop("TSNEstoch", None)
-            sns.lineplot(data["stoch"], data["ENVAR"] / 2, estimator=np.mean, label=produce_name(member, variant),
+            sns.lineplot(data["stoch"], data["ENVAR"] / 2, estimator=np.median, ci=None, label=produce_name(member, variant),
                          ax=ax1,
                          color=colours[colour_count])
             empty_keys = [k for k in data if not len(data[k])]
@@ -456,13 +456,15 @@ for group in plotting_groups:
                 del data[k]
             data = pd.DataFrame(data)[["stoch", "ENVAR"]]
             data["ENVAR"] /= 2
-            # data_stats = data.groupby("stoch").describe()
-            # quart25 = data_stats[('ENVAR', '25%')]
-            # quart75 = data_stats[('ENVAR', '75%')]
-            # ax1.fill_between([0, 1, 2, 3, 4, 5], quart25, quart75, alpha=0.3, color=colours[colour_count])
+            data_stats = data.groupby("stoch").describe()
+            quart25 = data_stats[('ENVAR', '25%')]
+            quart75 = data_stats[('ENVAR', '75%')]
+            ax1.fill_between([0, 1, 2, 3, 4, 5], quart25, quart75, alpha=0.3, color=colours[colour_count])
             if i == 0 and len(group) > 1:
                 ax1.lines[-1].set_linestyle("--")
             colour_count += 1
+    ax1.yaxis.get_major_formatter().set_useOffset(False)
+    ax1.yaxis.get_major_formatter().set_scientific(False)
     ax1.set_ylabel("Variance")
     ax1.set_xlabel("Stochasticity")
     ax1.set_title(f"Encoder Variance")
