@@ -42,6 +42,7 @@ struct Params {
     static double pct_extension;
     static bool full_loss;
     static size_t beta;
+    static bool sample_train;
 
     enum class loss : unsigned int {SmoothL1, L1, L2};
     static loss loss_function;
@@ -76,6 +77,7 @@ struct Params {
     // influences l = targeted size of pop
     SFERES_CONST int resolution = 8000; 
     SFERES_CONST int num_train_archives = 0;
+    
     static bool sample;
     };
     
@@ -132,6 +134,7 @@ size_t Params::pop::nb_gen;
 size_t Params::ae::beta;
 double Params::ae::pct_extension;
 Params::ae::loss Params::ae::loss_function;
+bool Params::ae::sample_train;
 bool Params::qd::sample;
 Params::ae::sne Params::ae::add_sne_criterion;
 

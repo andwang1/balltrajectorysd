@@ -6,7 +6,7 @@
 #define AE_ENCODER_HPP
 
 struct EncoderImpl : torch::nn::Module {
-    EncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim, bool bias) :
+    EncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim) :
         m_linear_1(torch::nn::LinearOptions(input_dim, en_hid_dim1).bias(true)),
         m_linear_2(torch::nn::LinearOptions(en_hid_dim1, en_hid_dim2).bias(true)),
         m_linear_3(torch::nn::LinearOptions(en_hid_dim2, latent_dim).bias(true)),

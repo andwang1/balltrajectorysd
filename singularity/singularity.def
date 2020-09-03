@@ -109,15 +109,15 @@ From: airl_lab/default/airl_env:pytorch_ci
     bash -c 'sleep $[ ( $RANDOM % 90 )  + 1 ]s'
 
     CURPATH=$(pwd)
-    DIRNAME=results_$1/$2_$4_$5_$6_$7_$8_$9_$10_$11
+    DIRNAME=results_$1/$2_$4_$5_$6_$7_$8_$9_$10_$11_$12
     PATHNAME=$(date +%Y-%m-%d_%H_%M_%S)_$$
 
     mkdir -p $CURPATH/$DIRNAME/$PATHNAME/
 
     cd /git/sferes2/
 
-    echo Launching command \'build/exp/balltrajectorysd/$1 -d $CURPATH/$DIRNAME/$PATHNAME $2 $3 $4 $5 $6 $7 $8 $9 $10 $11\'
-    build/exp/balltrajectorysd/$1 -d $CURPATH/$DIRNAME/$PATHNAME $2 $3 $4 $5 $6 $7 $8 $9 $10 $11
+    echo Launching command \'build/exp/balltrajectorysd/$1 -d $CURPATH/$DIRNAME/$PATHNAME $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12\'
+    build/exp/balltrajectorysd/$1 -d $CURPATH/$DIRNAME/$PATHNAME $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12
     echo Launching command \'python3 /git/sferes2/exp/balltrajectorysd/python/visualisation/plot_for_each_container.py $CURPATH/$DIRNAME/$PATHNAME $1 $5\'
     python3 /git/sferes2/exp/balltrajectorysd/python/visualisation/plot_for_each_container.py $CURPATH/$DIRNAME/$PATHNAME $1 $5
     

@@ -103,6 +103,7 @@ struct Arguments {
     size_t beta;
     double pct_extension;
     unsigned int loss_func;
+    bool sample_train;
     bool sample;
     unsigned int sne;
 };
@@ -122,6 +123,7 @@ void get_arguments(const boost::program_options::options_description &desc, Argu
     arg.beta = vm["beta"].as<size_t>();
     arg.pct_extension = vm["pct-extension"].as<double>();
     arg.loss_func = vm["loss-func"].as<unsigned int>();
+    arg.sample_train = vm["sample-train"].as<bool>();
     arg.sample = vm["sample"].as<bool>();
     arg.sne = vm["sne"].as<unsigned int>();
 }
@@ -132,19 +134,21 @@ int main(int argc, char **argv) {
     Arguments arg{};
 
     desc.add_options()
-                ("number-gen", boost::program_options::value<size_t>(), "Set Number of Generations");
+                ("number-gen", boost::program_options::value<size_t>(), "Number of Generations");
     desc.add_options()
-                ("number-cpus", boost::program_options::value<size_t>(), "Set Number of CPUs");
+                ("number-cpus", boost::program_options::value<size_t>(), "Number of CPUs");
     desc.add_options()
-                ("pct-random", boost::program_options::value<double>(), "Set Pct of random trajectories");
+                ("pct-random", boost::program_options::value<double>(), "Environment Stochasticity");
     desc.add_options()
-                ("full-loss", boost::program_options::value<bool>(), "Full VAE loss or just L2");
+                ("full-loss", boost::program_options::value<bool>(), "Log-Likelihood Loss (true) or Euclidean (false)");
     desc.add_options()
                 ("beta", boost::program_options::value<size_t>(), "Beta Coefficient");
     desc.add_options()
                 ("pct-extension", boost::program_options::value<double>(), "% of Phenotypes to regenerate for training");
     desc.add_options()
-                ("loss-func", boost::program_options::value<unsigned int>(), "Loss function: 0 = SqRoot, 1 = L1, 2 = L2");
+                ("loss-func", boost::program_options::value<unsigned int>(), "Loss function: 0 = Smooth L1, 1 = L1, 2 = L2");
+    desc.add_options()
+                ("sample-train", boost::program_options::value<bool>(), "Sample Latent Code during Training");
     desc.add_options()
                 ("sample", boost::program_options::value<bool>(), "Sample Encoder for BD");
     desc.add_options()
@@ -173,6 +177,8 @@ int main(int argc, char **argv) {
     Params::ae::pct_extension = arg.pct_extension;
     // loss function
     Params::ae::loss_function = static_cast<Params::ae::loss>(arg.loss_func);
+    // sample encoder for BD
+    Params::ae::sample_train = arg.sample_train;
     // sample encoder for BD
     Params::qd::sample = arg.sample;
     // TSNE or SNE

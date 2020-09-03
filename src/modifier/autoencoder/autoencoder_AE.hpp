@@ -11,13 +11,13 @@
 #include "decoder_AE.hpp"
 
 struct AutoEncoderImpl : torch::nn::Module {
-    AutoEncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim, int de_hid_dim1, int de_hid_dim2, int output_dim, bool bias) :
+    AutoEncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim, int de_hid_dim1, int de_hid_dim2, int output_dim, bool notused) :
             #ifdef AURORA
-            m_encoder(Encoder(output_dim, en_hid_dim1, en_hid_dim2, latent_dim, true)),
-            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim, true)) 
+            m_encoder(Encoder(output_dim, en_hid_dim1, en_hid_dim2, latent_dim)),
+            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim)) 
             #else
-            m_encoder(Encoder(input_dim, en_hid_dim1, en_hid_dim2, latent_dim, bias)),
-            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim, bias)) 
+            m_encoder(Encoder(input_dim, en_hid_dim1, en_hid_dim2, latent_dim)),
+            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim)) 
             #endif
     {
         register_module("encoder", m_encoder);

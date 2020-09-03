@@ -11,17 +11,18 @@
 #include "decoder_VAE.hpp"
 
 struct AutoEncoderImpl : torch::nn::Module {
-    AutoEncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim, int de_hid_dim1, int de_hid_dim2, int output_dim, bool bias) :
-            m_encoder(Encoder(input_dim, en_hid_dim1, en_hid_dim2, latent_dim, bias)),
-            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim, bias)) 
+    AutoEncoderImpl(int input_dim, int en_hid_dim1, int en_hid_dim2, int latent_dim, int de_hid_dim1, int de_hid_dim2, int output_dim, bool sample_train) :
+            m_encoder(Encoder(input_dim, en_hid_dim1, en_hid_dim2, latent_dim)),
+            m_decoder(Decoder(latent_dim, de_hid_dim1, de_hid_dim2, output_dim)) 
     {
         register_module("encoder", m_encoder);
         register_module("decoder", m_decoder);
+        _sample_train = sample_train;
     }
 
     torch::Tensor forward(const torch::Tensor &x) {
         torch::Tensor encoder_mu, encoder_logvar, decoder_logvar;
-        return m_decoder(m_encoder(x, encoder_mu, encoder_logvar, false), decoder_logvar);
+        return m_decoder(m_encoder(x, encoder_mu, encoder_logvar, _sample_train), decoder_logvar);
     }
 
     torch::Tensor forward_get_latent(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar, 
@@ -32,12 +33,13 @@ struct AutoEncoderImpl : torch::nn::Module {
 
     torch::Tensor forward_(const torch::Tensor &input, torch::Tensor &encoder_mu, torch::Tensor &encoder_logvar, torch::Tensor &decoder_logvar) {
         // last parameter sets boolean for whether to sample from Encoder during training
-        torch::Tensor corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar, false);
+        torch::Tensor corresponding_latent = m_encoder(input, encoder_mu, encoder_logvar, _sample_train);
         return m_decoder(corresponding_latent, decoder_logvar);
     }
 
     Encoder m_encoder;
     Decoder m_decoder;
+    bool _sample_train;
 };
 
 TORCH_MODULE(AutoEncoder);
